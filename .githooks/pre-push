@@ -1,0 +1,18 @@
+#!/bin/sh
+# Mirrors .github/workflows/ci.yml — GitHub Actions is unusable on this
+# account (locked pending a payment method), so this is the actual CI gate.
+set -e
+
+echo "[pre-push] ruff check..."
+uv run ruff check src tests
+
+echo "[pre-push] ruff format --check..."
+uv run ruff format --check src tests
+
+echo "[pre-push] mypy..."
+uv run mypy
+
+echo "[pre-push] pytest (not e2e)..."
+uv run pytest -q
+
+echo "[pre-push] all checks passed"

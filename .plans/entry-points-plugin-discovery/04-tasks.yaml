@@ -1,0 +1,90 @@
+# entry-points-plugin-discovery — task DAG (module-lite)
+# See 00-overview.md for full contracts, rationale, worktree.
+
+- id: T1
+  title: "AmbiguousPlugin error"
+  files: ["src/pylzt/errors.py"]
+  depends_on: []
+  parallelizable: true
+  acceptance: >
+    AmbiguousPlugin(LztError) with (group: str, names: list[str])
+    constructor args, message f"{len(names)} plugins registered for
+    {group!r}: {names}", chained per project convention (matches whatever
+    LztError's actual base constructor shape is — confirm before writing).
+  est_loc: 8
+
+- id: T2
+  title: "plugins.py — discover_middlewares/discover_metrics"
+  files: ["src/pylzt/plugins.py"]
+  depends_on: [T1]
+  parallelizable: true
+  acceptance: >
+    New file. MIDDLEWARE_GROUP="pylzt.plugins.middleware",
+    METRICS_GROUP="pylzt.plugins.metrics" constants. discover_middlewares()
+    -> tuple[BaseMiddleware, ...] loads+zero-arg-constructs every entry in
+    MIDDLEWARE_GROUP. discover_metrics() -> BaseMetrics | None: None on zero
+    entries, the constructed instance on exactly one, raises AmbiguousPlugin
+    on 2+. Module docstring documents the two-group pyproject.toml worked
+    example for third-party consumers.
+  est_loc: 30
+
+- id: T3
+  title: "ClientConfig.enable_plugin_discovery toggle"
+  files: ["src/pylzt/config.py"]
+  depends_on: []
+  parallelizable: true
+  acceptance: >
+    ClientConfig gains enable_plugin_discovery: bool = True field, no other
+    fields touched.
+  est_loc: 3
+
+- id: T4
+  title: "Client.__init__ discovery wiring + _raw_transport"
+  files: ["src/pylzt/client.py"]
+  depends_on: [T2, T3]
+  parallelizable: false
+  acceptance: >
+    Client.__init__ resolves self._plugin_middlewares (tuple, discovered or
+    empty per toggle) and self._metrics (explicit arg wins; else discovered
+    or NullMetrics per toggle) before any transport is built.
+    _raw_transport(base_url) passes middlewares=self._plugin_middlewares
+    into HttpxSession (currently passes none). Confirm BaseMiddleware import
+    status before adding the new import line.
+  est_loc: 20
+
+- id: T5
+  title: "Unit tests — plugins.py"
+  files: ["tests/pylzt/test_plugins.py"]
+  depends_on: [T2]
+  parallelizable: true
+  acceptance: >
+    Covers, against fake importlib.metadata EntryPoint objects (monkeypatch
+    entry_points()): zero registrations -> empty tuple / None; one
+    middleware -> constructed instance in the tuple; two+ middlewares -> both
+    constructed (additive, no error); one metrics -> instance returned;
+    two+ metrics -> AmbiguousPlugin raised with correct group/names.
+  est_loc: 60
+
+- id: T6
+  title: "Integration tests — Client discovery wiring"
+  files: ["tests/pylzt/test_client.py"]
+  depends_on: [T4]
+  parallelizable: true
+  acceptance: >
+    Client(metrics=SomeMetrics()) uses SomeMetrics() even when a discoverable
+    metrics plugin is faked in. Client(config=ClientConfig(
+    enable_plugin_discovery=False)) never calls entry_points() (patch/spy
+    assertion) and _plugin_middlewares is empty. Discovered middlewares (via
+    faked entry points) appear registered on the constructed HttpxSession's
+    request_middlewares chain.
+  est_loc: 50
+
+- id: RELEASE-READY
+  title: "Release-ready acceptance"
+  depends_on: [T5, T6]
+  acceptance: >
+    ruff + mypy clean on all touched files; full pytest suite green
+    (existing + new); worktree feat/entry-points-plugin-discovery ready to
+    merge into main; _MODULE_AUTO.md regenerated for the new plugins.py and
+    for client/config/errors packages.
+  est_loc: 0

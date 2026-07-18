@@ -1,0 +1,87 @@
+# resumable-exporter-cursor-persist — task DAG (module-lite)
+# See 00-overview.md for full contracts, rationale, worktree.
+
+- id: T1
+  title: "Paginator.on_page_start hook (additive)"
+  files: ["src/pylzt/pagination.py"]
+  depends_on: []
+  parallelizable: true
+  acceptance: >
+    Paginator.__init__ gains on_page_start: Callable[[int], Awaitable[None]]
+    | None = None. __aiter__ calls `await self._on_page_start(page)` (if
+    set) immediately before `await self._fetch(page)`, every iteration.
+    Omitting the param leaves existing behavior byte-identical.
+  est_loc: 12
+
+- id: T2
+  title: "ExportCursor + BaseCursorStorage + MemoryCursorStorage"
+  files: ["src/pylzt/lib/cursor_storage.py"]
+  depends_on: []
+  parallelizable: true
+  acceptance: >
+    New file. ExportCursor frozen dataclass (export_id: str, next_page: int,
+    walked: int = 0). BaseCursorStorage ABC with async save_cursor(cursor),
+    load_cursor(export_id) -> ExportCursor | None, clear_cursor(export_id).
+    MemoryCursorStorage concrete impl backed by a dict.
+  est_loc: 40
+
+- id: T3
+  title: "ResumableExporter"
+  files: ["src/pylzt/export/resumable_exporter.py"]
+  depends_on: [T1, T2]
+  parallelizable: false
+  acceptance: >
+    ResumableExporter[T](export_id, fetch, storage, *, max_pages=None).
+    __aiter__ loads saved cursor via storage.load_cursor(export_id) (resume
+    point) or starts at page 1; wraps a Paginator with on_page_start that
+    saves an ExportCursor before each page fetch; calls
+    storage.clear_cursor(export_id) only if the async for fully drains
+    (natural exhaustion) — early break leaves the cursor in place.
+  est_loc: 35
+
+- id: T4
+  title: "Unit tests — Paginator on_page_start"
+  files: ["tests/pylzt/test_pagination.py"]
+  depends_on: [T1]
+  parallelizable: true
+  acceptance: >
+    New test file (no prior tests existed). Covers: hook fires before each
+    fetch in page order; hook omitted -> unchanged iteration behavior;
+    hook raising propagates (no silent swallow).
+  est_loc: 40
+
+- id: T5
+  title: "Unit tests — cursor_storage"
+  files: ["tests/pylzt/test_cursor_storage.py"]
+  depends_on: [T2]
+  parallelizable: true
+  acceptance: >
+    MemoryCursorStorage round-trip: save then load returns matching
+    ExportCursor; load on unknown export_id returns None; clear then load
+    returns None; save is an upsert (second save for same export_id
+    overwrites, doesn't duplicate).
+  est_loc: 30
+
+- id: T6
+  title: "Integration tests — ResumableExporter resume/exhaustion"
+  files: ["tests/pylzt/test_resumable_exporter.py"]
+  depends_on: [T3]
+  parallelizable: true
+  acceptance: >
+    Simulated crash mid-iteration (stop consuming after N items, re-
+    instantiate ResumableExporter with same export_id+storage, re-iterate)
+    resumes from the last checkpointed page, not page 1. Natural exhaustion
+    clears the cursor (subsequent load_cursor returns None). Early break
+    (partial consumption, no re-instantiation) leaves the cursor saved.
+  est_loc: 55
+
+- id: RELEASE-READY
+  title: "Release-ready acceptance"
+  depends_on: [T4, T5, T6]
+  acceptance: >
+    ruff + mypy clean on all touched files; full pytest suite green
+    (existing + new); worktree feat/resumable-exporter-cursor-persist ready
+    to merge into main; _MODULE_AUTO.md regenerated for pagination.py's
+    package, lib/ (incidentally fixes pre-existing get_jobs signature
+    staleness), and the new export/ package.
+  est_loc: 0

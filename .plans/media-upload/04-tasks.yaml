@@ -1,0 +1,115 @@
+- id: T1
+  title: "Media type"
+  files: ["src/pylzt/media.py"]
+  depends_on: []
+  parallelizable: true
+  acceptance: >
+    Media(data=b"...", filename="a.png").sha256 returns a 64-char hex string;
+    Media.from_path reads a file's bytes and infers filename from the path.
+  est_loc: 40
+
+- id: T2
+  title: "Request.files field"
+  files: ["src/pylzt/transport/base.py"]
+  depends_on: [T1]
+  parallelizable: false
+  acceptance: >
+    Request(method="POST", path="/x", rate_class=RateClass.FORUM,
+    files={"avatar": Media(...)}) constructs without error; existing Request
+    call sites (no files=) are unaffected (default None).
+  est_loc: 10
+
+- id: T3
+  title: "HttpxSession multipart wiring"
+  files: ["src/pylzt/transport/session.py"]
+  depends_on: [T2]
+  parallelizable: false
+  acceptance: >
+    _raw_send builds httpx `files={field: (m.filename, m.data, m.content_type)}`
+    when req.files is set, and sends req.json_body fields (if any) via `data=`
+    instead of `json=` in that case (httpx forbids json+files together —
+    confirmed live against httpx.MockTransport in W3.5 audit). req.files is
+    None -> behavior unchanged (json= path as before). NOTE (W3.5 finding):
+    httpx serializes a None value in `data=` as the literal string "" rather
+    than omitting the key — build_request (T5) already drops None fields
+    before this point, so this is a non-issue here, but don't pass a raw
+    dict with None values into `data=` directly in future call sites.
+  est_loc: 40
+
+- id: T4
+  title: "BaseMediaStorage + NullMediaStorage"
+  files: ["src/pylzt/lib/media_storage.py"]
+  depends_on: [T1]
+  parallelizable: true
+  acceptance: >
+    NullMediaStorage().get(key) returns None always; save(key, media) is a no-op
+    and never raises. BaseMediaStorage is a proper ABC (subclassing without both
+    methods fails at instantiation).
+  est_loc: 30
+
+- id: T5
+  title: "BaseMethod.build_request Media routing"
+  files: ["src/pylzt/methods/base.py"]
+  depends_on: [T1, T2]
+  parallelizable: false
+  acceptance: >
+    A BaseMethod subclass with one field typed Media builds a Request whose
+    `files` contains that field under its own name and whose `json_body` is
+    None (other fields moved to a multipart-safe carrier, not JSON). A method
+    with zero Media fields builds exactly as before (regression: existing
+    test_methods_declarative.py suite stays green, no behavior change).
+  est_loc: 60
+
+- id: T6
+  title: "Client media_storage wiring"
+  files: ["src/pylzt/client.py"]
+  depends_on: [T4, T5]
+  parallelizable: false
+  acceptance: >
+    Client(tokens=[...], media_storage=NullMediaStorage()) constructs; default
+    (no media_storage passed) uses NullMediaStorage. After a successful
+    execute() of a method carrying a Media field, media_storage.save(sha256,
+    media) is called; a save() that raises does not propagate — the method's
+    real result is still returned to the caller.
+  est_loc: 40
+
+- id: T7
+  title: "Codegen format:binary -> Media detection"
+  files: ["dev/codegen/generator.py", "src/pylzt/methods/forum_users.py"]
+  depends_on: [T1]
+  parallelizable: true
+  acceptance: >
+    generator.py maps an OpenAPI request-body field with `format: "binary"` to
+    a `Media`-typed field (import from pylzt.media) instead of `str`/`dict`.
+    Running `python -m dev.codegen build --api forum` regenerates
+    UsersAvatarUpload/UsersAvatarCrop/UsersBackgroundUpload/UsersBackgroundCrop
+    with a real Media field (not just user_id) and passes the codegen gate
+    (ruff+mypy+import, pipeline.validate()).
+  est_loc: 60
+
+- id: T8
+  title: "Tests"
+  files: ["tests/pylzt/test_media.py", "tests/pylzt/test_client_request.py"]
+  depends_on: [T3, T5, T6, T7]
+  parallelizable: false
+  acceptance: >
+    New tests cover: Media.sha256/from_path, Request.files construction,
+    HttpxSession multipart send against a fake transport (asserts files= and
+    data= passed correctly, json= path unaffected when files is None),
+    BaseMethod.build_request Media routing (with and without a Media field),
+    NullMediaStorage default no-op, Client save-after-success + save-failure-
+    does-not-propagate. Full suite (`uv run pytest -q`) green, ruff+mypy clean.
+  est_loc: 130
+
+- id: RELEASE-READY
+  title: "Release-ready gate"
+  files: []
+  depends_on: [T8]
+  parallelizable: false
+  acceptance: >
+    All tasks done; `uv run ruff check`, `uv run ruff format --check`,
+    `uv run mypy`, `uv run pytest -q` all green; docs/integration-guide.md gets
+    a short "Uploading media" section (Media/from_path/media_storage example);
+    _MODULE_AUTO.md regenerated for touched packages (models excluded — no
+    models/ files touched by this plan).
+  est_loc: 0

@@ -1,0 +1,112 @@
+# adaptive-concurrency-governor — task DAG (module-lite)
+# BLOCKED: do not start T1 until .plans/rate-limit-sync/'s RELEASE-READY
+# task is done and merged to main. T1's acceptance re-checks this.
+# See 00-overview.md for full contracts, rationale, worktree.
+
+- id: T1
+  title: "Dependency gate check + AdaptiveGate primitive"
+  files: ["src/pylzt/lib/concurrency.py"]
+  depends_on: []
+  parallelizable: true
+  acceptance: >
+    BEFORE writing any code: confirm src/pylzt/token_pool/rate_limit.py
+    exists with RateLimitSnapshot, and BaseTokenPool.report_rate_limit
+    exists in token_pool/base.py -- i.e. rate-limit-sync has merged. If not,
+    STOP this task and escalate rather than building against a moving
+    target. Once confirmed: AdaptiveGate(limit: int) with property limit,
+    resize(new_limit: int) (sync, no await), async acquire() context
+    manager (FIFO waiter-future queue, finally-decrements _in_flight and
+    wakes waiters even on cancellation).
+  est_loc: 45
+
+- id: T2
+  title: "BaseConcurrencyGovernor + NullConcurrencyGovernor + AimdConcurrencyGovernor"
+  files: ["src/pylzt/token_pool/governor.py"]
+  depends_on: [T1]
+  parallelizable: false
+  acceptance: >
+    BaseConcurrencyGovernor ABC: abstract gate(rate_class) -> AdaptiveGate,
+    abstract observe(rate_class, snapshot) -> None. NullConcurrencyGovernor
+    (fixed_limit=8, gate() lazily creates+caches per rate_class, never
+    resized, observe() no-op). AimdConcurrencyGovernor(initial_limit=8,
+    min_limit=1, max_limit=32, increase_step=1, danger_ratio=0.1,
+    safe_ratio=0.5, metrics=None): observe() computes remaining/limit ratio,
+    halves (clamped min_limit) below danger_ratio, +increase_step (clamped
+    max_limit) above safe_ratio, no-op between; emits
+    metrics.gauge('adaptive_concurrency_limit', new_limit, rate_class=...).
+  est_loc: 60
+
+- id: T3
+  title: "ClientConfig.enable_adaptive_concurrency toggle"
+  files: ["src/pylzt/config.py"]
+  depends_on: []
+  parallelizable: true
+  acceptance: >
+    ClientConfig gains enable_adaptive_concurrency: bool = False field
+    (opt-in, unlike rate-limit-sync's opt-out default).
+  est_loc: 3
+
+- id: T4
+  title: "RateLimitedTransport governor wiring"
+  files: ["src/pylzt/transport/rate_limited.py"]
+  depends_on: [T2, T3]
+  parallelizable: false
+  acceptance: >
+    Constructor gains concurrency_governor: BaseConcurrencyGovernor | None =
+    None param, defaults to NullConcurrencyGovernor() when the
+    ClientConfig-derived toggle is off. send()'s retry-loop body wrapped in
+    `async with self._concurrency_governor.gate(req.rate_class).acquire():`
+    as the outermost layer, before token lease. On the success branch
+    (same RateLimitSnapshot already parsed for rate-limit-sync's
+    report_rate_limit call), additionally calls
+    self._concurrency_governor.observe(req.rate_class, snapshot).
+  est_loc: 20
+
+- id: T5
+  title: "Unit tests — AdaptiveGate"
+  files: ["tests/pylzt/test_concurrency.py"]
+  depends_on: [T1]
+  parallelizable: true
+  acceptance: >
+    Covers: grow wakes queued waiters immediately; shrink does not evict
+    in-flight holders (they finish naturally, next acquire respects new
+    limit); resize rejects <1; acquire's finally releases even on
+    cancellation (simulated via task.cancel() mid-await).
+  est_loc: 50
+
+- id: T6
+  title: "Unit tests — AimdConcurrencyGovernor"
+  files: ["tests/pylzt/test_governor.py"]
+  depends_on: [T2]
+  parallelizable: true
+  acceptance: >
+    Covers: danger_ratio breach halves limit (clamped to min_limit);
+    safe_ratio breach increments by increase_step (clamped to max_limit);
+    mid-range ratio no-ops; NullConcurrencyGovernor never resizes regardless
+    of snapshot content.
+  est_loc: 55
+
+- id: T7
+  title: "Integration tests — RateLimitedTransport governor wiring"
+  files: ["tests/pylzt/test_rate_limited_transport.py"]
+  depends_on: [T4]
+  parallelizable: true
+  acceptance: >
+    Gate acquired before token lease (ordering assertion via a fake gate
+    spy). observe() called once per successful response with the parsed
+    RateLimitSnapshot. Toggle off -> NullConcurrencyGovernor used, gate
+    never resized across multiple responses with varying remaining/limit.
+    Existing RateLimitedTransport/proxy-bulkhead tests stay green
+    (regression check, no assertions changed).
+  est_loc: 60
+
+- id: RELEASE-READY
+  title: "Release-ready acceptance"
+  depends_on: [T5, T6, T7]
+  acceptance: >
+    ruff + mypy clean on all touched files; full pytest suite green
+    (existing + new); worktree feat/adaptive-concurrency-governor ready to
+    merge into main (based on a main that already includes rate-limit-sync's
+    merge); _MODULE_AUTO.md regenerated for lib/, token_pool/, transport/
+    packages.
+  est_loc: 0
