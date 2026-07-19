@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -51,3 +53,16 @@ class ClientConfig(BaseModel):
     # actively changes live throughput and can misfire (too aggressive or
     # too lenient), so it's a behavior change that ships opt-in.
     enable_adaptive_concurrency: bool = False
+
+    @classmethod
+    def for_testnet(cls, **overrides: object) -> ClientConfig:
+        """Point market + forum at a local lzt-testnet mock in one call.
+
+        Reads ``LZT_TESTNET_HOST`` / ``LZT_TESTNET_PORT`` (default ``127.0.0.1:8765``) — the same
+        env the mock server itself uses — so ``config=ClientConfig.for_testnet()`` replaces the
+        hand-written ``base_url=`` / ``forum_base_url=`` boilerplate.
+        """
+        host = os.environ.get("LZT_TESTNET_HOST", "127.0.0.1")
+        port = os.environ.get("LZT_TESTNET_PORT", "8765")
+        base = f"http://{host}:{port}"
+        return cls(base_url=base, forum_base_url=base, **overrides)

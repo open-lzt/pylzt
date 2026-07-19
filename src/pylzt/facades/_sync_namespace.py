@@ -41,13 +41,19 @@ class SyncMarketNamespace(SyncGeneratedMarketFacade):
         return self._runner.run(self._async.get_lots_batch(item_ids))
 
     def list_lots(
-        self, filter: LotFilter, *, max_pages: int | None = None, limit: int | None = None
+        self,
+        filter: LotFilter | None = None,
+        *,
+        max_pages: int | None = None,
+        limit: int | None = None,
+        **filters: object,
     ) -> list[Lot]:
         """Blocking materialization — no `SyncPaginator` exists yet, so this drains
         the async `Paginator` into a plain `list[Lot]` (optionally capped at
-        `limit`) instead of streaming, unlike the async `list_lots`."""
+        `limit`) instead of streaming, unlike the async `list_lots`. Accepts a
+        `LotFilter`, filter kwargs (`list_lots(category=...)`), or nothing."""
         return self._runner.run(
-            self._async.list_lots(filter, max_pages=max_pages).collect(limit=limit)
+            self._async.list_lots(filter, max_pages=max_pages, **filters).collect(limit=limit)
         )
 
     def list_categories(self) -> list[Category]:

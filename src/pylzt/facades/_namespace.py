@@ -49,7 +49,19 @@ class MarketNamespace(_Namespace, GeneratedMarketFacade):
     """`client.market.*` — generated market methods + the hand-written read
     convenience surface (`get_lot`, `list_lots`, `category_params`, ...)."""
 
-    def list_lots(self, filter: LotFilter, *, max_pages: int | None = None) -> Paginator[Lot]:
+    def list_lots(
+        self,
+        filter: LotFilter | None = None,
+        *,
+        max_pages: int | None = None,
+        **filters: object,
+    ) -> Paginator[Lot]:
+        """A ``LotFilter``, filter kwargs (``list_lots(category=...)``), or nothing for all lots."""
+        if filter is None:
+            filter = LotFilter(**filters)
+        elif filters:
+            raise TypeError("list_lots() takes a LotFilter or filter kwargs, not both")
+
         async def fetch(page: int) -> Page[Lot]:
             return await self.execute(
                 ListLotsPage(

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import os
 import uuid
 from collections.abc import AsyncIterator, Sequence
 from contextvars import ContextVar
@@ -91,9 +92,29 @@ class Client:
     Never inherits a generated facade base.
     """
 
+    @classmethod
+    def from_token(cls, token: str | Token, **kwargs: Any) -> Client:
+        """Build a client for a single market token: ``Client.from_token("...")``."""
+        return cls([token], **kwargs)
+
+    @classmethod
+    def from_env(cls, **kwargs: Any) -> Client:
+        """Build a client from ``LZT_TOKEN`` (+ optional ``LZT_ANTIPUBLIC_KEY``).
+
+        Endpoint targeting (e.g. the local testnet mock) stays explicit via
+        ``config=ClientConfig.for_testnet()`` — this only reads the credentials.
+        """
+        token = os.environ.get("LZT_TOKEN")
+        if not token:
+            raise ValueError("Client.from_env() needs the LZT_TOKEN environment variable")
+        antipublic_key = os.environ.get("LZT_ANTIPUBLIC_KEY")
+        if antipublic_key and "antipublic_key" not in kwargs:
+            kwargs["antipublic_key"] = antipublic_key
+        return cls([token], **kwargs)
+
     def __init__(
         self,
-        tokens: Sequence[str | Token] | None = None,
+        tokens: Sequence[str | Token] | str | Token | None = None,
         *,
         antipublic_key: str | None = None,
         transport: BaseTransport | None = None,
@@ -109,6 +130,8 @@ class Client:
         media_storage: BaseMediaStorage | None = None,
         config: ClientConfig | None = None,
     ) -> None:
+        if isinstance(tokens, (str, Token)):
+            tokens = [tokens]  # accept a bare token, not only a list
         self.config = config or ClientConfig()
         self._clock = clock or RealClock()
         self._plugin_middlewares: tuple[BaseMiddleware, ...] = (
