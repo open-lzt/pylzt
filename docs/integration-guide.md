@@ -21,26 +21,27 @@ pip install "git+https://github.com/open-lzt/pylzt.git"
 import asyncio
 
 from pylzt import Client
-from pylzt.models.lot import LotFilter
 from pylzt.types import Category
 
 
 async def main() -> None:
-    async with Client(["<market-token>"]) as client:
+    async with Client.from_token("<market-token>") as client:
         lot = await client.market.get_lot(item_id=42)
         print(lot.item_id, lot.price, lot.title)
 
-        async for lot in client.market.list_lots(LotFilter(category=Category.STEAM)):
+        async for lot in client.market.list_lots(category=Category.STEAM):
             print(lot.item_id, lot.price)
 
 
 asyncio.run(main())
 ```
 
-`Client(tokens=...)` — единственный обязательный аргумент конструктора; всё
-остальное (`transport`, `token_pool`, `proxy_source`, `retry`, `metrics`, `clock`,
-кэши, `config`) имеет рабочее значение по умолчанию и существует для подстановки
-фейка в тестах или другой политики — см. [Внедрение зависимостей](#внедрение-зависимостей).
+`Client(tokens=...)` — единственный обязательный аргумент; `tokens` — список
+(пул) или одна строка. `Client.from_token(token)` и `Client.from_env()`
+(читает `LZT_TOKEN` + опционально `LZT_ANTIPUBLIC_KEY`) — сахар для одного
+токена. Всё остальное (`transport`, `token_pool`, `proxy_source`, `retry`,
+`metrics`, `clock`, кэши, `config`) — рабочий дефолт, подставляемый в тестах
+или под другую политику: [Внедрение зависимостей](#внедрение-зависимостей).
 
 ## Чтение лотов
 
@@ -93,15 +94,13 @@ games = await client.market.category_games(Category.STEAM)
 ## Сгенерированный фасад (~200 эндпоинтов)
 
 `client.market`/`client.forum`/`client.antipublic` — доменные namespace'ы: каждый
-эндпоинт из официальной OpenAPI-спеки — реальный `async def` на соответствующем
-namespace'е, например `client.forum.forums_list()`,
-`client.forum.threads_get(thread_id)`, `client.forum.categories_get(...)`,
-`client.antipublic.license_check_license()`. Они генерируются командой
-`python -m dev.codegen build` (см.
-[`docs/codegen-runbook.md`](codegen-runbook.md)) — не редактируйте вручную файл
-с авто-заголовком. У части моделей в докстринге всё ещё есть заметка о живой
-верификации там, где заявленная в спеке форма не совпадает с реальным ответом
-(см. `docs/codegen-runbook.md`) — всё остальное сверено с продовым трафиком.
+эндпоинт официальной OpenAPI-спеки — реальный `async def`, например
+`client.forum.forums_list()`, `client.forum.threads_get(thread_id)`,
+`client.antipublic.license_check_license()`. Генерируются
+`python -m dev.codegen build` ([`docs/codegen-runbook.md`](codegen-runbook.md)) —
+файл с авто-заголовком руками не трогать. Часть моделей несёт в докстринге
+заметку о живой верификации там, где спека расходится с реальным ответом —
+остальное сверено с продовым трафиком.
 
 Для вызова, который не покрывает сгенерированный фасад, спускайтесь напрямую на
 слой method-as-class через `execute` (остаётся на `Client`, а не на namespace —
@@ -146,10 +145,10 @@ async with client.batching():
     )
 ```
 
-**`job()`** — оборачивать нечего (например, вызовы возникают в несвязанных
-местах кода, которые вы не контролируете). `job()` схлопывается с любым другим
-одновременным вызовом `job()`, сделанным через тот же клиент, через общий,
-лениво создаваемый, живущий весь клиент коллектор — `async with` не нужен:
+**`job()`** — нечего оборачивать (вызовы разбросаны по коду, который вы не
+контролируете). Схлопывается с любым конкурентным `job()` того же клиента
+через общий, лениво создаваемый, живущий весь клиент коллектор — `async with`
+не нужен:
 
 ```python
 lot = await client.job(GetLot(item_id=ItemId(1)))
@@ -165,7 +164,7 @@ lot = await client.job(GetLot(item_id=ItemId(1)))
 `antipublic_key=`, он никогда не попадает в ротацию токенов market/forum:
 
 ```python
-async with Client(["<market-token>"], antipublic_key="<antipublic-license-key>") as client:
+async with Client.from_token("<market-token>", antipublic_key="<antipublic-license-key>") as client:
     remaining = await client.antipublic.license_available_queries()
     hit = await client.antipublic.license_check_lines(lines=("user:pass",))
 ```
@@ -232,7 +231,7 @@ from pylzt.proxy_pool.source import Proxy, ProxyId, ProxyScheme, StaticProxySour
 proxies = StaticProxySource([
     Proxy(proxy_id=ProxyId("p1"), scheme=ProxyScheme.SOCKS5, host="1.2.3.4", port=1080),
 ])
-client = Client(["token-a"], proxy_source=proxies)
+client = Client.from_token("token-a", proxy_source=proxies)
 ```
 
 Прокси sticky per-token (один прокси остаётся привязан к токену, пока не
@@ -247,11 +246,11 @@ client = Client(["token-a"], proxy_source=proxies)
 client.reconfigure(token_pool=new_pool)
 ```
 
-Это примитив, к которому стоит обращаться, если токены должны ротироваться
-пока процесс продолжает работать (например, при перечитывании из secrets
-store) — постройте небольшой цикл, который создаёт свежий `RoundRobinTokenPool`
-и вызывает `reconfigure()` с интервалом; более тяжёлая абстракция не нужна,
-если у вас нет конкретного требования, которое `reconfigure()` не покрывает.
+Используйте, когда токены должны ротироваться без остановки процесса
+(например, перечитывание из secrets store) — цикл, создающий свежий
+`RoundRobinTokenPool` и вызывающий `reconfigure()` с интервалом, обычно
+достаточен; более тяжёлая абстракция нужна только под конкретное требование,
+которое `reconfigure()` не покрывает.
 
 ### Фейки для тестов
 
@@ -277,18 +276,16 @@ await client.forum.users_avatar_upload(user_id="me", avatar=avatar)
 вызывающего — сама загрузка не дедуплицируется (контракт идемпотентности API
 для повторной загрузки неизвестен, поэтому каждый вызов всё равно идёт в сеть).
 
-Передайте `media_storage=` в `Client(...)`, чтобы кэшировать загруженные байты
-после успешного вызова (по умолчанию `NullMediaStorage`, no-op — ничего не
-кэшируется, пока вы не подключите это явно). `FileMediaStorage` — готовая
-реализация на локальном диске: один файл сырых байтов на sha256-ключ плюс
-`.json`-сайдкар для `filename`/`content_type` (одни байты не позволяют
-восстановить их обратно), блокирующий I/O выполняется через
-`asyncio.to_thread`, чтобы не подвешивать event loop:
+`media_storage=` кэширует загруженные байты после успешного вызова (по
+умолчанию `NullMediaStorage` — no-op, пока не подключено явно).
+`FileMediaStorage` — готовая реализация на диске: файл сырых байтов на
+sha256-ключ плюс `.json`-сайдкар для `filename`/`content_type`; блокирующий
+I/O идёт через `asyncio.to_thread`, чтобы не подвешивать event loop:
 
 ```python
 from pylzt import FileMediaStorage
 
-client = Client(["token-a"], media_storage=FileMediaStorage("./media-cache"))
+client = Client.from_token("token-a", media_storage=FileMediaStorage("./media-cache"))
 ```
 
 Реализуйте `BaseMediaStorage` сами для S3/удалённого хранилища:
@@ -328,44 +325,39 @@ config = ClientConfig(
     enable_plugin_discovery=True,      # авто-загрузка entry-point middleware/metrics-бэкендов, см. ниже
     enable_adaptive_concurrency=False, # опциональный AIMD-governor конкурентности, см. ниже
 )
-client = Client(["token-a"], config=config)
+client = Client.from_token("token-a", config=config)
 ```
 
 ### Адаптивная конкурентность (AIMD-governor)
 
-`enable_adaptive_concurrency=True` подменяет дефолтную no-op-политику
-конкурентности на AIMD-governor (additive-increase/multiplicative-decrease —
-тот же принцип, что и у TCP congestion control): он расширяет лимит
-одновременных запросов на `RateClass`, пока сервер сообщает о запасе, и резко
-режет его в момент возврата сигнала рейт-лимита — полезно, когда вы заранее
-не знаете безопасный потолок конкурентности и хотите, чтобы фреймворк нашёл
-его сам, а не подбирать `general_per_min`/`search_per_min` методом проб
-и ошибок:
+`enable_adaptive_concurrency=True` подменяет no-op-политику на AIMD-governor
+(additive-increase/multiplicative-decrease, принцип TCP congestion control):
+расширяет лимит одновременных запросов на `RateClass`, пока сервер сообщает о
+запасе, и режет его при первом сигнале рейт-лимита — полезно, когда
+безопасный потолок конкурентности неизвестен заранее и не хочется подбирать
+`general_per_min`/`search_per_min` вручную:
 
 ```python
-client = Client(["token-a"], config=ClientConfig(enable_adaptive_concurrency=True))
+client = Client.from_token("token-a", config=ClientConfig(enable_adaptive_concurrency=True))
 ```
 
 ### Обнаружение плагинов (entry points)
 
-`enable_plugin_discovery=True` (по умолчанию) автоматически подгружает любую
-реализацию `BaseMiddleware`/`BaseMetrics`, которую сторонний пакет
-регистрирует под группами entry-point `pylzt.plugins.middleware` /
-`pylzt.plugins.metrics` — без изменений кода в приложении, импортирующем
-`pylzt`, как только такой пакет установлен. Установите `False` для полностью
-явного монтирования (работает только то, что явно передано в `Client(...)`),
-либо чтобы отладить неожиданный middleware, всплывающий в трейсе запроса.
+`enable_plugin_discovery=True` (по умолчанию) авто-подгружает любую
+`BaseMiddleware`/`BaseMetrics`, которую сторонний пакет регистрирует под
+entry-point группами `pylzt.plugins.middleware` / `pylzt.plugins.metrics` —
+без изменений кода приложения. `False` — полностью явное монтирование (только
+то, что передано в `Client(...)`), удобно для отладки неожиданного
+middleware в трейсе.
 
 ## Сквозной (end-to-end) референс
 
 `tests/pylzt/e2e/test_live_read.py` прогоняет read-only запросы против
-реального API (опционально, переменная окружения `LZT_E2E_TOKEN`,
-`pytest -m e2e`) и является самым актуальным рабочим примером цепочки вызовов
-(`list_categories` → `category_params` → `list_lots` → `get_lot`;
-`forums_list` → `forums_get` → `threads_list` → `threads_get`). Прочтите его
-перед тем, как копировать паттерн из этого руководства в продовый код — он
-сверяется с живым API на каждом прогоне, где задан токен, а это руководство —
-нет.
+реального API (опционально: `LZT_E2E_TOKEN`, `pytest -m e2e`) — самый
+актуальный пример цепочки вызовов (`list_categories` → `category_params` →
+`list_lots` → `get_lot`; `forums_list` → `forums_get` → `threads_list` →
+`threads_get`). Перед тем как копировать паттерн отсюда в прод — сверьтесь с
+ним: он бьётся о живой API на каждом прогоне с токеном, это руководство — нет.
 
 ## См. также
 

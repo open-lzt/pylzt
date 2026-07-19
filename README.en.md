@@ -22,8 +22,9 @@ the [lolzteam](https://lolz.live) forum API, and the [AntiPublic](https://antipu
 leak-checking API — not a thin HTTP wrapper.
 
 **[Why a framework](#why-a-framework-not-a-library)** ·
-**[Quickstart](#30-second-quickstart)** ·
-**[Sync/async](#async-and-sync-side-by-side)** ·
+**[Quickstart](#quickstart)** ·
+**[Sync](#sync-without-await)** ·
+**[Mock](#against-the-mock-lzt-testnet)** ·
 **[Pagination](#pagination)** ·
 **[Batching](#batching-n-calls-into-one-request)** ·
 **[Media uploads](#uploading-media)** ·
@@ -60,7 +61,7 @@ machinery a production integration actually needs, already wired together:
   background event-loop thread (`SyncRunner`), with every method's return type
   matching its async counterpart's unwrapped type under `mypy --strict`.
 
-## 30-second quickstart
+## Quickstart
 
 ```bash
 pip install "git+https://github.com/open-lzt/pylzt.git"
@@ -70,16 +71,15 @@ pip install "git+https://github.com/open-lzt/pylzt.git"
 import asyncio
 
 from pylzt import Client
-from pylzt.models.lot import LotFilter
 from pylzt.types import Category
 
 
 async def main() -> None:
-    async with Client(["<market-token>"]) as client:
+    async with Client.from_token("<market-token>") as client:  # or Client.from_env() from $LZT_TOKEN
         lot = await client.market.get_lot(item_id=42)
         print(lot.item_id, lot.price, lot.title)
 
-        async for lot in client.market.list_lots(LotFilter(category=Category.STEAM)):
+        async for lot in client.market.list_lots(category=Category.STEAM):
             print(lot.item_id, lot.price)
 
 
@@ -90,34 +90,36 @@ asyncio.run(main())
 namespaces — every endpoint in the official spec is a real method on the matching
 one (`client.forum.threads_get(...)`, `client.antipublic.license_check_license()`).
 
-## Async and sync, side by side
+## Sync without `await`
 
 ```python
-# async — Client
-async with Client(["<market-token>"]) as client:
-    lot = await client.market.get_lot(item_id=42)
-
-# sync — SyncClient, same constructor args, blocking calls, no event loop to manage
 from pylzt.sync.client import SyncClient
 
-with SyncClient(["<market-token>"]) as client:
-    lot = client.market.get_lot(item_id=42)  # no `await`
+with SyncClient("<market-token>") as client:
+    lot = client.market.get_lot(item_id=42)
+```
+
+## Against the mock (lzt-testnet)
+
+```python
+from pylzt import Client, ClientConfig
+
+async with Client.from_token("t", config=ClientConfig.for_testnet()) as client:
+    ...  # every call hits the local mock at 127.0.0.1:8765
 ```
 
 ## Pagination
 
 ```python
-from pylzt.models.lot import LotFilter
-from pylzt.types import Category, OrderBy
 from decimal import Decimal
+from pylzt.types import Category, OrderBy
 
-filt = LotFilter(category=Category.STEAM, pmax=Decimal("500"), order_by=OrderBy.PRICE_ASC)
-
-async for lot in client.market.list_lots(filt, max_pages=5):
+# stream page by page (max_pages is an optional cap)
+async for lot in client.market.list_lots(category=Category.STEAM, order_by=OrderBy.PRICE_ASC, max_pages=5):
     ...
 
-all_lots = await client.market.list_lots(filt).collect(limit=200)  # materialize a list
-first = await client.market.list_lots(filt).first_page()           # just the first page
+all_lots = await client.market.list_lots(category=Category.STEAM, pmax=Decimal("500")).collect(limit=200)
+first = await client.market.list_lots(category=Category.STEAM).first_page()
 ```
 
 ## Batching N calls into one request
@@ -166,7 +168,7 @@ A separate license key, not a market/forum token — it never enters the same ro
 (see the framework overview above):
 
 ```python
-async with Client(["<market-token>"], antipublic_key="<antipublic-license-key>") as client:
+async with Client.from_token("<market-token>", antipublic_key="<antipublic-license-key>") as client:
     remaining = await client.antipublic.license_available_queries()
     hit = await client.antipublic.license_check_lines(lines=("user:pass",))
 ```
