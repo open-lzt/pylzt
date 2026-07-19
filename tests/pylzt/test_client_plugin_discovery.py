@@ -70,9 +70,7 @@ def test_explicit_metrics_wins_over_discovered(monkeypatch: pytest.MonkeyPatch) 
     monkeypatch.setattr(
         "pylzt.plugins.entry_points",
         lambda group: (
-            [_FakeEntryPoint("m", _DiscoveredMetrics)]
-            if group == "pylzt.plugins.metrics"
-            else []
+            [_FakeEntryPoint("m", _DiscoveredMetrics)] if group == "pylzt.plugins.metrics" else []
         ),
     )
     explicit = _ExplicitMetrics()

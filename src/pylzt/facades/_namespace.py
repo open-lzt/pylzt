@@ -59,7 +59,9 @@ class MarketNamespace(_Namespace, GeneratedMarketFacade):
         """A ``LotFilter``, filter kwargs (``list_lots(category=...)``), or nothing for all lots."""
         if filter is None:
             unexpected = set(filters) - set(LotFilter.model_fields)
-            if unexpected:  # pydantic ignores extras silently; a typo'd filter must not pass quietly
+            if (
+                unexpected
+            ):  # pydantic ignores extras silently; a typo'd filter must not pass quietly
                 raise TypeError(f"list_lots() got unexpected filter kwargs: {sorted(unexpected)}")
             filter = LotFilter(**filters)
         elif filters:
