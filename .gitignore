@@ -35,4 +35,3 @@ dev/codegen/generated/
 !.gitignore
 !.github/
 !.githooks/
-!.plans/
