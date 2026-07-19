@@ -47,9 +47,26 @@ def test_for_testnet_reads_env(monkeypatch: pytest.MonkeyPatch) -> None:
     assert cfg.base_url == "http://10.0.0.1:9999"
 
 
+def test_empty_string_token_raises() -> None:
+    with pytest.raises(ValueError):
+        Client("")  # a bare empty string must not sneak past the empty-tokens guard
+
+
+def test_for_testnet_overrides_win() -> None:
+    cfg = ClientConfig.for_testnet(base_url="http://custom:1234")
+    assert cfg.base_url == "http://custom:1234"  # override, not a duplicate-kwarg TypeError
+    assert cfg.forum_base_url == "http://127.0.0.1:8765"  # untouched
+
+
 def test_list_lots_accepts_kwargs_or_bare() -> None:
     client = Client.from_token("tok")
     assert client.market.list_lots(category=Category.STEAM) is not None  # builds LotFilter
     assert client.market.list_lots() is not None  # unfiltered
     with pytest.raises(TypeError):
         client.market.list_lots(LotFilter(category=Category.STEAM), category=Category.STEAM)
+
+
+def test_list_lots_rejects_typo_kwarg() -> None:
+    client = Client.from_token("tok")
+    with pytest.raises(TypeError):
+        client.market.list_lots(catgory=Category.STEAM)  # typo must not silently return all lots

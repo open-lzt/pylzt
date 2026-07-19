@@ -65,4 +65,5 @@ class ClientConfig(BaseModel):
         host = os.environ.get("LZT_TESTNET_HOST", "127.0.0.1")
         port = os.environ.get("LZT_TESTNET_PORT", "8765")
         base = f"http://{host}:{port}"
-        return cls(base_url=base, forum_base_url=base, **overrides)
+        # overrides win — dict merge, not duplicate-kwarg (which would TypeError on base_url=...)
+        return cls(**{"base_url": base, "forum_base_url": base, **overrides})

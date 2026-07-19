@@ -132,6 +132,8 @@ class Client:
     ) -> None:
         if isinstance(tokens, (str, Token)):
             tokens = [tokens]  # accept a bare token, not only a list
+            if not tokens[0]:  # a bare empty-string token must not sneak past the guard below
+                raise ValueError("Client needs a non-empty token or an explicit token_pool")
         self.config = config or ClientConfig()
         self._clock = clock or RealClock()
         self._plugin_middlewares: tuple[BaseMiddleware, ...] = (
