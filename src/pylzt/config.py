@@ -8,7 +8,10 @@ from pydantic import BaseModel, ConfigDict
 
 
 class ClientConfig(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    # `extra="forbid"` because the default silently accepted anything: a misspelled option was
+    # dropped without a word and the client ran on the default, which is indistinguishable from
+    # the setting having no effect. On `request_timeout` that difference is money.
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     # These are the real hosts AS7's Market/Forum clients pin internally (verified
     # live 2026-07-03) — LolzteamTransport doesn't pass base_url through to them, so
