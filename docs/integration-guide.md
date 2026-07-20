@@ -9,7 +9,7 @@ lolz.live. Каждый сниппет ниже сверен с реальным
 ## Установка
 
 ```bash
-pip install "git+https://github.com/open-lzt/pylzt.git"
+pip install pylzt
 ```
 
 ## Быстрый старт

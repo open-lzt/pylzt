@@ -64,7 +64,7 @@ machinery a production integration actually needs, already wired together:
 ## Quickstart
 
 ```bash
-pip install "git+https://github.com/open-lzt/pylzt.git"
+pip install pylzt
 ```
 
 ```python
