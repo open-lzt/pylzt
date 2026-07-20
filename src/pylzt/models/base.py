@@ -22,7 +22,7 @@ just `cls.model_validate(raw)`) inherits `BaseModel, BoundModel` directly instea
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any, Optional, Self
 
 from pydantic import BaseModel, ConfigDict
 
@@ -72,10 +72,14 @@ class LolzObject(BaseModel, BoundModel):
         super().__pydantic_init_subclass__(**kwargs)
         widened = False
         for field in cls.model_fields.values():
-            if field.is_required():
-                field.annotation = field.annotation | None  # type: ignore[assignment]
-                field.default = None
-                widened = True
+            annotation = field.annotation
+            if annotation is None or not field.is_required():
+                continue
+            # `Optional[x]`, not `x | None`: identical at runtime, but the field's declared type is
+            # `type[Any] | None`, and `|` on a possibly-None left operand does not type-check.
+            field.annotation = Optional[annotation]  # type: ignore[assignment]  # noqa: UP045
+            field.default = None
+            widened = True
         if widened:
             cls.model_rebuild(force=True)
 
