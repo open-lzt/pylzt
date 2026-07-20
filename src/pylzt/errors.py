@@ -199,15 +199,25 @@ class Forbidden(LztError):
     __wire__ = True
     __priority__ = 60
 
-    def __init__(self, scope: str | None = None) -> None:
-        self.scope = scope
+    def __init__(self, reason: str | None = None) -> None:
+        self.reason = reason
         super().__init__(ErrorCode.FORBIDDEN)
+        if reason:
+            # `LztError.__init__` seeds args with the bare code, so an untouched Forbidden prints
+            # as "forbidden" and a log line carries nothing. Put the marketplace's own words in
+            # args too, where repr() and any generic handler will find them.
+            self.args = (ErrorCode.FORBIDDEN.value, reason)
 
     @classmethod
     def check(
         cls, status: int, headers: Mapping[str, str], body: Mapping[str, Any]
     ) -> LztError | None:
-        return cls(None) if status == 403 else None
+        if status != 403:
+            return None
+        # A bare Forbidden tells an operator nothing, and 403 is the marketplace's answer to a
+        # dozen unrelated situations — lot already sold, purchase requires confirmation, category
+        # closed to this account. The reason is in the body; carry it or the caller has to guess.
+        return cls(_messages(body) or None)
 
 
 class NotFound(LztError):

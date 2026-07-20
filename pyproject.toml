@@ -1,6 +1,6 @@
 [project]
 name = "pylzt"
-version = "0.1.1"
+version = "0.1.2"
 description = "Typed async SDK over the lzt.market / lolzteam API — token-pooled, rate-limited, proxy-aware, generated from the official OpenAPI spec."
 readme = "README.md"
 requires-python = ">=3.12"
