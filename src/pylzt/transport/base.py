@@ -17,11 +17,18 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABC, abstractmethod
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from pylzt.errors import AuthFailed, LztError, ProxyChallenge, TransportError
+from pylzt.errors import (
+    AuthFailed,
+    LztError,
+    ProxyChallenge,
+    TotalTimeoutExceeded,
+    TransportError,
+)
 from pylzt.lib.clock import Clock, RealClock
 from pylzt.lib.metrics import BaseMetrics, NullMetrics
 from pylzt.lib.retry import BaseRetryPolicy, ExponentialBackoff
@@ -46,6 +53,53 @@ class ProxySpec(BaseModel):
     password: str | None = None
 
 
+class RequestOptions(BaseModel):
+    """Transport overrides for ONE call — headers, cookies, extra query params, timeouts.
+
+    Bundled rather than spread across keyword arguments on every generated method, and that is not
+    a style choice: the three OpenAPI specs declare 629 distinct parameter names, and `cookies` is
+    already one of them (two endpoints), `extra` another (three). A flattened `cookies=` argument
+    would collide with a real endpoint's own parameter. One bundle collides with nothing.
+
+    The two timeouts answer different questions and neither implies the other:
+
+    * ``timeout`` bounds a SINGLE HTTP attempt — httpx's own meaning, applied per try.
+    * ``total_timeout`` bounds the whole chain: every retry plus every backoff sleep between them.
+      Exceeding it raises `TotalTimeoutExceeded`, which is not retryable by construction.
+
+    A call that must finish within N seconds needs ``total_timeout``; ``timeout`` alone bounds one
+    attempt and says nothing about how many there will be.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    headers: Mapping[str, str] | None = None
+    cookies: Mapping[str, str] | None = None
+    # Merged into the method's own query string; on a key clash these win, since the caller is
+    # deliberately overriding what the method computed.
+    params: Mapping[str, Any] | None = None
+    timeout: float | None = None
+    total_timeout: float | None = None
+
+    @field_validator("headers")
+    @classmethod
+    def _refuse_authorization(cls, value: Mapping[str, str] | None) -> Mapping[str, str] | None:
+        """Authorization is the token pool's to set, and only the pool knows which token was leased.
+
+        Letting a caller pass it would send the request as somebody else while the pool still
+        accounted the call — including quarantine on a 401 — against the token it leased. Refused
+        loudly instead of being silently dropped, so the caller learns the header did nothing.
+        """
+        if value is None:
+            return None
+        for key in value:
+            if key.lower() == "authorization":
+                raise ValueError(
+                    "Authorization is set from the leased token and cannot be overridden per call"
+                )
+        return value
+
+
 class Request(BaseModel):
     """A wire-agnostic request the transport turns into an actual HTTP call."""
 
@@ -61,6 +115,7 @@ class Request(BaseModel):
     files: dict[str, Media] | None = None
     bearer: str | None = None
     proxy: ProxySpec | None = None
+    options: RequestOptions | None = None
 
 
 class Response(BaseModel):
@@ -111,8 +166,23 @@ class BaseTransport(ABC):
         self._token_pool = token_pool
 
     async def send(self, req: Request) -> Response:
+        total = req.options.total_timeout if req.options else None
+        if total is None:
+            return await self._send_attempts(req)
+        # Bounds the ENTIRE loop below — attempts and the backoff sleeps between them — which is
+        # the only place a caller's "finish within N seconds" can be honoured. A per-attempt
+        # timeout cannot: it says nothing about how many attempts the retry policy will make.
+        try:
+            async with asyncio.timeout(total):
+                return await self._send_attempts(req)
+        except TimeoutError as exc:
+            raise TotalTimeoutExceeded(total_timeout=total, attempts=self._attempts_made) from exc
+
+    async def _send_attempts(self, req: Request) -> Response:
         attempt = 0
+        self._attempts_made = 0
         while True:
+            self._attempts_made = attempt + 1
             async with (
                 self._concurrency_governor.gate(req.rate_class).acquire(),
                 self._token_pool.lease(req.rate_class) as lease,

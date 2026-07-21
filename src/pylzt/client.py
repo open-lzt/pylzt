@@ -24,6 +24,7 @@ from pylzt.errors import (
     CredentialMissing,
     MethodDeclarationError,
     MixedBatchApiTargets,
+    OptionsNotBatchable,
 )
 from pylzt.facades._namespace import AntipublicNamespace, ForumNamespace, MarketNamespace
 from pylzt.lib.asyncio_utils import gather_or_raise
@@ -56,7 +57,7 @@ from pylzt.token_pool.governor import (
     NullConcurrencyGovernor,
 )
 from pylzt.token_pool.round_robin import RoundRobinTokenPool
-from pylzt.transport.base import BaseTransport, Request, Response
+from pylzt.transport.base import BaseTransport, Request, RequestOptions, Response
 from pylzt.transport.middleware import BaseMiddleware
 from pylzt.transport.session import HttpxSession
 from pylzt.types import ApiTarget, RateClass, TokenId
@@ -367,19 +368,27 @@ class Client:
             )
         )
 
-    async def execute[T](self, method: BaseMethod[T]) -> T:
+    async def execute[T](
+        self, method: BaseMethod[T], *, request_options: RequestOptions | None = None
+    ) -> T:
         """Run a method-as-class through the rail matching its `__api__` and bind the result.
 
         Inside `async with client.batching():`, coalesces with concurrent `execute()`
         calls into `/batch` requests instead of one request per call — see `batching()`.
         For a single call you want batched without opening a block, see `job()`.
+
+        `request_options` overrides transport details for THIS call only — headers, cookies, extra
+        query params, a per-attempt timeout and a whole-chain deadline. It is refused inside a
+        batching block: N jobs share one HTTP request, so there is no per-job call to attach them
+        to, and silently dropping them would tell the caller something untrue.
         """
         collector = _batching_var.get()
-        result = (
-            await collector.submit(method)
-            if collector is not None
-            else await method(self._transport_for(method))
-        )
+        if collector is not None:
+            if request_options is not None:
+                raise OptionsNotBatchable(method_name=type(method).__name__)
+            result = await collector.submit(method)
+        else:
+            result = await method(self._transport_for(method), request_options)
         return await self._after_call(method, result)
 
     async def job[T](self, method: BaseMethod[T]) -> T:

@@ -47,7 +47,7 @@ from pydantic import BaseModel, ConfigDict
 from pylzt.errors import MethodDeclarationError
 from pylzt.media import Media
 from pylzt.models.base import LolzObject
-from pylzt.transport.base import Request
+from pylzt.transport.base import Request, RequestOptions
 from pylzt.types import ApiTarget, HttpMethod, RateClass
 
 if TYPE_CHECKING:
@@ -173,5 +173,16 @@ class BaseMethod[T](BaseModel):
             return cast("T", returning.from_raw_many(body))
         return cast("T", returning.from_raw(body))
 
-    async def __call__(self, transport: BaseTransport) -> T:
-        return self.parse_response(await transport.send(self.build_request()))
+    async def __call__(self, transport: BaseTransport, options: RequestOptions | None = None) -> T:
+        """Run this method over a transport, optionally overriding transport details for the call.
+
+        The options are stamped onto the built Request rather than passed into `build_request`,
+        because `build_request` is part of the public override contract — a subclass that narrows
+        an odd wire shape defines `build_request(self)`, and widening the signature would break
+        every such override in the wild. Same reason the transport stamps the leased bearer this
+        way instead of asking each method to carry one.
+        """
+        request = self.build_request()
+        if options is not None:
+            request = request.model_copy(update={"options": options})
+        return self.parse_response(await transport.send(request))

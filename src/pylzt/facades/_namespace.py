@@ -21,6 +21,7 @@ from pylzt.methods.categories import CategoryGames, CategoryParams, ListCategori
 from pylzt.models.category import CategoryGame, FilterSchema
 from pylzt.models.lot import Lot, LotFilter
 from pylzt.pagination import Page, Paginator
+from pylzt.transport.base import RequestOptions
 from pylzt.types import Category, ItemId
 
 if TYPE_CHECKING:
@@ -38,11 +39,15 @@ class _Namespace:
     def __init__(self, client: Client) -> None:
         self._client = client
 
-    async def execute[T](self, method: BaseMethod[T]) -> T:
-        return await self._client.execute(method)
+    async def execute[T](
+        self, method: BaseMethod[T], *, request_options: RequestOptions | None = None
+    ) -> T:
+        return await self._client.execute(method, request_options=request_options)
 
-    async def __call__[T](self, method: BaseMethod[T]) -> T:
-        return await self._client.execute(method)
+    async def __call__[T](
+        self, method: BaseMethod[T], *, request_options: RequestOptions | None = None
+    ) -> T:
+        return await self._client.execute(method, request_options=request_options)
 
 
 class MarketNamespace(_Namespace, GeneratedMarketFacade):

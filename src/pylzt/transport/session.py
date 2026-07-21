@@ -112,7 +112,31 @@ class HttpxSession(BaseTransport):
 
     async def _do_wire_send(self, req: Request) -> Response:
         client = self._client_for(req.proxy)
-        headers = {"Authorization": f"Bearer {req.bearer}"} if req.bearer else None
+        opts = req.options
+        # Caller headers first, Authorization stamped on top. RequestOptions already refuses an
+        # Authorization key, so this is belt and braces: the leased token is never overridable,
+        # whichever path built the options.
+        headers: dict[str, str] | None = dict(opts.headers) if opts and opts.headers else None
+        if req.bearer:
+            headers = {**(headers or {}), "Authorization": f"Bearer {req.bearer}"}
+        cookies = dict(opts.cookies) if opts and opts.cookies else None
+        params = _flatten_query(req.query) if req.query else None
+        if opts and opts.params:
+            # A LIST of pairs, not a dict: `_flatten_query` encodes a repeated parameter as several
+            # `key[]` entries, and collapsing that to a mapping would keep only the last of them.
+            # Caller wins on a clash — passing a param the method also computes is a deliberate
+            # override — so its keys are dropped from the method's pairs before the caller's are
+            # appended, and the caller's own list values go through the same PHP-array encoding.
+            override = _flatten_query(dict(opts.params))
+            overridden = {key for key, _ in override}
+            params = [(k, v) for k, v in (params or []) if k not in overridden] + override
+        # Passed only when the caller actually set one. httpx reads an explicit `timeout=None` as
+        # "no timeout at all", so defaulting the kwarg to None would silently strip the session's
+        # own — and httpx is a lazy optional import here, so its USE_CLIENT_DEFAULT sentinel is not
+        # in scope to name either. Omitting the kwarg is what "leave the default alone" looks like.
+        extra: dict[str, Any] = {}
+        if opts and opts.timeout is not None:
+            extra["timeout"] = opts.timeout
         if req.files:
             files = {field: (m.filename, m.data, m.content_type) for field, m in req.files.items()}
             # httpx forbids json= together with files= (content-type conflict) — the
@@ -123,18 +147,22 @@ class HttpxSession(BaseTransport):
             raw = await client.request(
                 req.method,
                 req.path,
-                params=_flatten_query(req.query) if req.query else None,
+                params=params,
                 data=data,
                 files=files,
                 headers=headers,
+                cookies=cookies,
+                **extra,
             )
         else:
             raw = await client.request(
                 req.method,
                 req.path,
-                params=_flatten_query(req.query) if req.query else None,
+                params=params,
                 json=req.json_body,
                 headers=headers,
+                cookies=cookies,
+                **extra,
             )
         body, text = _decode(raw)
         err = LztError.match(raw.status_code, dict(raw.headers), body)
