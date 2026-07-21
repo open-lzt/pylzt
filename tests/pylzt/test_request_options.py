@@ -6,16 +6,16 @@ If the wire call ignores it, the whole feature is decoration, so it is proven he
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 import pytest
 
 from pylzt.errors import LztError, TotalTimeoutExceeded, TransportError
 from pylzt.lib.clock import FakeClock
+from pylzt.token_pool.base import Token, TokenId
 from pylzt.token_pool.round_robin import RoundRobinTokenPool
 from pylzt.transport.base import BaseTransport, Request, RequestOptions, Response
 from pylzt.transport.session import HttpxSession
-from pylzt.token_pool.base import Token, TokenId
 from pylzt.types import RateClass
 
 pytestmark = pytest.mark.anyio
@@ -104,7 +104,7 @@ class _CapturingSession(HttpxSession):
 
                 class _Raw:
                     status_code = 200
-                    headers: dict[str, str] = {}
+                    headers: ClassVar[dict[str, str]] = {}
                     content = b"{}"
 
                     def json(_s) -> dict[str, Any]:
