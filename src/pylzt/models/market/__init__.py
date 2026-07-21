@@ -24,7 +24,6 @@ from pylzt.models.market.custom_discounts_get_response import CustomDiscountsGet
 from pylzt.models.market.discord_item import DiscordItem
 from pylzt.models.market.discount import Discount
 from pylzt.models.market.ea_item import EAItem
-from pylzt.models.market.email_letters_response import EmailLettersResponse
 from pylzt.models.market.epic_games_item import EpicGamesItem
 from pylzt.models.market.escape_from_tarkov_item import EscapeFromTarkovItem
 from pylzt.models.market.fortnite_item import FortniteItem
@@ -39,16 +38,12 @@ from pylzt.models.market.item_battlenet_transaction import ItemBattlenetTransact
 from pylzt.models.market.item_bump_settings import ItemBumpSettings
 from pylzt.models.market.item_buyer import ItemBuyer
 from pylzt.models.market.item_category import ItemCategory
-from pylzt.models.market.item_code_data_response import ItemCodeDataResponse
 from pylzt.models.market.item_eg_game import ItemEgGame
 from pylzt.models.market.item_eg_transaction import ItemEgTransaction
 from pylzt.models.market.item_extra_price import ItemExtraPrice
 from pylzt.models.market.item_fortnite_past_season import ItemFortnitePastSeason
 from pylzt.models.market.item_fortnite_skin import ItemFortniteSkin
 from pylzt.models.market.item_guarantee import ItemGuarantee
-from pylzt.models.market.item_id_tag_added_tag_id_delete_tags_response import (
-    ItemIdTagAddedTagIdDeleteTagsResponse,
-)
 from pylzt.models.market.item_login_data import ItemLoginData
 from pylzt.models.market.item_lol_inventory import ItemLolInventory
 from pylzt.models.market.item_public_tag import ItemPublicTag
@@ -77,14 +72,17 @@ from pylzt.models.market.managing_bulk_action_response import ManagingBulkAction
 from pylzt.models.market.managing_bulk_get_item import ManagingBulkGetItem
 from pylzt.models.market.managing_bulk_get_response import ManagingBulkGetResponse
 from pylzt.models.market.managing_change_password_response import ManagingChangePasswordResponse
-from pylzt.models.market.managing_steam_inventory_value_data import (
-    ManagingSteamInventoryValueData,
-)
-from pylzt.models.market.managing_steam_inventory_value_item import (
-    ManagingSteamInventoryValueItem,
-)
+from pylzt.models.market.managing_steam_inventory_value_data import ManagingSteamInventoryValueData
+from pylzt.models.market.managing_steam_inventory_value_item import ManagingSteamInventoryValueItem
 from pylzt.models.market.managing_telegram_code_response import ManagingTelegramCodeResponse
 from pylzt.models.market.managing_temp_email_password_item import ManagingTempEmailPasswordItem
+from pylzt.models.market.market_email_letters_response import MarketEmailLettersResponse
+from pylzt.models.market.market_item_code_data_response import MarketItemCodeDataResponse
+from pylzt.models.market.market_item_id_tag_added_tag_id_delete_tags_response import (
+    MarketItemIdTagAddedTagIdDeleteTagsResponse,
+)
+from pylzt.models.market.market_query_data_app_id_response import MarketQueryDataAppIdResponse
+from pylzt.models.market.market_status_item_response import MarketStatusItemResponse
 from pylzt.models.market.market_status_message_response import MarketStatusMessageResponse
 from pylzt.models.market.minecraft_item import MinecraftItem
 from pylzt.models.market.payments_currency_response import PaymentsCurrencyResponse
@@ -104,7 +102,6 @@ from pylzt.models.market.purchasing_check_item import PurchasingCheckItem
 from pylzt.models.market.purchasing_check_item_seller import PurchasingCheckItemSeller
 from pylzt.models.market.purchasing_check_response import PurchasingCheckResponse
 from pylzt.models.market.purchasing_confirm_response import PurchasingConfirmResponse
-from pylzt.models.market.query_data_app_id_response import QueryDataAppIdResponse
 from pylzt.models.market.rendered_avatars import RenderedAvatars
 from pylzt.models.market.rendered_backgrounds import RenderedBackgrounds
 from pylzt.models.market.riot_item import RiotItem
@@ -112,7 +109,6 @@ from pylzt.models.market.roblox_item import RobloxItem
 from pylzt.models.market.social_club_item import SocialClubItem
 from pylzt.models.market.stats import Stats
 from pylzt.models.market.stats_market import StatsMarket
-from pylzt.models.market.status_item_response import StatusItemResponse
 from pylzt.models.market.steam_item import SteamItem
 from pylzt.models.market.supercell_item import SupercellItem
 from pylzt.models.market.system import System
@@ -133,6 +129,14 @@ from pylzt.models.market.user_rendered import UserRendered
 from pylzt.models.market.user_telegram_client import UserTelegramClient
 from pylzt.models.market.vpn_item import VpnItem
 from pylzt.models.market.warface_item import WarfaceItem
+
+# Backward-compatible aliases: these names shipped unprefixed before the response
+# roots were API-qualified. Deprecated — prefer the qualified name; removable in the
+# next major, once no caller imports the bare form.
+EmailLettersResponse = MarketEmailLettersResponse
+ItemCodeDataResponse = MarketItemCodeDataResponse
+QueryDataAppIdResponse = MarketQueryDataAppIdResponse
+StatusItemResponse = MarketStatusItemResponse
 
 __all__ = [
     "AuthorField",
@@ -178,7 +182,6 @@ __all__ = [
     "ItemFortnitePastSeason",
     "ItemFortniteSkin",
     "ItemGuarantee",
-    "ItemIdTagAddedTagIdDeleteTagsResponse",
     "ItemLoginData",
     "ItemLolInventory",
     "ItemPublicTag",
@@ -211,6 +214,11 @@ __all__ = [
     "ManagingSteamInventoryValueItem",
     "ManagingTelegramCodeResponse",
     "ManagingTempEmailPasswordItem",
+    "MarketEmailLettersResponse",
+    "MarketItemCodeDataResponse",
+    "MarketItemIdTagAddedTagIdDeleteTagsResponse",
+    "MarketQueryDataAppIdResponse",
+    "MarketStatusItemResponse",
     "MarketStatusMessageResponse",
     "MinecraftItem",
     "PaymentsCurrencyResponse",

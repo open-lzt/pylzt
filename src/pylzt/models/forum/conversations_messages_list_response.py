@@ -6,9 +6,7 @@ to update.
 from __future__ import annotations
 
 from pylzt.models.base import LolzObject
-from pylzt.models.forum.conversations_messages_list_message import (
-    ConversationsMessagesListMessage,
-)
+from pylzt.models.forum.conversations_messages_list_message import ConversationsMessagesListMessage
 from pylzt.models.forum.links import Links
 
 

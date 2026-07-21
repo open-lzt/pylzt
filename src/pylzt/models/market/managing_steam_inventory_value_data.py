@@ -6,9 +6,7 @@ to update.
 from __future__ import annotations
 
 from pylzt.models.base import LolzObject
-from pylzt.models.market.managing_steam_inventory_value_item import (
-    ManagingSteamInventoryValueItem,
-)
+from pylzt.models.market.managing_steam_inventory_value_item import ManagingSteamInventoryValueItem
 
 
 class ManagingSteamInventoryValueData(LolzObject):

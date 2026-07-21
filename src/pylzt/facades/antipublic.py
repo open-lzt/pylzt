@@ -8,11 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from pylzt.enums.antipublic import Format, GroupBy, Order, SearchBy
-from pylzt.methods.antipublic_account import (
-    GetDebug,
-    LicenseAvailableQueries,
-    LicenseCheckLicense,
-)
+from pylzt.methods.antipublic_account import GetDebug, LicenseAvailableQueries, LicenseCheckLicense
 from pylzt.methods.antipublic_check import LicenseCheckLines
 from pylzt.methods.antipublic_info import PublicCountLines, PublicCountLinesPlain
 from pylzt.methods.antipublic_search import LicensePlusEmailPasswords, LicenseSearch

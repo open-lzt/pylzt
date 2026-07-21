@@ -1279,14 +1279,66 @@ def _lib_model_file(
     return f"{_GEN_HEAD}\n\n" + "\n".join(imports) + f"\n\n\n{body}"
 
 
+# The response roots that shipped UNPREFIXED in the published library, per API. An explicit list,
+# not a pattern: a rule like "alias every prefixed Response" also aliases models this generator has
+# only just invented, which no caller can be importing — and for `StatusMessageResponse` that would
+# hand the same bare name to two namespaces, the very ambiguity the prefix exists to prevent. This
+# list is the compatibility surface and nothing else; it only ever shrinks, and empties at the next
+# major.
+_SHIPPED_UNPREFIXED: Final[dict[str, tuple[str, ...]]] = {
+    "market": (
+        "EmailLettersResponse",
+        "ItemCodeDataResponse",
+        "QueryDataAppIdResponse",
+        "StatusItemResponse",
+    ),
+    "forum": ("DataDataTotalLinksResponse",),
+}
+
+
+def _compat_aliases(api: str, ordered: list[ExtractedModel]) -> list[tuple[str, str]]:
+    """`(old_name, current_name)` for every response root this generator API-qualifies.
+
+    The qualification is deliberate (see the API-prefix comment in `_normalize_models`): a
+    field-derived name like `StatusItemResponse` is API-agnostic by construction, so market and
+    forum both produce it and a downstream registry keyed by bare `__name__` collides. But the
+    published library shipped the UNPREFIXED names, so regenerating renames five public types out
+    from under anyone importing them.
+
+    Emitting the old name as an alias keeps both: the registry gets globally unique class names,
+    and existing imports keep resolving. Emitted from the generator rather than hand-written into
+    the package, because `models/<api>/__init__.py` is generated — a hand-added alias there would
+    be erased by the next run, which is exactly when it is still needed.
+    """
+    cap = _pascal(api)
+    taken = {m.name for m in ordered}
+    aliases = []
+    for bare in _SHIPPED_UNPREFIXED.get(api, ()):
+        qualified = f"{cap}{bare}"
+        # Never shadow a model that genuinely owns the bare name, and never alias a name this run
+        # did not actually produce.
+        if qualified in taken and bare not in taken:
+            aliases.append((bare, qualified))
+    return aliases
+
+
 def _model_init(api: str, models: list[ExtractedModel]) -> str:
     """The `models/<api>/__init__.py` that re-exports every generated model so callers keep
     importing `from pylzt.models.<api> import X`."""
     ordered = sorted(models, key=lambda m: m.name)
+    aliases = _compat_aliases(api, ordered)
     lines = [_GEN_HEAD, ""]
     lines += [f"from pylzt.models.{api}.{_snake(m.name)} import {m.name}" for m in ordered]
+    if aliases:
+        lines += [
+            "",
+            "# Backward-compatible aliases: these names shipped unprefixed before the response",
+            "# roots were API-qualified. Deprecated — prefer the qualified name; removable in the",
+            "# next major, once no caller imports the bare form.",
+        ]
+        lines += [f"{old} = {new}" for old, new in aliases]
     lines += ["", "__all__ = ["]
-    lines += [f'    "{m.name}",' for m in ordered]
+    lines += [f'    "{name}",' for name in sorted([m.name for m in ordered] + [a for a, _ in aliases])]
     lines += ["]"]
     return "\n".join(lines) + "\n"
 

@@ -16,12 +16,8 @@ from pylzt.models.forum.content_links import ContentLinks
 from pylzt.models.forum.content_permissions import ContentPermissions
 from pylzt.models.forum.content_thread_prefixe import ContentThreadPrefixe
 from pylzt.models.forum.contest_permissions import ContestPermissions
-from pylzt.models.forum.conversations_messages_edit_message import (
-    ConversationsMessagesEditMessage,
-)
-from pylzt.models.forum.conversations_messages_list_message import (
-    ConversationsMessagesListMessage,
-)
+from pylzt.models.forum.conversations_messages_edit_message import ConversationsMessagesEditMessage
+from pylzt.models.forum.conversations_messages_list_message import ConversationsMessagesListMessage
 from pylzt.models.forum.conversations_messages_list_message_links import (
     ConversationsMessagesListMessageLinks,
 )
@@ -32,7 +28,6 @@ from pylzt.models.forum.conversations_messages_list_response import (
     ConversationsMessagesListResponse,
 )
 from pylzt.models.forum.conversations_search_response import ConversationsSearchResponse
-from pylzt.models.forum.data_data_total_links_response import DataDataTotalLinksResponse
 from pylzt.models.forum.field_choice import FieldChoice
 from pylzt.models.forum.field_field_choices import FieldFieldChoices
 from pylzt.models.forum.first_post_delete_info import FirstPostDeleteInfo
@@ -43,6 +38,7 @@ from pylzt.models.forum.form_field import FormField
 from pylzt.models.forum.forms_create_response import FormsCreateResponse
 from pylzt.models.forum.forms_list_response import FormsListResponse
 from pylzt.models.forum.forum import Forum
+from pylzt.models.forum.forum_data_data_total_links_response import ForumDataDataTotalLinksResponse
 from pylzt.models.forum.forum_forum_prefixe import ForumForumPrefixe
 from pylzt.models.forum.forum_links import ForumLinks
 from pylzt.models.forum.forum_permissions import ForumPermissions
@@ -111,6 +107,11 @@ from pylzt.models.forum.users_sa_reset_response import UsersSAResetResponse
 from pylzt.models.forum.users_secret_answer_types_data import UsersSecretAnswerTypesData
 from pylzt.models.forum.users_trophies_response import UsersTrophiesResponse
 
+# Backward-compatible aliases: these names shipped unprefixed before the response
+# roots were API-qualified. Deprecated — prefer the qualified name; removable in the
+# next major, once no caller imports the bare form.
+DataDataTotalLinksResponse = ForumDataDataTotalLinksResponse
+
 __all__ = [
     "CategoriesListResponse",
     "Category",
@@ -142,6 +143,7 @@ __all__ = [
     "FormsCreateResponse",
     "FormsListResponse",
     "Forum",
+    "ForumDataDataTotalLinksResponse",
     "ForumForumPrefixe",
     "ForumLinks",
     "ForumPermissions",
