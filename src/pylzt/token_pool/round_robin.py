@@ -41,6 +41,7 @@ class RoundRobinTokenPool(BaseTokenPool):
         metrics: BaseMetrics | None = None,
         selector: BaseTokenSelector | None = None,
         park_poll: float = 0.05,
+        quarantine_seconds: float = 300.0,
     ) -> None:
         self._tokens = list(tokens)
         if not self._tokens:
@@ -59,16 +60,31 @@ class RoundRobinTokenPool(BaseTokenPool):
         self._proxy_pool = proxy_pool or NullProxyPool()
         self._metrics = metrics or NullMetrics()
         self._lock = asyncio.Lock()
-        self._quarantined: set[TokenId] = set()
+        # token_id -> monotonic deadline. A plain set never expired, so one 401 retired the
+        # token for the lifetime of the process: a token rotated at the provider, a temporary
+        # upstream outage answering 401, or a mock restarting mid-poll all ended the same way —
+        # a poller that raises `NoUsableToken` forever and recovers only if someone restarts it.
+        self._quarantined: dict[TokenId, float] = {}
         self._park_poll = park_poll
+        self._quarantine_seconds = quarantine_seconds
 
     def quarantine(self, token_id: TokenId) -> None:
-        """Pull a token out of rotation after a `401`/repeated `403` (§5)."""
-        self._quarantined.add(token_id)
+        """Pull a token out of rotation after a `401`/repeated `403` (§5), for a while."""
+        self._quarantined[token_id] = self._clock.monotonic() + self._quarantine_seconds
         self._metrics.incr("token_quarantined", token_id=str(token_id))
 
     def restore(self, token_id: TokenId) -> None:
-        self._quarantined.discard(token_id)
+        self._quarantined.pop(token_id, None)
+
+    def _is_quarantined(self, token_id: TokenId) -> bool:
+        deadline = self._quarantined.get(token_id)
+        if deadline is None:
+            return False
+        if self._clock.monotonic() < deadline:
+            return True
+        del self._quarantined[token_id]
+        self._metrics.incr("token_quarantine_expired", token_id=str(token_id))
+        return False
 
     def report_proxy(self, proxy: Proxy, outcome: ProxyOutcome) -> None:
         self._proxy_pool.report(proxy.proxy_id, outcome)
@@ -99,9 +115,12 @@ class RoundRobinTokenPool(BaseTokenPool):
     async def _acquire_token(self, rate_class: RateClass) -> Token:
         while True:
             async with self._lock:
-                live = [t for t in self._tokens if t.token_id not in self._quarantined]
+                live = [t for t in self._tokens if not self._is_quarantined(t.token_id)]
                 if not live:
-                    raise NoUsableToken("all tokens quarantined")
+                    raise NoUsableToken(
+                        f"all {len(self._tokens)} tokens quarantined; "
+                        f"each is retried {self._quarantine_seconds:.0f}s after its 401"
+                    )
                 for token in self._selector.candidates(live):
                     if self._buckets[token.token_id].try_consume(rate_class, self._clock):
                         self._selector.on_leased(token, live)

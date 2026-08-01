@@ -118,6 +118,18 @@ async def test_pool_all_quarantined_raises() -> None:
             pass
 
 
+async def test_pool_quarantine_expires_and_token_returns() -> None:
+    clock = FakeClock()
+    pool = RoundRobinTokenPool(_tokens(1), clock=clock, quarantine_seconds=300.0)
+    pool.quarantine(TokenId("t0"))
+    with pytest.raises(NoUsableToken):
+        async with pool.lease(RateClass.GENERAL):
+            pass
+    clock.advance(301.0)
+    async with pool.lease(RateClass.GENERAL) as lease:
+        assert str(lease.token.token_id) == "t0"  # a 401 must not retire a token forever
+
+
 def test_empty_pool_rejected() -> None:
     with pytest.raises(NoUsableToken):
         RoundRobinTokenPool([])
