@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from pylzt.errors import AuthFailed, LztError, ProxyChallenge, TransportError
+from pylzt.errors import AuthFailed, LztError, NetworkError, ProxyChallenge, TransportError
 from pylzt.lib.clock import Clock, RealClock
 from pylzt.lib.metrics import BaseMetrics, NullMetrics
 from pylzt.lib.retry import BaseRetryPolicy, ExponentialBackoff
@@ -156,7 +156,7 @@ class BaseTransport(ABC):
             return
         if isinstance(exc, ProxyChallenge):
             self._token_pool.report_proxy(lease.proxy, ProxyOutcome.BANNED)
-        elif isinstance(exc, TransportError):
+        elif isinstance(exc, TransportError | NetworkError):
             self._token_pool.report_proxy(lease.proxy, ProxyOutcome.TIMEOUT)
 
     async def aclose(self) -> None:

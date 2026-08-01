@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from pylzt.errors import DependencyMissing, LztError
+from pylzt.errors import DependencyMissing, LztError, NetworkError
 from pylzt.transport.base import BaseTransport, Response
 from pylzt.transport.middleware import BaseMiddleware, MiddlewareManager
 
@@ -111,6 +111,19 @@ class HttpxSession(BaseTransport):
         return await self.request_middlewares.dispatch(req, self._do_wire_send)
 
     async def _do_wire_send(self, req: Request) -> Response:
+        # httpx is an optional extra, imported lazily here as it is in `_client_for`.
+        import httpx
+
+        try:
+            return await self._wire_send(req)
+        except httpx.TransportError as exc:
+            # A pooled keep-alive the server closed between two polls surfaces as
+            # RemoteProtocolError. Raw, it escapes `BaseTransport.send`'s `except LztError`:
+            # no retry, no proxy report, and the caller loses the whole cycle to a fault
+            # the very next request would not have hit.
+            raise NetworkError(reason=repr(exc)) from exc
+
+    async def _wire_send(self, req: Request) -> Response:
         client = self._client_for(req.proxy)
         headers = {"Authorization": f"Bearer {req.bearer}"} if req.bearer else None
         if req.files:

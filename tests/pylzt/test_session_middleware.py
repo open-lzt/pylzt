@@ -5,8 +5,9 @@ from __future__ import annotations
 import httpx
 import pytest
 
-from pylzt.errors import NotFound
+from pylzt.errors import NetworkError, NotFound
 from pylzt.lib.clock import FakeClock
+from pylzt.lib.retry import ExponentialBackoff
 from pylzt.token_pool.base import Token
 from pylzt.token_pool.round_robin import RoundRobinTokenPool
 from pylzt.transport.base import Request, Response
@@ -72,6 +73,41 @@ async def test_session_maps_status_to_typed_error() -> None:
     session = HttpxSession(client=_client(httpx.MockTransport(handle)), token_pool=_pool())
     with pytest.raises(NotFound):
         await session.send(_req("/missing"))
+    await session.aclose()
+
+
+async def test_dropped_connection_becomes_a_retryable_network_error() -> None:
+    """A keep-alive the server closed between polls arrives as `httpx.RemoteProtocolError`.
+    Raw, it flew past `BaseTransport.send`'s `except LztError` — no retry, and the caller lost
+    its whole cycle to a fault the next request would not have hit."""
+    attempts = 0
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise httpx.RemoteProtocolError("Server disconnected without sending a response.")
+        return httpx.Response(200, json={})
+
+    session = HttpxSession(client=_client(httpx.MockTransport(handle)), token_pool=_pool())
+    resp = await session.send(_req("/x"))
+    await session.aclose()
+
+    assert attempts == 2  # retried, not surfaced
+    assert resp.status == 200
+
+
+async def test_network_error_is_raised_when_every_attempt_drops() -> None:
+    def handle(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("connection refused")
+
+    session = HttpxSession(
+        client=_client(httpx.MockTransport(handle)),
+        token_pool=_pool(),
+        retry=ExponentialBackoff(base=0.0, cap=0.0, max_attempts=2),
+    )
+    with pytest.raises(NetworkError):
+        await session.send(_req("/x"))
     await session.aclose()
 
 

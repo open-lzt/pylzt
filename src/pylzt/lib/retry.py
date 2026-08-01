@@ -14,6 +14,7 @@ from pylzt.errors import (
     BadRequest,
     Forbidden,
     LztError,
+    NetworkError,
     NotFound,
     RateLimited,
     RetryableUpstream,
@@ -53,7 +54,7 @@ class ExponentialBackoff(BaseRetryPolicy):
             return None
         if isinstance(exc, RateLimited) and exc.retry_after is not None:
             return min(exc.retry_after, self._cap)
-        if not isinstance(exc, RateLimited | RetryableUpstream | TransportError):
+        if not isinstance(exc, RateLimited | RetryableUpstream | TransportError | NetworkError):
             return None
         ceiling = min(self._cap, self._base * (self._factor**attempt))
         # full jitter — spread retries so a fleet does not thunder in lockstep.

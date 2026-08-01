@@ -34,6 +34,7 @@ class ErrorCode(StrEnum):
     NOT_FOUND = "not_found"
     BAD_REQUEST = "bad_request"
     UPSTREAM_ERROR = "upstream_error"
+    NETWORK = "network"
     DEP_MISSING = "dep_missing"
     METHOD_DECLARATION = "method_declaration"
     MODEL_NOT_BOUND = "model_not_bound"
@@ -253,6 +254,21 @@ class TransportError(LztError):
         cls, status: int, headers: Mapping[str, str], body: Mapping[str, Any]
     ) -> LztError | None:
         return cls(status) if status >= 500 else None
+
+
+class NetworkError(LztError):
+    """The request never got an answer — connection dropped, refused, or timed out.
+
+    Not `__wire__`: there is no status and no body to match on. Raised by the session
+    when the HTTP client itself fails, so a dropped keep-alive is retried like any other
+    transient upstream fault instead of escaping raw and killing the caller's whole cycle.
+    """
+
+    __wire__ = False
+
+    def __init__(self, reason: str) -> None:
+        self.reason = reason
+        super().__init__(ErrorCode.NETWORK)
 
 
 class DependencyMissing(LztError):
