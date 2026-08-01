@@ -6,13 +6,25 @@ to update.
 from pylzt.models.market.author_field import AuthorField
 from pylzt.models.market.author_links import AuthorLinks
 from pylzt.models.market.author_permissions import AuthorPermissions
+from pylzt.models.market.auto_payments_create_response import AutoPaymentsCreateResponse
+from pylzt.models.market.balance import Balance
+from pylzt.models.market.balance_balance import BalanceBalance
+from pylzt.models.market.balance_custom_fields import BalanceCustomFields
+from pylzt.models.market.balance_dob import BalanceDob
+from pylzt.models.market.balance_domain_zone import BalanceDomainZone
+from pylzt.models.market.balance_rendered import BalanceRendered
+from pylzt.models.market.balance_telegram_client import BalanceTelegramClient
 from pylzt.models.market.base_item import BaseItem
 from pylzt.models.market.battle_net_item import BattleNetItem
+from pylzt.models.market.blitz_wot_top_premium_tank import BlitzWotTopPremiumTank
 from pylzt.models.market.calculator import Calculator
 from pylzt.models.market.cart_get_response import CartGetResponse
 from pylzt.models.market.category_discord_item_seller import CategoryDiscordItemSeller
+from pylzt.models.market.category_onlyfans_item import CategoryOnlyfansItem
+from pylzt.models.market.category_onlyfans_response import CategoryOnlyfansResponse
 from pylzt.models.market.category_response import CategoryResponse
 from pylzt.models.market.category_steam_list import CategorySteamList
+from pylzt.models.market.category_wot_item2 import CategoryWotItem2
 from pylzt.models.market.claim import Claim
 from pylzt.models.market.claim_author import ClaimAuthor
 from pylzt.models.market.code_data import CodeData
@@ -20,14 +32,25 @@ from pylzt.models.market.codes import Codes
 from pylzt.models.market.currency_list import CurrencyList
 from pylzt.models.market.currency_list_btc import CurrencyListBTC
 from pylzt.models.market.currency_list_rub import CurrencyListRUB
-from pylzt.models.market.custom_discounts_get_response import CustomDiscountsGetResponse
+from pylzt.models.market.custom_discounts_create_response import CustomDiscountsCreateResponse
 from pylzt.models.market.discord_item import DiscordItem
 from pylzt.models.market.discount import Discount
 from pylzt.models.market.ea_item import EAItem
 from pylzt.models.market.epic_games_item import EpicGamesItem
 from pylzt.models.market.escape_from_tarkov_item import EscapeFromTarkovItem
+from pylzt.models.market.first_post_like_user import FirstPostLikeUser
+from pylzt.models.market.first_post_links import FirstPostLinks
+from pylzt.models.market.first_post_permissions import FirstPostPermissions
 from pylzt.models.market.fortnite_item import FortniteItem
+from pylzt.models.market.forum_forum_prefixe import ForumForumPrefixe
+from pylzt.models.market.forum_links import ForumLinks
+from pylzt.models.market.forum_permissions import ForumPermissions
+from pylzt.models.market.forum_prefixe_group_prefixe import ForumPrefixeGroupPrefixe
+from pylzt.models.market.genshin_character_reliquary import GenshinCharacterReliquary
+from pylzt.models.market.genshin_character_weapon import GenshinCharacterWeapon
 from pylzt.models.market.gifts_item import GiftsItem
+from pylzt.models.market.honkai_character_equip import HonkaiCharacterEquip
+from pylzt.models.market.honkai_character_relic import HonkaiCharacterRelic
 from pylzt.models.market.hytale_item import HytaleItem
 from pylzt.models.market.instagram_item import InstagramItem
 from pylzt.models.market.invoice import Invoice
@@ -43,9 +66,14 @@ from pylzt.models.market.item_eg_transaction import ItemEgTransaction
 from pylzt.models.market.item_extra_price import ItemExtraPrice
 from pylzt.models.market.item_fortnite_past_season import ItemFortnitePastSeason
 from pylzt.models.market.item_fortnite_skin import ItemFortniteSkin
+from pylzt.models.market.item_genshin_character import ItemGenshinCharacter
 from pylzt.models.market.item_guarantee import ItemGuarantee
+from pylzt.models.market.item_honkai_character import ItemHonkaiCharacter
 from pylzt.models.market.item_login_data import ItemLoginData
 from pylzt.models.market.item_lol_inventory import ItemLolInventory
+from pylzt.models.market.item_mihoyo_linked_accounts import ItemMihoyoLinkedAccounts
+from pylzt.models.market.item_onlyfans_subscription import ItemOnlyfansSubscription
+from pylzt.models.market.item_onlyfans_transaction import ItemOnlyfansTransaction
 from pylzt.models.market.item_public_tag import ItemPublicTag
 from pylzt.models.market.item_r6_operator import ItemR6Operator
 from pylzt.models.market.item_roblox_game_donation import ItemRobloxGameDonation
@@ -60,6 +88,8 @@ from pylzt.models.market.item_telegram_group_counters import ItemTelegramGroupCo
 from pylzt.models.market.item_uplay_game import ItemUplayGame
 from pylzt.models.market.item_valorant_inventory import ItemValorantInventory
 from pylzt.models.market.item_wf_server import ItemWfServer
+from pylzt.models.market.item_wot_top_premium_tank import ItemWotTopPremiumTank
+from pylzt.models.market.item_zenless_character import ItemZenlessCharacter
 from pylzt.models.market.letter import Letter
 from pylzt.models.market.list_user_item import ListUserItem
 from pylzt.models.market.list_user_response import ListUserResponse
@@ -76,6 +106,7 @@ from pylzt.models.market.managing_steam_inventory_value_data import ManagingStea
 from pylzt.models.market.managing_steam_inventory_value_item import ManagingSteamInventoryValueItem
 from pylzt.models.market.managing_telegram_code_response import ManagingTelegramCodeResponse
 from pylzt.models.market.managing_temp_email_password_item import ManagingTempEmailPasswordItem
+from pylzt.models.market.market_discounts_total_response import MarketDiscountsTotalResponse
 from pylzt.models.market.market_email_letters_response import MarketEmailLettersResponse
 from pylzt.models.market.market_item_code_data_response import MarketItemCodeDataResponse
 from pylzt.models.market.market_item_id_tag_added_tag_id_delete_tags_response import (
@@ -83,13 +114,18 @@ from pylzt.models.market.market_item_id_tag_added_tag_id_delete_tags_response im
 )
 from pylzt.models.market.market_query_data_app_id_response import MarketQueryDataAppIdResponse
 from pylzt.models.market.market_status_item_response import MarketStatusItemResponse
+from pylzt.models.market.market_status_message_item_response import MarketStatusMessageItemResponse
 from pylzt.models.market.market_status_message_response import MarketStatusMessageResponse
+from pylzt.models.market.market_tag_id_title_is_default_for_owned_accounts_only_bc_response import (
+    MarketTagIdTitleIsDefaultForOwnedAccountsOnlyBcResponse,
+)
+from pylzt.models.market.mihoyo_item import MihoyoItem
 from pylzt.models.market.minecraft_item import MinecraftItem
+from pylzt.models.market.payments_balance_exchange_response import PaymentsBalanceExchangeResponse
 from pylzt.models.market.payments_currency_response import PaymentsCurrencyResponse
 from pylzt.models.market.payments_fee_response import PaymentsFeeResponse
 from pylzt.models.market.payments_invoice_list_response import PaymentsInvoiceListResponse
 from pylzt.models.market.profile_claims_response import ProfileClaimsResponse
-from pylzt.models.market.profile_get_user import ProfileGetUser
 from pylzt.models.market.providers_bep20 import ProvidersBEP20
 from pylzt.models.market.proxy import Proxy
 from pylzt.models.market.proxy_proxy import ProxyProxy
@@ -102,6 +138,7 @@ from pylzt.models.market.purchasing_check_item import PurchasingCheckItem
 from pylzt.models.market.purchasing_check_item_seller import PurchasingCheckItemSeller
 from pylzt.models.market.purchasing_check_response import PurchasingCheckResponse
 from pylzt.models.market.purchasing_confirm_response import PurchasingConfirmResponse
+from pylzt.models.market.relic_main_property import RelicMainProperty
 from pylzt.models.market.rendered_avatars import RenderedAvatars
 from pylzt.models.market.rendered_backgrounds import RenderedBackgrounds
 from pylzt.models.market.riot_item import RiotItem
@@ -113,42 +150,48 @@ from pylzt.models.market.steam_item import SteamItem
 from pylzt.models.market.supercell_item import SupercellItem
 from pylzt.models.market.system import System
 from pylzt.models.market.system_providers import SystemProviders
-from pylzt.models.market.tag import Tag
 from pylzt.models.market.telegram_item import TelegramItem
+from pylzt.models.market.thread import Thread
+from pylzt.models.market.thread_first_post import ThreadFirstPost
+from pylzt.models.market.thread_forum import ThreadForum
+from pylzt.models.market.thread_links import ThreadLinks
+from pylzt.models.market.thread_permissions import ThreadPermissions
 from pylzt.models.market.tik_tok_item import TikTokItem
+from pylzt.models.market.to import To
+from pylzt.models.market.to_balance import ToBalance
 from pylzt.models.market.uplay_item import UplayItem
 from pylzt.models.market.user import User
-from pylzt.models.market.user_balance import UserBalance
-from pylzt.models.market.user_custom_fields import UserCustomFields
-from pylzt.models.market.user_dob import UserDob
-from pylzt.models.market.user_domain_zone import UserDomainZone
 from pylzt.models.market.user_item_states import UserItemStates
 from pylzt.models.market.user_item_states_discount_request import UserItemStatesDiscountRequest
 from pylzt.models.market.user_item_states_stickied import UserItemStatesStickied
-from pylzt.models.market.user_rendered import UserRendered
-from pylzt.models.market.user_telegram_client import UserTelegramClient
 from pylzt.models.market.vpn_item import VpnItem
 from pylzt.models.market.warface_item import WarfaceItem
-
-# Backward-compatible aliases: these names shipped unprefixed before the response
-# roots were API-qualified. Deprecated — prefer the qualified name; removable in the
-# next major, once no caller imports the bare form.
-EmailLettersResponse = MarketEmailLettersResponse
-ItemCodeDataResponse = MarketItemCodeDataResponse
-QueryDataAppIdResponse = MarketQueryDataAppIdResponse
-StatusItemResponse = MarketStatusItemResponse
+from pylzt.models.market.weapon_property import WeaponProperty
+from pylzt.models.market.zenless_character_weapon import ZenlessCharacterWeapon
 
 __all__ = [
     "AuthorField",
     "AuthorLinks",
     "AuthorPermissions",
+    "AutoPaymentsCreateResponse",
+    "Balance",
+    "BalanceBalance",
+    "BalanceCustomFields",
+    "BalanceDob",
+    "BalanceDomainZone",
+    "BalanceRendered",
+    "BalanceTelegramClient",
     "BaseItem",
     "BattleNetItem",
+    "BlitzWotTopPremiumTank",
     "Calculator",
     "CartGetResponse",
     "CategoryDiscordItemSeller",
+    "CategoryOnlyfansItem",
+    "CategoryOnlyfansResponse",
     "CategoryResponse",
     "CategorySteamList",
+    "CategoryWotItem2",
     "Claim",
     "ClaimAuthor",
     "CodeData",
@@ -156,15 +199,25 @@ __all__ = [
     "CurrencyList",
     "CurrencyListBTC",
     "CurrencyListRUB",
-    "CustomDiscountsGetResponse",
+    "CustomDiscountsCreateResponse",
     "DiscordItem",
     "Discount",
     "EAItem",
-    "EmailLettersResponse",
     "EpicGamesItem",
     "EscapeFromTarkovItem",
+    "FirstPostLikeUser",
+    "FirstPostLinks",
+    "FirstPostPermissions",
     "FortniteItem",
+    "ForumForumPrefixe",
+    "ForumLinks",
+    "ForumPermissions",
+    "ForumPrefixeGroupPrefixe",
+    "GenshinCharacterReliquary",
+    "GenshinCharacterWeapon",
     "GiftsItem",
+    "HonkaiCharacterEquip",
+    "HonkaiCharacterRelic",
     "HytaleItem",
     "InstagramItem",
     "Invoice",
@@ -175,15 +228,19 @@ __all__ = [
     "ItemBumpSettings",
     "ItemBuyer",
     "ItemCategory",
-    "ItemCodeDataResponse",
     "ItemEgGame",
     "ItemEgTransaction",
     "ItemExtraPrice",
     "ItemFortnitePastSeason",
     "ItemFortniteSkin",
+    "ItemGenshinCharacter",
     "ItemGuarantee",
+    "ItemHonkaiCharacter",
     "ItemLoginData",
     "ItemLolInventory",
+    "ItemMihoyoLinkedAccounts",
+    "ItemOnlyfansSubscription",
+    "ItemOnlyfansTransaction",
     "ItemPublicTag",
     "ItemR6Operator",
     "ItemRobloxGameDonation",
@@ -198,6 +255,8 @@ __all__ = [
     "ItemUplayGame",
     "ItemValorantInventory",
     "ItemWfServer",
+    "ItemWotTopPremiumTank",
+    "ItemZenlessCharacter",
     "LLMItem",
     "Letter",
     "ListUserItem",
@@ -214,18 +273,22 @@ __all__ = [
     "ManagingSteamInventoryValueItem",
     "ManagingTelegramCodeResponse",
     "ManagingTempEmailPasswordItem",
+    "MarketDiscountsTotalResponse",
     "MarketEmailLettersResponse",
     "MarketItemCodeDataResponse",
     "MarketItemIdTagAddedTagIdDeleteTagsResponse",
     "MarketQueryDataAppIdResponse",
     "MarketStatusItemResponse",
+    "MarketStatusMessageItemResponse",
     "MarketStatusMessageResponse",
+    "MarketTagIdTitleIsDefaultForOwnedAccountsOnlyBcResponse",
+    "MihoyoItem",
     "MinecraftItem",
+    "PaymentsBalanceExchangeResponse",
     "PaymentsCurrencyResponse",
     "PaymentsFeeResponse",
     "PaymentsInvoiceListResponse",
     "ProfileClaimsResponse",
-    "ProfileGetUser",
     "ProvidersBEP20",
     "Proxy",
     "ProxyProxy",
@@ -238,7 +301,7 @@ __all__ = [
     "PurchasingCheckItemSeller",
     "PurchasingCheckResponse",
     "PurchasingConfirmResponse",
-    "QueryDataAppIdResponse",
+    "RelicMainProperty",
     "RenderedAvatars",
     "RenderedBackgrounds",
     "RiotItem",
@@ -246,25 +309,26 @@ __all__ = [
     "SocialClubItem",
     "Stats",
     "StatsMarket",
-    "StatusItemResponse",
     "SteamItem",
     "SupercellItem",
     "System",
     "SystemProviders",
-    "Tag",
     "TelegramItem",
+    "Thread",
+    "ThreadFirstPost",
+    "ThreadForum",
+    "ThreadLinks",
+    "ThreadPermissions",
     "TikTokItem",
+    "To",
+    "ToBalance",
     "UplayItem",
     "User",
-    "UserBalance",
-    "UserCustomFields",
-    "UserDob",
-    "UserDomainZone",
     "UserItemStates",
     "UserItemStatesDiscountRequest",
     "UserItemStatesStickied",
-    "UserRendered",
-    "UserTelegramClient",
     "VpnItem",
     "WarfaceItem",
+    "WeaponProperty",
+    "ZenlessCharacterWeapon",
 ]

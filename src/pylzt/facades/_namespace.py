@@ -21,7 +21,6 @@ from pylzt.methods.categories import CategoryGames, CategoryParams, ListCategori
 from pylzt.models.category import CategoryGame, FilterSchema
 from pylzt.models.lot import Lot, LotFilter
 from pylzt.pagination import Page, Paginator
-from pylzt.transport.base import RequestOptions
 from pylzt.types import Category, ItemId
 
 if TYPE_CHECKING:
@@ -39,39 +38,18 @@ class _Namespace:
     def __init__(self, client: Client) -> None:
         self._client = client
 
-    async def execute[T](
-        self, method: BaseMethod[T], *, request_options: RequestOptions | None = None
-    ) -> T:
-        return await self._client.execute(method, request_options=request_options)
+    async def execute[T](self, method: BaseMethod[T]) -> T:
+        return await self._client.execute(method)
 
-    async def __call__[T](
-        self, method: BaseMethod[T], *, request_options: RequestOptions | None = None
-    ) -> T:
-        return await self._client.execute(method, request_options=request_options)
+    async def __call__[T](self, method: BaseMethod[T]) -> T:
+        return await self._client.execute(method)
 
 
 class MarketNamespace(_Namespace, GeneratedMarketFacade):
     """`client.market.*` — generated market methods + the hand-written read
     convenience surface (`get_lot`, `list_lots`, `category_params`, ...)."""
 
-    def list_lots(
-        self,
-        filter: LotFilter | None = None,
-        *,
-        max_pages: int | None = None,
-        **filters: object,
-    ) -> Paginator[Lot]:
-        """A ``LotFilter``, filter kwargs (``list_lots(category=...)``), or nothing for all lots."""
-        if filter is None:
-            unexpected = set(filters) - set(LotFilter.model_fields)
-            if (
-                unexpected
-            ):  # pydantic ignores extras silently; a typo'd filter must not pass quietly
-                raise TypeError(f"list_lots() got unexpected filter kwargs: {sorted(unexpected)}")
-            filter = LotFilter(**filters)
-        elif filters:
-            raise TypeError("list_lots() takes a LotFilter or filter kwargs, not both")
-
+    def list_lots(self, filter: LotFilter, *, max_pages: int | None = None) -> Paginator[Lot]:
         async def fetch(page: int) -> Page[Lot]:
             return await self.execute(
                 ListLotsPage(

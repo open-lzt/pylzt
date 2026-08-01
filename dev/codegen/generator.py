@@ -988,10 +988,17 @@ def _collapse_generics(
             for i in sorted(templates):
                 concrete = templates[i][1][gi]
                 if concrete in taken and disc:  # a model arg → give it a meaningful name
-                    leaf = _pascal(_singularize(group[0].fields[i].name))
-                    new = _unique_model_name(f"{disc}{leaf}", taken)
-                    taken.add(new)
-                    renames[concrete] = new
+                    # One model can back several type params — WoT Blitz has four tank fields
+                    # sharing a schema. Minting a name per position renamed the same source
+                    # repeatedly, and since `renames` is a dict only the last survived: the
+                    # other three stayed in the emitted references with no model behind them.
+                    if concrete in renames:
+                        new = renames[concrete]
+                    else:
+                        leaf = _pascal(_singularize(group[0].fields[i].name))
+                        new = _unique_model_name(f"{disc}{leaf}", taken)
+                        taken.add(new)
+                        renames[concrete] = new
                     args.append(new)
                     param_args[i].append(new)
                 else:
@@ -1080,6 +1087,46 @@ def _apply_rewrites(
         for m in models
     ]
     op_root = {k: (rw(v) if v else v) for k, v in op_root.items()}
+    return op_root, models
+
+
+def _reconcile_dangling(
+    op_root: dict[str, str | None],
+    models: list[ExtractedModel],
+    renames: dict[str, str],
+    param_rewrites: dict[str, str],
+) -> tuple[dict[str, str | None], list[ExtractedModel]]:
+    """Re-point references to a renamed model that never survived to be emitted.
+
+    A type-arg model is given a meaningful name (`Item6` -> `WotItem`) in the same pass that may
+    also collapse it into a generic. When both happen it leaves `survivors` under its old name,
+    so nothing is ever written as `WotItem` while the references minted for it remain —
+    `CategoryResponse[WotItem]`, importable by nobody. Substituting the collapsed form its
+    original name maps to restores a reference that resolves.
+    """
+    # old-name -> collapsed form, reachable from whichever new name was minted for it.
+    by_new = {new: param_rewrites[old] for old, new in renames.items() if old in param_rewrites}
+    ident = re.compile(r"\b[A-Z][A-Za-z0-9]*\b")
+
+    for _ in range(6):  # a substituted form names further collapsed models, one level per pass
+        defined = {m.name for m in models}
+        referenced: set[str] = set()
+        for value in op_root.values():
+            if value:
+                referenced |= set(ident.findall(value))
+        for model in models:
+            for field in model.fields:
+                referenced |= set(ident.findall(field.annotation))
+        # A dangling name is either a stale rename source (it was renamed again later) or a
+        # name minted for a model that collapsed; try the rename chain before the collapsed form.
+        fixes = {
+            n: renames[n] if n in renames else by_new[n]
+            for n in referenced - defined
+            if n in renames or n in by_new
+        }
+        if not fixes:
+            break
+        op_root, models = _apply_rewrites(fixes, op_root, models)
     return op_root, models
 
 
@@ -1180,6 +1227,9 @@ def _collapse_models(
     models = [m for m in models if m.name not in dropped] + generics2
     models = [replace(m, name=renames2.get(m.name, m.name)) for m in models]
     op_root, models = _apply_rewrites({**renames2, **params2}, op_root, models)
+    op_root, models = _reconcile_dangling(
+        op_root, models, {**renames, **renames2}, {**param_rewrites, **params2}
+    )
     return op_root, models
 
 
@@ -1279,66 +1329,14 @@ def _lib_model_file(
     return f"{_GEN_HEAD}\n\n" + "\n".join(imports) + f"\n\n\n{body}"
 
 
-# The response roots that shipped UNPREFIXED in the published library, per API. An explicit list,
-# not a pattern: a rule like "alias every prefixed Response" also aliases models this generator has
-# only just invented, which no caller can be importing — and for `StatusMessageResponse` that would
-# hand the same bare name to two namespaces, the very ambiguity the prefix exists to prevent. This
-# list is the compatibility surface and nothing else; it only ever shrinks, and empties at the next
-# major.
-_SHIPPED_UNPREFIXED: Final[dict[str, tuple[str, ...]]] = {
-    "market": (
-        "EmailLettersResponse",
-        "ItemCodeDataResponse",
-        "QueryDataAppIdResponse",
-        "StatusItemResponse",
-    ),
-    "forum": ("DataDataTotalLinksResponse",),
-}
-
-
-def _compat_aliases(api: str, ordered: list[ExtractedModel]) -> list[tuple[str, str]]:
-    """`(old_name, current_name)` for every response root this generator API-qualifies.
-
-    The qualification is deliberate (see the API-prefix comment in `_normalize_models`): a
-    field-derived name like `StatusItemResponse` is API-agnostic by construction, so market and
-    forum both produce it and a downstream registry keyed by bare `__name__` collides. But the
-    published library shipped the UNPREFIXED names, so regenerating renames five public types out
-    from under anyone importing them.
-
-    Emitting the old name as an alias keeps both: the registry gets globally unique class names,
-    and existing imports keep resolving. Emitted from the generator rather than hand-written into
-    the package, because `models/<api>/__init__.py` is generated — a hand-added alias there would
-    be erased by the next run, which is exactly when it is still needed.
-    """
-    cap = _pascal(api)
-    taken = {m.name for m in ordered}
-    aliases = []
-    for bare in _SHIPPED_UNPREFIXED.get(api, ()):
-        qualified = f"{cap}{bare}"
-        # Never shadow a model that genuinely owns the bare name, and never alias a name this run
-        # did not actually produce.
-        if qualified in taken and bare not in taken:
-            aliases.append((bare, qualified))
-    return aliases
-
-
 def _model_init(api: str, models: list[ExtractedModel]) -> str:
     """The `models/<api>/__init__.py` that re-exports every generated model so callers keep
     importing `from pylzt.models.<api> import X`."""
     ordered = sorted(models, key=lambda m: m.name)
-    aliases = _compat_aliases(api, ordered)
     lines = [_GEN_HEAD, ""]
     lines += [f"from pylzt.models.{api}.{_snake(m.name)} import {m.name}" for m in ordered]
-    if aliases:
-        lines += [
-            "",
-            "# Backward-compatible aliases: these names shipped unprefixed before the response",
-            "# roots were API-qualified. Deprecated — prefer the qualified name; removable in the",
-            "# next major, once no caller imports the bare form.",
-        ]
-        lines += [f"{old} = {new}" for old, new in aliases]
     lines += ["", "__all__ = ["]
-    lines += [f'    "{name}",' for name in sorted([m.name for m in ordered] + [a for a, _ in aliases])]
+    lines += [f'    "{m.name}",' for m in ordered]
     lines += ["]"]
     return "\n".join(lines) + "\n"
 
@@ -1385,13 +1383,6 @@ def _facade_name(op: ExtractedOperation, taken: set[str]) -> str:
     return name
 
 
-# The one name added to every generated signature. Checked against all three specs: it collides
-# with none of the 629 distinct parameter names they declare, while `cookies` (2 endpoints) and
-# `extra` (3) are already taken — which is why the overrides travel as ONE bundle rather than as
-# separate `headers=`/`cookies=`/`timeout=` arguments.
-_OPTIONS_PARAM: Final = "request_options"
-
-
 def render_facade_method(
     op: ExtractedOperation, class_name: str, root_name: str | None, facade_name: str
 ) -> str:
@@ -1402,13 +1393,10 @@ def render_facade_method(
         sig.append(f"{p.name}: {ann}" + ("" if p.required else " = None"))
     ret = root_name or "Any"
     args = ", ".join(f"{p.name}={p.name}" for p in params)
-    # Keyword-only and last, so no existing positional call shifts.
-    sig += ["*", f"{_OPTIONS_PARAM}: RequestOptions | None = None"]
     return (
         f"    async def {facade_name}({', '.join(sig)}) -> {ret}:\n"
         f"        {_format_docstring(op, indent='        ')}\n"
-        f"        return await self({class_name}({args}), "
-        f"{_OPTIONS_PARAM}={_OPTIONS_PARAM})"
+        f"        return await self({class_name}({args}))"
     )
 
 
@@ -1426,13 +1414,10 @@ def render_sync_facade_method(
         sig.append(f"{p.name}: {ann}" + ("" if p.required else " = None"))
     ret = root_name or "Any"
     args = ", ".join(f"{p.name}={p.name}" for p in params)
-    sig += ["*", f"{_OPTIONS_PARAM}: RequestOptions | None = None"]
-    forwarded = f"{_OPTIONS_PARAM}={_OPTIONS_PARAM}"
-    call_args = f"{args}, {forwarded}" if args else forwarded
     return (
         f"    def {facade_name}({', '.join(sig)}) -> {ret}:\n"
         f"        {_format_docstring(op, indent='        ')}\n"
-        f"        return self._runner.run(self._async.{facade_name}({call_args}))"
+        f"        return self._runner.run(self._async.{facade_name}({args}))"
     )
 
 
@@ -1463,7 +1448,6 @@ def _render_sync_facade_module(
     ):
         if imp:
             imports.append(imp)
-    imports.append("from pylzt.transport.base import RequestOptions")
     imports += ["", "if TYPE_CHECKING:", "    from pylzt.sync.runner import SyncRunner"]
     cls = [
         f"class SyncGenerated{cap}Facade:",
@@ -1500,24 +1484,13 @@ def _render_facade_module(
     ):
         if imp:
             imports.append(imp)
-    # A real import, not a TYPE_CHECKING one: every generated signature carries it as a runtime
-    # default annotation, and the module is `from __future__ import annotations` so it would still
-    # type-check — but a caller doing `from pylzt.facades.market import RequestOptions` (the
-    # obvious place to look for it) must find something.
-    imports.append("from pylzt.transport.base import RequestOptions")
     imports += ["", "if TYPE_CHECKING:", "    from pylzt.methods.base import BaseMethod"]
     cls = [
         f"class Generated{cap}Facade:",
         f'    """Generated by forge — DO NOT EDIT. Async facade for the {api} API."""',
         "",
         "    if TYPE_CHECKING:",
-        # Must mirror _Namespace.__call__ exactly: this stub is the only thing a type checker sees
-        # for the delegation every generated method body performs, and the real __call__ lives on
-        # the namespace that mixes this class in.
-        "        async def __call__[T](",
-        "            self, method: BaseMethod[T], *, "
-        f"{_OPTIONS_PARAM}: RequestOptions | None = None",
-        "        ) -> T: ...",
+        "        async def __call__[T](self, method: BaseMethod[T]) -> T: ...",
         "",
         body,
     ]

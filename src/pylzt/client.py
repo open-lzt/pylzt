@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-import os
 import uuid
 from collections.abc import AsyncIterator, Sequence
 from contextvars import ContextVar
@@ -24,7 +23,6 @@ from pylzt.errors import (
     CredentialMissing,
     MethodDeclarationError,
     MixedBatchApiTargets,
-    OptionsNotBatchable,
 )
 from pylzt.facades._namespace import AntipublicNamespace, ForumNamespace, MarketNamespace
 from pylzt.lib.asyncio_utils import gather_or_raise
@@ -57,7 +55,7 @@ from pylzt.token_pool.governor import (
     NullConcurrencyGovernor,
 )
 from pylzt.token_pool.round_robin import RoundRobinTokenPool
-from pylzt.transport.base import BaseTransport, Request, RequestOptions, Response
+from pylzt.transport.base import BaseTransport, Request, Response
 from pylzt.transport.middleware import BaseMiddleware
 from pylzt.transport.session import HttpxSession
 from pylzt.types import ApiTarget, RateClass, TokenId
@@ -87,35 +85,15 @@ class Client:
 
     Composition root, not an extension point: builds one rate-limited
     `HttpxSession` per `ApiTarget` (market/forum share `token_pool`; antipublic
-    gets its own `_StaticBearerPool`, see Decisions in
-    `.plans/api-namespaces/00-overview.md`) and attaches
+    gets its own `_StaticBearerPool` — it authenticates with a separate licence
+    key, not a market token) and attaches
     `.market`/`.forum`/`.antipublic` namespaces — see `facades/_namespace.py`.
     Never inherits a generated facade base.
     """
 
-    @classmethod
-    def from_token(cls, token: str | Token, **kwargs: Any) -> Client:
-        """Build a client for a single market token: ``Client.from_token("...")``."""
-        return cls([token], **kwargs)
-
-    @classmethod
-    def from_env(cls, **kwargs: Any) -> Client:
-        """Build a client from ``LZT_TOKEN`` (+ optional ``LZT_ANTIPUBLIC_KEY``).
-
-        Endpoint targeting (e.g. the local testnet mock) stays explicit via
-        ``config=ClientConfig.for_testnet()`` — this only reads the credentials.
-        """
-        token = os.environ.get("LZT_TOKEN")
-        if not token:
-            raise ValueError("Client.from_env() needs the LZT_TOKEN environment variable")
-        antipublic_key = os.environ.get("LZT_ANTIPUBLIC_KEY")
-        if antipublic_key and "antipublic_key" not in kwargs:
-            kwargs["antipublic_key"] = antipublic_key
-        return cls([token], **kwargs)
-
     def __init__(
         self,
-        tokens: Sequence[str | Token] | str | Token | None = None,
+        tokens: Sequence[str | Token] | None = None,
         *,
         antipublic_key: str | None = None,
         transport: BaseTransport | None = None,
@@ -131,10 +109,6 @@ class Client:
         media_storage: BaseMediaStorage | None = None,
         config: ClientConfig | None = None,
     ) -> None:
-        if isinstance(tokens, (str, Token)):
-            tokens = [tokens]  # accept a bare token, not only a list
-            if not tokens[0]:  # a bare empty-string token must not sneak past the guard below
-                raise ValueError("Client needs a non-empty token or an explicit token_pool")
         self.config = config or ClientConfig()
         self._clock = clock or RealClock()
         self._plugin_middlewares: tuple[BaseMiddleware, ...] = (
@@ -368,27 +342,19 @@ class Client:
             )
         )
 
-    async def execute[T](
-        self, method: BaseMethod[T], *, request_options: RequestOptions | None = None
-    ) -> T:
+    async def execute[T](self, method: BaseMethod[T]) -> T:
         """Run a method-as-class through the rail matching its `__api__` and bind the result.
 
         Inside `async with client.batching():`, coalesces with concurrent `execute()`
         calls into `/batch` requests instead of one request per call — see `batching()`.
         For a single call you want batched without opening a block, see `job()`.
-
-        `request_options` overrides transport details for THIS call only — headers, cookies, extra
-        query params, a per-attempt timeout and a whole-chain deadline. It is refused inside a
-        batching block: N jobs share one HTTP request, so there is no per-job call to attach them
-        to, and silently dropping them would tell the caller something untrue.
         """
         collector = _batching_var.get()
-        if collector is not None:
-            if request_options is not None:
-                raise OptionsNotBatchable(method_name=type(method).__name__)
-            result = await collector.submit(method)
-        else:
-            result = await method(self._transport_for(method), request_options)
+        result = (
+            await collector.submit(method)
+            if collector is not None
+            else await method(self._transport_for(method))
+        )
         return await self._after_call(method, result)
 
     async def job[T](self, method: BaseMethod[T]) -> T:

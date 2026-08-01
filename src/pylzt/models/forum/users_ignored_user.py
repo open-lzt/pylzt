@@ -8,7 +8,7 @@ from __future__ import annotations
 from pylzt.models.base import LolzObject
 from pylzt.models.forum.user_custom_fields import UserCustomFields
 from pylzt.models.forum.user_ignored_info import UserIgnoredInfo
-from pylzt.models.forum.user_rendered import UserRendered
+from pylzt.models.forum.users_ignored_user_rendered import UsersIgnoredUserRendered
 
 
 class UsersIgnoredUser(LolzObject):
@@ -43,7 +43,7 @@ class UsersIgnoredUser(LolzObject):
     location: str
     message_count: int
     register_date: int
-    rendered: UserRendered
+    rendered: UsersIgnoredUserRendered
     short_link: str
     trophy_points: int
     user_id: int

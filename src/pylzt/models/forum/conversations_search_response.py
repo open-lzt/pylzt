@@ -6,7 +6,7 @@ to update.
 from __future__ import annotations
 
 from pylzt.models.base import LolzObject
-from pylzt.models.forum.conversations_messages_edit_message import ConversationsMessagesEditMessage
+from pylzt.models.forum.conversation import Conversation
 
 
 class ConversationsSearchResponse(LolzObject):
@@ -15,5 +15,5 @@ class ConversationsSearchResponse(LolzObject):
     Docs: https://lolzteam.readme.io/reference/conversationssearch
     """
 
-    conversations: list[ConversationsMessagesEditMessage]
+    conversations: list[Conversation]
     recipients: bool

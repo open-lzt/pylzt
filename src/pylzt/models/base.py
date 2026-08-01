@@ -22,7 +22,7 @@ just `cls.model_validate(raw)`) inherits `BaseModel, BoundModel` directly instea
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
-from typing import TYPE_CHECKING, Any, Optional, Self
+from typing import TYPE_CHECKING, Any, Self
 
 from pydantic import BaseModel, ConfigDict
 
@@ -49,39 +49,6 @@ class BoundModel:
 
 class LolzObject(BaseModel, BoundModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
-
-    @classmethod
-    def __pydantic_init_subclass__(cls, **kwargs: Any) -> None:
-        """Every response field becomes optional. Deliberate, and only on the response side.
-
-        The OpenAPI spec marks almost everything required; the live API disagrees constantly —
-        a field is absent on one item and null on the next, and which ones varies by category, by
-        endpoint and by how the row was created. Each mismatch used to cost a hand-patch, and the
-        failure mode is the worst kind: a `purchasing_fast_buy` that ALREADY MOVED MONEY raised a
-        ValidationError on ten cosmetic fields, so the caller saw a failure for a purchase that
-        succeeded.
-
-        We do not control that server, so the model must absorb its variance instead of asserting
-        it. This is Postel's law applied where it belongs — inbound only. `BaseMethod` (requests)
-        stays strict, because there a missing field IS the caller's bug and catching it before the
-        wire is the whole point of a typed SDK.
-
-        Widening the annotation rather than only defaulting matters: it accepts both shapes the API
-        actually produces — the field missing, and the field present as null.
-        """
-        super().__pydantic_init_subclass__(**kwargs)
-        widened = False
-        for field in cls.model_fields.values():
-            annotation = field.annotation
-            if annotation is None or not field.is_required():
-                continue
-            # `Optional[x]`, not `x | None`: identical at runtime, but the field's declared type is
-            # `type[Any] | None`, and `|` on a possibly-None left operand does not type-check.
-            field.annotation = Optional[annotation]  # type: ignore[assignment]  # noqa: UP045
-            field.default = None
-            widened = True
-        if widened:
-            cls.model_rebuild(force=True)
 
     @classmethod
     def from_raw(cls, raw: Mapping[str, Any]) -> Self:

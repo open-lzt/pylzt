@@ -6,6 +6,10 @@ from typing import TYPE_CHECKING
 
 from pylzt.methods.base import BaseMethod
 from pylzt.models.conversation import Conversation, Message
+from pylzt.models.envelopes import (
+    ConversationMessagesListResponse,
+    ConversationsListResponse,
+)
 from pylzt.pagination import Page
 from pylzt.types import ApiTarget, HttpMethod, RateClass
 
@@ -18,11 +22,14 @@ class ListConversations(BaseMethod[Page[Conversation]]):
 
     __http_method__ = HttpMethod.GET
     __url__ = "/conversations"
-    __query_fields__ = frozenset({"folder"})
+    __returning__ = ConversationsListResponse
+    __query_fields__ = frozenset({"folder", "page", "limit"})
     __api__ = ApiTarget.FORUM
     __rate_class__ = RateClass.FORUM
 
     folder: str | None = None
+    page: int | None = None
+    limit: int | None = None
 
     def parse_response(self, response: Response) -> Page[Conversation]:
         conversations = Conversation.from_raw_many(response.body)
@@ -36,11 +43,14 @@ class ListConversationMessages(BaseMethod[Page[Message]]):
 
     __http_method__ = HttpMethod.GET
     __url__ = "/conversations/messages"
-    __query_fields__ = frozenset({"conversation_id"})
+    __returning__ = ConversationMessagesListResponse
+    __query_fields__ = frozenset({"conversation_id", "page", "limit"})
     __api__ = ApiTarget.FORUM
     __rate_class__ = RateClass.FORUM
 
     conversation_id: int
+    page: int | None = None
+    limit: int | None = None
 
     def parse_response(self, response: Response) -> Page[Message]:
         messages = Message.from_raw_many(response.body)

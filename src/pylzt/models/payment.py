@@ -89,8 +89,16 @@ class PaymentOperation(BaseModel):
 
     @classmethod
     def from_raw_many(cls, envelope: Mapping[str, Any]) -> list[PaymentOperation]:
-        """Fan `from_raw` out over the `/user/payments` envelope's `operations`."""
-        items = envelope.get("operations", [])
+        """Fan `from_raw` out over the `/user/payments` envelope.
+
+        The documented key is `payments`
+        (https://lzt-market.readme.io/reference/paymentshistory lists the response as
+        `payments, perPage, page, …`). This read `operations` only, so against the real API it
+        returned an empty list every time — the feed looked healthy and produced nothing.
+        `operations` is still accepted second: it costs one dict lookup, and if some deployment
+        really does emit it, silently returning nothing is the worse failure.
+        """
+        items = envelope.get("payments", envelope.get("operations", []))
         if isinstance(items, dict):
             raws: list[Any] = list(items.values())
         elif isinstance(items, list):

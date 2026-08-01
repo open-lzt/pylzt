@@ -24,15 +24,15 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/open-lzt/pylzt"
-Repository = "https://github.com/open-lzt/pylzt"
+Homepage = "https://github.com/zlexdev/pylzt"
+Repository = "https://github.com/zlexdev/pylzt"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/pylzt"]
+packages = ["src/pylzt", "src/lztforge"]
 
 [tool.ruff]
 src = ["src", "tests"]
@@ -47,6 +47,7 @@ ignore = ["B008", "B024", "B027"]
 
 [tool.ruff.lint.per-file-ignores]
 # Compat shim: .pyi stubs re-export pylzt via star import.
+"src/lztforge/**" = ["F403", "F405"]
 "tests/**" = ["B", "SIM"]
 # Generated code sits flat beside hand-written modules (told apart by the auto-gen header
 # marker + the `{api}_` / `{api}` naming). Long docstrings/signatures (E501) and single-char

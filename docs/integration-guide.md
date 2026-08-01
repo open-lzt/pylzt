@@ -1,53 +1,50 @@
-<p align="right"><a href="integration-guide.en.md">English</a> · <b>Русский</b></p>
+# Integration guide
 
-# Руководство по интеграции
+Full usage walkthrough for `pylzt` — a typed async SDK over the lzt.market /
+lolz.live API. Every snippet below is checked against the actual signatures in
+`src/pylzt/`; if a signature changes, update this file in the same PR.
 
-Полный обзор использования `pylzt` — типизированного async-SDK над API lzt.market /
-lolz.live. Каждый сниппет ниже сверен с реальными сигнатурами в `src/pylzt/`; если
-сигнатура меняется — обновляйте этот файл в том же PR.
-
-## Установка
+## Install
 
 ```bash
-pip install pylzt
+pip install "git+https://github.com/zlexdev/pylzt.git"
 ```
 
-## Быстрый старт
+## Quickstart
 
-`Client` — асинхронный контекстный менеджер: `aclose()` запускается при выходе и
-освобождает нижележащие HTTP-сессии.
+`Client` is an async context manager — `aclose()` runs on exit and releases the
+underlying HTTP sessions.
 
 ```python
 import asyncio
 
 from pylzt import Client
+from pylzt.models.lot import LotFilter
 from pylzt.types import Category
 
 
 async def main() -> None:
-    async with Client.from_token("<market-token>") as client:
+    async with Client(["<market-token>"]) as client:
         lot = await client.market.get_lot(item_id=42)
         print(lot.item_id, lot.price, lot.title)
 
-        async for lot in client.market.list_lots(category=Category.STEAM):
+        async for lot in client.market.list_lots(LotFilter(category=Category.STEAM)):
             print(lot.item_id, lot.price)
 
 
 asyncio.run(main())
 ```
 
-`Client(tokens=...)` — единственный обязательный аргумент; `tokens` — список
-(пул) или одна строка. `Client.from_token(token)` и `Client.from_env()`
-(читает `LZT_TOKEN` + опционально `LZT_ANTIPUBLIC_KEY`) — сахар для одного
-токена. Всё остальное (`transport`, `token_pool`, `proxy_source`, `retry`,
-`metrics`, `clock`, кэши, `config`) — рабочий дефолт, подставляемый в тестах
-или под другую политику: [Внедрение зависимостей](#внедрение-зависимостей).
+`Client(tokens=...)` is the only required constructor argument; everything else
+(`transport`, `token_pool`, `proxy_source`, `retry`, `metrics`, `clock`, caches,
+`config`) has a working default and is there to substitute in a fake for tests
+or to swap in a different policy — see [Dependency injection](#dependency-injection).
 
-## Чтение лотов
+## Reading lots
 
-`client.market.get_lot` получает один лот по id; `client.market.get_lots_batch`
-получает много лотов через серверный эндпоинт `/batch` (автоматически чанкуется
-по серверному лимиту на job — вызывающему коду не нужно думать о размере батча):
+`client.market.get_lot` fetches one lot by id; `client.market.get_lots_batch`
+fetches many through the server's `/batch` endpoint (chunked at the server's
+job cap automatically — the caller doesn't need to think about batch size):
 
 ```python
 from pylzt.types import ItemId
@@ -55,14 +52,14 @@ from pylzt.types import ItemId
 lot = await client.market.get_lot(item_id=ItemId(123456))
 
 lots = await client.market.get_lots_batch([ItemId(1), ItemId(2), ItemId(3)])
-# отсутствующие id тихо пропускаются; порядок ввода сохраняется
+# absent ids are silently skipped; input order is preserved
 ```
 
-### Пагинация
+### Pagination
 
-`client.market.list_lots(filter, *, max_pages=None)` возвращает `Paginator[Lot]` —
-ничего не запрашивается, пока вы его не итерируете. `max_pages=None` означает
-«листать, пока сервер не сообщит, что результатов больше нет».
+`client.market.list_lots(filter, *, max_pages=None)` returns a `Paginator[Lot]` —
+nothing is fetched until you iterate it. `max_pages=None` means "keep paging
+until the server reports no more results."
 
 ```python
 from decimal import Decimal
@@ -72,39 +69,42 @@ from pylzt.types import Category, OrderBy
 
 filt = LotFilter(category=Category.STEAM, pmax=Decimal("500"), order_by=OrderBy.PRICE_ASC)
 
-# потоково, элемент за элементом, через страницы
+# stream item-by-item across pages
 async for lot in client.market.list_lots(filt, max_pages=5):
     ...
 
-# или сразу вытянуть всё в список (опционально с лимитом)
+# or pull everything into a list (optionally capped)
 all_lots = await client.market.list_lots(filt).collect(limit=200)
 
-# или только первая страница, для быстрого взгляда
+# or just the first page, for a quick look
 first = await client.market.list_lots(filt).first_page()
 ```
 
-### Категории
+### Categories
 
 ```python
 categories = await client.market.list_categories()
-schema = await client.market.category_params(Category.STEAM)  # кэшируется на `category_params_ttl`
+schema = await client.market.category_params(Category.STEAM)  # cached for `category_params_ttl`
 games = await client.market.category_games(Category.STEAM)
 ```
 
-## Сгенерированный фасад (~200 эндпоинтов)
+## The generated facade (~200 endpoints)
 
-`client.market`/`client.forum`/`client.antipublic` — доменные namespace'ы: каждый
-эндпоинт официальной OpenAPI-спеки — реальный `async def`, например
-`client.forum.forums_list()`, `client.forum.threads_get(thread_id)`,
-`client.antipublic.license_check_license()`. Генерируются
-`python -m dev.codegen build` ([`docs/codegen-runbook.md`](codegen-runbook.md)) —
-файл с авто-заголовком руками не трогать. Часть моделей несёт в докстринге
-заметку о живой верификации там, где спека расходится с реальным ответом —
-остальное сверено с продовым трафиком.
+`client.market`/`client.forum`/`client.antipublic` are domain namespaces —
+every endpoint in the official OpenAPI spec is a real `async def` on the
+matching namespace, e.g. `client.forum.forums_list()`,
+`client.forum.threads_get(thread_id)`, `client.forum.categories_get(...)`,
+`client.antipublic.license_check_license()`. These are generated by
+`python -m dev.codegen build` (see
+[`docs/codegen-runbook.md`](codegen-runbook.md)) — don't hand-edit a file with
+the auto-gen header. A handful of models still carry a live-verification note
+in their docstring where the spec's declared shape doesn't match a real
+response (see `docs/codegen-runbook.md`) — everything else has been checked
+against production traffic.
 
-Для вызова, который не покрывает сгенерированный фасад, спускайтесь напрямую на
-слой method-as-class через `execute` (остаётся на `Client`, а не на namespace —
-это сквозная точка входа, к которой делегирует каждый namespace):
+For a call the generated facade doesn't cover, drop to the method-as-class
+layer directly through `execute` (stays on `Client`, not a namespace — it's
+the cross-cutting entry point every namespace itself delegates to):
 
 ```python
 from pylzt.methods.catalog import GetLot
@@ -113,13 +113,13 @@ from pylzt.types import ItemId
 lot = await client.execute(GetLot(item_id=ItemId(42)))
 ```
 
-### Выполнение нескольких методов как одного запроса
+### Running several methods as one request
 
-Три точки входа, все прогоняются через одну и ту же механику `/batch` (чанкуется
-по серверному лимиту на job, группируется по market/forum, так как `/batch`
-специфичен для хоста) — выбирайте по тому, как вызовы возникают в вашем коде:
+Three entry points, all funneling through the same `/batch` mechanics
+(chunked at the server's job cap, grouped by market vs forum since `/batch`
+is host-specific) — pick by how the calls arise in your code:
 
-**`execute_batch`** — список уже собран заранее:
+**`execute_batch`** — you already have the full list up front:
 
 ```python
 from pylzt.methods.catalog import GetLot
@@ -132,10 +132,9 @@ results = await client.execute_batch([
 ])
 ```
 
-**`batching()`** — вызовы разбросаны по функции/циклу; оборачиваем регион вместо
-того, чтобы сначала собирать список. Каждый `execute()` внутри блока
-автоматически схлопывается (окно задаётся `batch_linger`, флаш при выходе
-из блока):
+**`batching()`** — calls are scattered across a function/loop; wrap the region
+instead of collecting a list first. Every `execute()` inside the block
+auto-coalesces (windowed by `batch_linger`, flushed on block exit):
 
 ```python
 async with client.batching():
@@ -145,39 +144,38 @@ async with client.batching():
     )
 ```
 
-**`job()`** — нечего оборачивать (вызовы разбросаны по коду, который вы не
-контролируете). Схлопывается с любым конкурентным `job()` того же клиента
-через общий, лениво создаваемый, живущий весь клиент коллектор — `async with`
-не нужен:
+**`job()`** — no block to wrap (e.g. the calls originate in unrelated call
+sites you don't control). `job()` coalesces with every other concurrent
+`job()` call made through the same client via one shared, lazily-created,
+client-lifetime collector — no `async with` needed:
 
 ```python
 lot = await client.job(GetLot(item_id=ItemId(1)))
 ```
 
-Вызов `job()`, сделанный изнутри активного блока `batching()`, использует
-коллектор этого блока вместо своего собственного — эти два механизма
-компонуются, а не удваивают батчинг.
+A `job()` call made from inside an active `batching()` block shares that
+block's collector instead of its own — the two compose rather than double-batch.
 
-## AntiPublic (API проверки утечек)
+## AntiPublic (leak-checking API)
 
-Отдельный лицензионный ключ, не токен market/forum — передавайте его как
-`antipublic_key=`, он никогда не попадает в ротацию токенов market/forum:
+A separate license key, not a market/forum token — pass it as `antipublic_key=`,
+it never enters the market/forum token rotation:
 
 ```python
-async with Client.from_token("<market-token>", antipublic_key="<antipublic-license-key>") as client:
+async with Client(["<market-token>"], antipublic_key="<antipublic-license-key>") as client:
     remaining = await client.antipublic.license_available_queries()
     hit = await client.antipublic.license_check_lines(lines=("user:pass",))
 ```
 
-Вызов любого метода `client.antipublic.*` без `antipublic_key=` бросает
-`CredentialMissing("antipublic_key")` — громкий отказ вместо тихого no-op.
-`config.antipublic_per_min` (по умолчанию 60) и `config.antipublic_base_url`
-управляют его собственным рейт-лимитом и хостом, независимо от market/forum.
+Calling any `client.antipublic.*` method without `antipublic_key=` raises
+`CredentialMissing("antipublic_key")` — fail loud rather than a silent no-op.
+`config.antipublic_per_min` (default 60) and `config.antipublic_base_url`
+control its own rate limit and host, independent of market/forum.
 
-## Обработка ошибок
+## Error handling
 
-Каждая ошибка, которую бросает SDK, — подкласс `LztError`: ловите конкретный
-тип, из которого можете восстановиться, остальное пусть летит дальше:
+Every failure the SDK raises is an `LztError` subclass — catch the specific
+type you can recover from, and let the rest propagate:
 
 ```python
 from pylzt import AuthFailed, NotFound, RateLimited, TransportError
@@ -185,45 +183,45 @@ from pylzt import AuthFailed, NotFound, RateLimited, TransportError
 try:
     lot = await client.market.get_lot(item_id=ItemId(999_999_999))
 except NotFound:
-    ...  # лот не существует или не виден этому токену
+    ...  # lot doesn't exist or isn't visible to this token
 except RateLimited as exc:
-    ...  # exc несёт retry_after — пул токенов уже сам делает бэкофф
+    ...  # exc carries retry_after — the token pool already backs off internally
 except AuthFailed:
-    ...  # токен мёртв/отозван — выведите его из ротации, см. reconfigure() ниже
+    ...  # token is dead/revoked — pull it out of rotation, see reconfigure() below
 except TransportError:
-    ...  # 5xx апстрима после исчерпания повторов
+    ...  # upstream 5xx after retries were exhausted
 ```
 
-| Исключение | Когда бросается |
+| Exception | Raised when |
 |---|---|
-| `AuthFailed` | токен отклонён (401) |
-| `Forbidden` | у токена нет scope/права на этот эндпоинт (403) |
-| `NotFound` | ресурс не существует или не виден этому токену (404) |
-| `BadRequest` | некорректный запрос (400) |
-| `RateLimited` | 429 — несёт `retry_after`; пул токенов уже сам повторяет запрос внутри, наружу это всплывает только когда повторы исчерпаны |
-| `CaptchaRequired` / `ProxyChallenge` | анти-бот заслон апстрима; нужно ручное вмешательство или другой egress-IP |
-| `TransportError` | 5xx после того, как политика повторов сдалась |
-| `RetryableUpstream` | временный сбой апстрима, который политика повторов уже обрабатывает — видно только если вы отключили retry |
-| `ModelNotBound` | вызвана привязанная к клиенту операция (например, `lot.refresh()`) на модели, которая была построена/распарсена отдельно и никогда не возвращалась через `Client.execute` |
-| `MethodDeclarationError` | у подкласса `BaseMethod` отсутствует `__url__`/`__returning__` — бросается на этапе определения класса, не в рантайме |
+| `AuthFailed` | token rejected (401) |
+| `Forbidden` | token lacks the scope/permission for this endpoint (403) |
+| `NotFound` | resource doesn't exist or isn't visible to this token (404) |
+| `BadRequest` | malformed request (400) |
+| `RateLimited` | 429 — carries `retry_after`; the token pool already retries internally, this only surfaces if retries were exhausted |
+| `CaptchaRequired` / `ProxyChallenge` | upstream anti-bot gate; needs manual intervention or a different egress IP |
+| `TransportError` | 5xx after the retry policy gave up |
+| `RetryableUpstream` | a transient upstream fault the retry policy is already handling — only visible if you disabled retry |
+| `ModelNotBound` | called a client-bound op (e.g. `lot.refresh()`) on a model that was built/parsed standalone, never returned through `Client.execute` |
+| `MethodDeclarationError` | a `BaseMethod` subclass is missing `__url__`/`__returning__` — raised at class-definition time, not at runtime |
 
-## Внедрение зависимостей
+## Dependency injection
 
-Каждый аргумент конструктора `Client` — интерфейс `Base*` с реализацией по
-умолчанию — подставляйте свою для тестов или другого бэкенда без изменения
-внутренностей SDK.
+Every constructor argument on `Client` is a `Base*` interface with a default
+implementation — substitute your own for tests or a different backend without
+touching SDK internals.
 
-### Несколько токенов (масштабирование рейт-лимита)
+### Multiple tokens (rate-limit scaling)
 
-У каждого токена свой бакет на `RateClass` (`GENERAL` 120/мин, `SEARCH` 20/мин,
-`FORUM` 300/мин — официально опубликованные лимиты). Передача N токенов даёт
-N-кратную пропускную способность, round-robin:
+Each token gets its own per-`RateClass` bucket (`GENERAL` 120/min, `SEARCH`
+20/min, `FORUM` 300/min — official published ceilings). Passing N tokens gives
+you N× the throughput, round-robined:
 
 ```python
 client = Client(["token-a", "token-b", "token-c"])
 ```
 
-### Прокси
+### Proxies
 
 ```python
 from pylzt.proxy_pool.source import Proxy, ProxyId, ProxyScheme, StaticProxySource
@@ -231,64 +229,66 @@ from pylzt.proxy_pool.source import Proxy, ProxyId, ProxyScheme, StaticProxySour
 proxies = StaticProxySource([
     Proxy(proxy_id=ProxyId("p1"), scheme=ProxyScheme.SOCKS5, host="1.2.3.4", port=1080),
 ])
-client = Client.from_token("token-a", proxy_source=proxies)
+client = Client(["token-a"], proxy_source=proxies)
 ```
 
-Прокси sticky per-token (один прокси остаётся привязан к токену, пока не
-сработает его circuit breaker), а не round-robin на каждый запрос.
+Proxies are sticky per token (one proxy stays bound to a token until its
+circuit breaker trips), not round-robined per request.
 
-### Замена пула токенов/прокси на лету — без рестарта
+### Swapping the token/proxy pool at runtime — no restart
 
-`reconfigure()` горячо подменяет живой пул токенов; уже выданные leases
-завершаются со старым пулом, следующий запрос подхватывает новый:
+`reconfigure()` hot-swaps the live token pool; in-flight leases finish against
+the old pool, the next request picks up the new one:
 
 ```python
 client.reconfigure(token_pool=new_pool)
 ```
 
-Используйте, когда токены должны ротироваться без остановки процесса
-(например, перечитывание из secrets store) — цикл, создающий свежий
-`RoundRobinTokenPool` и вызывающий `reconfigure()` с интервалом, обычно
-достаточен; более тяжёлая абстракция нужна только под конкретное требование,
-которое `reconfigure()` не покрывает.
+This is the primitive to reach for if tokens need to rotate while the process
+keeps running (e.g. re-reading from a secrets store) — build a small loop that
+constructs a fresh `RoundRobinTokenPool` and calls `reconfigure()` on an
+interval; there's no need for a heavier abstraction unless you have a concrete
+requirement `reconfigure()` doesn't cover.
 
-### Фейки для тестов
+### Fakes for tests
 
 `Clock`/`FakeClock`, `BaseMetrics`/`NullMetrics`, `BaseCache`/`MemoryCache`,
-`BaseTransport` — все подменяемы одинаково — рабочие примеры фейков см. в
-`tests/pylzt/test_client_request.py` и `tests/pylzt/test_client_loop.py`.
+`BaseTransport` are all swappable the same way — see
+`tests/pylzt/test_client_request.py` and `tests/pylzt/test_client_loop.py`
+for working fakes.
 
-## Загрузка медиа
+## Uploading media
 
-Эндпоинты с реальным файловым полем (сейчас это 4 метода загрузки/кропа
-аватара/фона) принимают экземпляр `Media` вместо сырого пути или байтов:
+Endpoints with a real file field (currently the 4 avatar/background
+upload/crop methods) take a `Media` instance instead of a raw path or bytes:
 
 ```python
 from pylzt import Media
 
-avatar = Media.from_path("avatar.png")               # читает байты + определяет имя файла
-# или: Media(data=raw_bytes, filename="avatar.png", content_type="image/png")
+avatar = Media.from_path("avatar.png")               # reads bytes + infers filename
+# or: Media(data=raw_bytes, filename="avatar.png", content_type="image/png")
 
 await client.forum.users_avatar_upload(user_id="me", avatar=avatar)
 ```
 
-`Media.sha256` — хэш содержимого, удобен для дедупа/аудита на стороне
-вызывающего — сама загрузка не дедуплицируется (контракт идемпотентности API
-для повторной загрузки неизвестен, поэтому каждый вызов всё равно идёт в сеть).
+`Media.sha256` is a content hash, handy for dedup/audit on the caller's side —
+uploading is not itself dedup'd (the API's idempotency contract for a repeat
+upload is unknown, so every call still hits the network).
 
-`media_storage=` кэширует загруженные байты после успешного вызова (по
-умолчанию `NullMediaStorage` — no-op, пока не подключено явно).
-`FileMediaStorage` — готовая реализация на диске: файл сырых байтов на
-sha256-ключ плюс `.json`-сайдкар для `filename`/`content_type`; блокирующий
-I/O идёт через `asyncio.to_thread`, чтобы не подвешивать event loop:
+Pass `media_storage=` to `Client(...)` to cache uploaded bytes after a
+successful call (default `NullMediaStorage`, a no-op — nothing is cached
+unless you opt in). `FileMediaStorage` is a ready-made local-disk
+implementation — one raw-bytes file per sha256 key plus a `.json` sidecar for
+`filename`/`content_type` (bytes alone can't round-trip those), blocking I/O
+run via `asyncio.to_thread` so it never stalls the event loop:
 
 ```python
 from pylzt import FileMediaStorage
 
-client = Client.from_token("token-a", media_storage=FileMediaStorage("./media-cache"))
+client = Client(["token-a"], media_storage=FileMediaStorage("./media-cache"))
 ```
 
-Реализуйте `BaseMediaStorage` сами для S3/удалённого хранилища:
+Implement `BaseMediaStorage` yourself for S3/remote-hosting instead:
 
 ```python
 from pylzt import BaseMediaStorage, Media
@@ -298,12 +298,12 @@ class S3MediaStorage(BaseMediaStorage):
     async def save(self, key: str, media: Media) -> None: ...
 ```
 
-`save()`, который бросает исключение, никогда не роняет саму загрузку — это
-best-effort кэш, а не часть пути успеха/неудачи запроса.
+A `save()` that raises never fails the upload itself — it's a best-effort
+cache, not part of the request's success/failure path.
 
-## Конфигурация
+## Configuration
 
-`ClientConfig` (все поля опциональны, показаны со значениями по умолчанию):
+`ClientConfig` (all fields optional, shown with defaults):
 
 ```python
 from pylzt import ClientConfig
@@ -321,47 +321,50 @@ config = ClientConfig(
     batch_size=50,
     batch_linger=0.05,
     category_params_ttl=3600.0,
-    enable_server_rate_sync=True,      # доверять серверным заголовкам рейт-лимита больше, чем локальному учёту
-    enable_plugin_discovery=True,      # авто-загрузка entry-point middleware/metrics-бэкендов, см. ниже
-    enable_adaptive_concurrency=False, # опциональный AIMD-governor конкурентности, см. ниже
+    enable_server_rate_sync=True,      # trust the server's own rate-limit headers over local accounting
+    enable_plugin_discovery=True,      # auto-load entry-point middlewares/metrics backends, see below
+    enable_adaptive_concurrency=False, # opt-in AIMD concurrency governor, see below
 )
-client = Client.from_token("token-a", config=config)
+client = Client(["token-a"], config=config)
 ```
 
-### Адаптивная конкурентность (AIMD-governor)
+### Adaptive concurrency (AIMD governor)
 
-`enable_adaptive_concurrency=True` подменяет no-op-политику на AIMD-governor
-(additive-increase/multiplicative-decrease, принцип TCP congestion control):
-расширяет лимит одновременных запросов на `RateClass`, пока сервер сообщает о
-запасе, и режет его при первом сигнале рейт-лимита — полезно, когда
-безопасный потолок конкурентности неизвестен заранее и не хочется подбирать
-`general_per_min`/`search_per_min` вручную:
+`enable_adaptive_concurrency=True` swaps the default no-op concurrency policy
+for an AIMD governor (additive-increase/multiplicative-decrease, the same
+family TCP congestion control uses): it widens the in-flight request limit per
+`RateClass` while the server reports headroom, and cuts it sharply the moment
+a rate-limit signal comes back — useful when you don't know the safe
+concurrency ceiling up front and want it to find one instead of hand-tuning
+`general_per_min`/`search_per_min` against trial and error:
 
 ```python
-client = Client.from_token("token-a", config=ClientConfig(enable_adaptive_concurrency=True))
+client = Client(["token-a"], config=ClientConfig(enable_adaptive_concurrency=True))
 ```
 
-### Обнаружение плагинов (entry points)
+### Plugin discovery (entry points)
 
-`enable_plugin_discovery=True` (по умолчанию) авто-подгружает любую
-`BaseMiddleware`/`BaseMetrics`, которую сторонний пакет регистрирует под
-entry-point группами `pylzt.plugins.middleware` / `pylzt.plugins.metrics` —
-без изменений кода приложения. `False` — полностью явное монтирование (только
-то, что передано в `Client(...)`), удобно для отладки неожиданного
-middleware в трейсе.
+`enable_plugin_discovery=True` (the default) auto-loads any `BaseMiddleware`/
+`BaseMetrics` implementation a third-party package registers under the
+`pylzt.plugins.middleware` / `pylzt.plugins.metrics` entry-point groups —
+no code change needed in the app importing `pylzt` once such a package is
+installed. Set it to `False` for a fully explicit wiring (only what's passed
+to `Client(...)` directly runs), or to debug an unexpected middleware showing
+up in a request trace.
 
-## Сквозной (end-to-end) референс
+## End-to-end reference
 
-`tests/pylzt/e2e/test_live_read.py` прогоняет read-only запросы против
-реального API (опционально: `LZT_E2E_TOKEN`, `pytest -m e2e`) — самый
-актуальный пример цепочки вызовов (`list_categories` → `category_params` →
-`list_lots` → `get_lot`; `forums_list` → `forums_get` → `threads_list` →
-`threads_get`). Перед тем как копировать паттерн отсюда в прод — сверьтесь с
-ним: он бьётся о живой API на каждом прогоне с токеном, это руководство — нет.
+`tests/pylzt/e2e/test_live_read.py` runs read-only requests against the real
+API (opt-in, `LZT_E2E_TOKEN` env var, `pytest -m e2e`) and is the most
+up-to-date working example of chaining calls (`list_categories` →
+`category_params` → `list_lots` → `get_lot`; `forums_list` → `forums_get` →
+`threads_list` → `threads_get`). Read it before copying a pattern from this
+guide into production code — it's checked against the live API on every run
+that sets the token, this guide isn't.
 
-## См. также
+## See also
 
-- [`docs/codegen-runbook.md`](codegen-runbook.md) — как строится сгенерированный
-  фасад, что уже проверено вживую, и механизм ручного патча для расхождения
-  спеки и реальности.
-- `README.md` — обзор возможностей на один абзац + справочник команд кодогена.
+- [`docs/codegen-runbook.md`](codegen-runbook.md) — how the generated facade
+  is built, what's been live-verified, and the hand-patch mechanism for a
+  spec/reality mismatch.
+- `README.md` — one-paragraph feature overview + codegen command reference.

@@ -9,11 +9,17 @@ from typing import TYPE_CHECKING, Any
 
 from pylzt.enums.market import (
     Action,
+    AlRankMax,
+    AlRankMin,
     Badge,
     BirthdayAfterPeriod,
     BirthdayPeriod,
     ClaimState,
+    ClanRole,
     Condition,
+    Cs2MapRank,
+    Cs2MapRmax,
+    Cs2MapRmin,
     D2LastMatchDateLaterPeriod,
     D2LastMatchDatePeriod,
     Edition,
@@ -22,23 +28,37 @@ from pylzt.enums.market import (
     FieldsInclude,
     Format,
     HoldLengthOption,
+    InvGame,
     LastLoginHypixelPeriod,
+    LastRaidPeriod,
+    LastRmax,
+    LastRmin,
     LastTransDatePeriod,
     LastTransDatePeriodLater,
     LolRank,
+    MihoyoGame,
     NitroPeriod,
     NitroType,
+    NotClanRole,
     NotEmailProvider,
     NotOrigin,
+    NotRegion,
     NotService,
     NotStw,
     Origin,
     Platform,
     PremiumExpirationPeriod,
+    PreviousRmax,
+    PreviousRmin,
+    R6RankMax,
+    R6RankMin,
     RankHypixel,
     RegAfterPeriod,
     Region,
     RegPeriod,
+    RiotGame,
+    Rmax,
+    Rmin,
     Sc,
     Service,
     Show,
@@ -47,9 +67,12 @@ from pylzt.enums.market import (
     Stw,
     Subscription,
     SubscriptionPeriod,
+    SupercellGame,
     Type,
     ValorantRankType,
     Version,
+    WingmanRmax,
+    WingmanRmin,
 )
 from pylzt.methods.market_account_managing import ManagingBulkAction
 from pylzt.methods.market_account_publishing import (
@@ -61,6 +84,8 @@ from pylzt.methods.market_account_publishing import (
 from pylzt.methods.market_account_purchasing import (
     PurchasingCheck,
     PurchasingConfirm,
+    PurchasingDiscountCancel,
+    PurchasingDiscountRequest,
     PurchasingDiscountReview,
     PurchasingFastBuy,
 )
@@ -74,6 +99,7 @@ from pylzt.methods.market_accounts_list import (
 )
 from pylzt.methods.market_accounts_managing import (
     ManagingAIPrice,
+    ManagingAutoBump,
     ManagingAutoBumpDisable,
     ManagingAutoBuyPrice,
     ManagingBulkGet,
@@ -81,23 +107,31 @@ from pylzt.methods.market_accounts_managing import (
     ManagingChangePassword,
     ManagingCheckGuarantee,
     ManagingClose,
+    ManagingCreateClaim,
     ManagingDeclineVideoRecording,
     ManagingEdit,
     ManagingEmailCode,
+    ManagingFavorite,
     ManagingGetLetters,
     ManagingGetLetters2,
     ManagingImage,
+    ManagingNoteDelete,
     ManagingNoteEdit,
     ManagingOpen,
+    ManagingPublicTag,
     ManagingPublicUntag,
     ManagingRefuseGuarantee,
+    ManagingSteamAddMafile,
     ManagingSteamGetMafile,
     ManagingSteamInventoryValue,
     ManagingSteamMafileCode,
     ManagingSteamPreview,
+    ManagingSteamRemoveMafile,
     ManagingSteamSDA,
     ManagingSteamUpdateValue,
     ManagingSteamValue,
+    ManagingStick,
+    ManagingTag,
     ManagingTelegramCode,
     ManagingTelegramResetAuth,
     ManagingTempEmailPassword,
@@ -108,7 +142,7 @@ from pylzt.methods.market_accounts_managing import (
     MangingDelete,
     ProfileClaims,
 )
-from pylzt.methods.market_cart import CartGet
+from pylzt.methods.market_cart import CartAdd, CartDelete, CartGet
 from pylzt.methods.market_category_search import (
     CategoryAll,
     CategoryBattleNet,
@@ -121,7 +155,9 @@ from pylzt.methods.market_category_search import (
     CategoryHytale,
     CategoryInstagram,
     CategoryLLM,
+    CategoryMihoyo,
     CategoryMinecraft,
+    CategoryOnlyfans,
     CategoryRiot,
     CategoryRoblox,
     CategorySocialClub,
@@ -132,13 +168,26 @@ from pylzt.methods.market_category_search import (
     CategoryUplay,
     CategoryVpn,
     CategoryWarface,
+    CategoryWot,
+    CategoryWotBlitz,
 )
-from pylzt.methods.market_custom_discounts import CustomDiscountsGet
-from pylzt.methods.market_imap import ImapDelete
-from pylzt.methods.market_invoices import PaymentsInvoiceGet, PaymentsInvoiceList
+from pylzt.methods.market_custom_discounts import (
+    CustomDiscountsCreate,
+    CustomDiscountsDelete,
+    CustomDiscountsEdit,
+    CustomDiscountsGet,
+)
+from pylzt.methods.market_imap import ImapCreate, ImapDelete
+from pylzt.methods.market_invoices import (
+    PaymentsInvoiceCreate,
+    PaymentsInvoiceGet,
+    PaymentsInvoiceList,
+)
 from pylzt.methods.market_payments import (
+    AutoPaymentsCreate,
     AutoPaymentsDelete,
     AutoPaymentsList,
+    PaymentsBalanceExchange,
     PaymentsCancel,
     PaymentsCurrency,
     PaymentsFee,
@@ -146,14 +195,24 @@ from pylzt.methods.market_payments import (
     PaymentsPayoutServices,
     PaymentsTransfer,
 )
-from pylzt.methods.market_profile import ProfileGet
-from pylzt.methods.market_proxy import ProxyGet
-from pylzt.methods.market_tags import ManagingTagsList, ManagingTagsOrder
+from pylzt.methods.market_profile import ProfileEdit, ProfileGet
+from pylzt.methods.market_proxy import ProxyAdd, ProxyDelete, ProxyGet
+from pylzt.methods.market_tags import (
+    ManagingTagsCreate,
+    ManagingTagsDelete,
+    ManagingTagsEdit,
+    ManagingTagsList,
+    ManagingTagsOrder,
+)
 from pylzt.models.market import (
+    AutoPaymentsCreateResponse,
     BattleNetItem,
+    BlitzWotTopPremiumTank,
     CartGetResponse,
+    CategoryOnlyfansResponse,
     CategoryResponse,
-    CustomDiscountsGetResponse,
+    CategoryWotItem2,
+    CustomDiscountsCreateResponse,
     DiscordItem,
     EAItem,
     EpicGamesItem,
@@ -163,6 +222,7 @@ from pylzt.models.market import (
     HytaleItem,
     InstagramItem,
     Invoice,
+    ItemWotTopPremiumTank,
     ListUserItem,
     ListUserResponse,
     ListViewedResponse,
@@ -173,18 +233,22 @@ from pylzt.models.market import (
     ManagingChangePasswordResponse,
     ManagingTelegramCodeResponse,
     ManagingTempEmailPasswordItem,
+    MarketDiscountsTotalResponse,
     MarketEmailLettersResponse,
     MarketItemCodeDataResponse,
     MarketItemIdTagAddedTagIdDeleteTagsResponse,
     MarketQueryDataAppIdResponse,
     MarketStatusItemResponse,
+    MarketStatusMessageItemResponse,
     MarketStatusMessageResponse,
+    MarketTagIdTitleIsDefaultForOwnedAccountsOnlyBcResponse,
+    MihoyoItem,
     MinecraftItem,
+    PaymentsBalanceExchangeResponse,
     PaymentsCurrencyResponse,
     PaymentsFeeResponse,
     PaymentsInvoiceListResponse,
     ProfileClaimsResponse,
-    ProfileGetUser,
     Proxy,
     PublishingCheckItem,
     PublishingFastSellResponse,
@@ -196,15 +260,15 @@ from pylzt.models.market import (
     SteamItem,
     SupercellItem,
     System,
-    Tag,
     TelegramItem,
+    Thread,
     TikTokItem,
+    ToBalance,
     UplayItem,
     UserItemStates,
     VpnItem,
     WarfaceItem,
 )
-from pylzt.transport.base import RequestOptions
 from pylzt.types import Currency, ItemOrigin, OrderBy, Tristate
 
 if TYPE_CHECKING:
@@ -216,20 +280,16 @@ class GeneratedMarketFacade:
 
     if TYPE_CHECKING:
 
-        async def __call__[T](
-            self, method: BaseMethod[T], *, request_options: RequestOptions | None = None
-        ) -> T: ...
+        async def __call__[T](self, method: BaseMethod[T]) -> T: ...
 
-    async def managing_bulk_action(
-        self, *, request_options: RequestOptions | None = None
-    ) -> ManagingBulkActionResponse:
+    async def managing_bulk_action(self) -> ManagingBulkActionResponse:
         """Generated by forge — DO NOT EDIT. Execute bulk actions on items.
         Sourced from the official OpenAPI spec (readme.io).
         Executes bulk actions on items.
 
         Docs: https://lzt-market.readme.io/reference/managingbulkaction
         """
-        return await self(ManagingBulkAction(), request_options=request_options)
+        return await self(ManagingBulkAction())
 
     async def publishing_add(
         self,
@@ -252,8 +312,6 @@ class GeneratedMarketFacade:
         allow_ask_discount: bool | None = None,
         proxy_id: int | None = None,
         random_proxy: bool | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> MarketStatusItemResponse[ListUserItem]:
         """Generated by forge — DO NOT EDIT. Add Account.
         Sourced from the official OpenAPI spec (readme.io).
@@ -303,8 +361,7 @@ class GeneratedMarketFacade:
                 allow_ask_discount=allow_ask_discount,
                 proxy_id=proxy_id,
                 random_proxy=random_proxy,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def publishing_check(
@@ -318,8 +375,6 @@ class GeneratedMarketFacade:
         email_login_data: str | None = None,
         email_type: EmailType | None = None,
         extra: dict[str, Any] | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> MarketStatusItemResponse[PublishingCheckItem]:
         """Generated by forge — DO NOT EDIT. Check Account Details.
         Sourced from the official OpenAPI spec (readme.io).
@@ -349,8 +404,7 @@ class GeneratedMarketFacade:
                 email_login_data=email_login_data,
                 email_type=email_type,
                 extra=extra,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def publishing_external(
@@ -360,8 +414,6 @@ class GeneratedMarketFacade:
         login: str | None = None,
         email_login_data: str | None = None,
         cookies: str | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> MarketStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Add an External Account.
         Sourced from the official OpenAPI spec (readme.io).
@@ -384,8 +436,7 @@ class GeneratedMarketFacade:
                 login=login,
                 email_login_data=email_login_data,
                 cookies=cookies,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def publishing_fast_sell(
@@ -412,8 +463,6 @@ class GeneratedMarketFacade:
         email_type: EmailType | None = None,
         tfa_secret: str | None = None,
         extra: dict[str, Any] | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> PublishingFastSellResponse:
         """Generated by forge — DO NOT EDIT. Fast Account Upload.
         Sourced from the official OpenAPI spec (readme.io).
@@ -465,13 +514,10 @@ class GeneratedMarketFacade:
                 email_type=email_type,
                 tfa_secret=tfa_secret,
                 extra=extra,
-            ),
-            request_options=request_options,
+            )
         )
 
-    async def purchasing_check(
-        self, item_id: int, *, request_options: RequestOptions | None = None
-    ) -> PurchasingCheckResponse:
+    async def purchasing_check(self, item_id: int) -> PurchasingCheckResponse:
         """Generated by forge — DO NOT EDIT. Check Account.
         Sourced from the official OpenAPI spec (readme.io).
         Checking account for validity.
@@ -482,15 +528,10 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/purchasingcheck
         """
-        return await self(PurchasingCheck(item_id=item_id), request_options=request_options)
+        return await self(PurchasingCheck(item_id=item_id))
 
     async def purchasing_confirm(
-        self,
-        item_id: int,
-        price: int | None = None,
-        balance_id: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        self, item_id: int, price: int | None = None, balance_id: int | None = None
     ) -> PurchasingConfirmResponse:
         """Generated by forge — DO NOT EDIT. Confirm Buy.
         Sourced from the official OpenAPI spec (readme.io).
@@ -504,9 +545,49 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/purchasingconfirm
         """
+        return await self(PurchasingConfirm(item_id=item_id, price=price, balance_id=balance_id))
+
+    async def purchasing_discount_cancel(self, item_id: int) -> MarketStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Cancel Discount Request.
+        Sourced from the official OpenAPI spec (readme.io).
+        Cancel a requested discount for the specified item.
+
+        Args:
+            item_id: Item id.
+
+        Docs: https://lzt-market.readme.io/reference/purchasingdiscountcancel
+        """
+        return await self(PurchasingDiscountCancel(item_id=item_id))
+
+    async def purchasing_discount_request(
+        self,
+        item_id: int,
+        discount_price: float,
+        message: str | None = None,
+        auto_buy: bool | None = None,
+        balance_id: int | None = None,
+    ) -> MarketStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Discount Request.
+        Sourced from the official OpenAPI spec (readme.io).
+        Request a discount for the specified item.
+
+        Args:
+            item_id: Item id.
+            discount_price: Requested discounted price.
+            message: Message to the seller.
+            auto_buy: Automatically buy the item once the discount is accepted.
+            balance_id: Balance ID that will be used to purchase specified item.
+
+        Docs: https://lzt-market.readme.io/reference/purchasingdiscountrequest
+        """
         return await self(
-            PurchasingConfirm(item_id=item_id, price=price, balance_id=balance_id),
-            request_options=request_options,
+            PurchasingDiscountRequest(
+                item_id=item_id,
+                discount_price=discount_price,
+                message=message,
+                auto_buy=auto_buy,
+                balance_id=balance_id,
+            )
         )
 
     async def purchasing_discount_review(
@@ -516,8 +597,6 @@ class GeneratedMarketFacade:
         action: Action | None = None,
         discount_price: float | None = None,
         message: str | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> MarketStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Approve/Decline Discount Request.
         Sourced from the official OpenAPI spec (readme.io).
@@ -539,17 +618,11 @@ class GeneratedMarketFacade:
                 action=action,
                 discount_price=discount_price,
                 message=message,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def purchasing_fast_buy(
-        self,
-        item_id: int,
-        price: float | None = None,
-        balance_id: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        self, item_id: int, price: float | None = None, balance_id: int | None = None
     ) -> MarketStatusItemResponse[PublishingCheckItem]:
         """Generated by forge — DO NOT EDIT. Fast Buy Account.
         Sourced from the official OpenAPI spec (readme.io).
@@ -563,10 +636,7 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/purchasingfastbuy
         """
-        return await self(
-            PurchasingFastBuy(item_id=item_id, price=price, balance_id=balance_id),
-            request_options=request_options,
-        )
+        return await self(PurchasingFastBuy(item_id=item_id, price=price, balance_id=balance_id))
 
     async def list_download(
         self,
@@ -597,8 +667,6 @@ class GeneratedMarketFacade:
         delete_startDate: str | None = None,
         delete_endDate: str | None = None,
         filter_by_delete_date: bool | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> str:
         """Generated by forge — DO NOT EDIT. Download Accounts Data.
         Sourced from the official OpenAPI spec (readme.io).
@@ -664,8 +732,7 @@ class GeneratedMarketFacade:
                 delete_startDate=delete_startDate,
                 delete_endDate=delete_endDate,
                 filter_by_delete_date=filter_by_delete_date,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def list_favorites(
@@ -682,8 +749,6 @@ class GeneratedMarketFacade:
         sb_by_me: bool | None = None,
         nsb: bool | None = None,
         nsb_by_me: bool | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> CartGetResponse:
         """Generated by forge — DO NOT EDIT. Get All Favourites Accounts.
         Sourced from the official OpenAPI spec (readme.io).
@@ -719,8 +784,7 @@ class GeneratedMarketFacade:
                 sb_by_me=sb_by_me,
                 nsb=nsb,
                 nsb_by_me=nsb_by_me,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def list_orders(
@@ -740,8 +804,6 @@ class GeneratedMarketFacade:
         sb_by_me: bool | None = None,
         nsb: bool | None = None,
         nsb_by_me: bool | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> CartGetResponse:
         """Generated by forge — DO NOT EDIT. Get All Purchased Accounts.
         Sourced from the official OpenAPI spec (readme.io).
@@ -783,13 +845,10 @@ class GeneratedMarketFacade:
                 sb_by_me=sb_by_me,
                 nsb=nsb,
                 nsb_by_me=nsb_by_me,
-            ),
-            request_options=request_options,
+            )
         )
 
-    async def list_states(
-        self, user_id: int | None = None, *, request_options: RequestOptions | None = None
-    ) -> UserItemStates:
+    async def list_states(self, user_id: int | None = None) -> UserItemStates:
         """Generated by forge — DO NOT EDIT. Get User Items States.
         Sourced from the official OpenAPI spec (readme.io).
         Returns the states of user items.
@@ -799,7 +858,7 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/liststates
         """
-        return await self(ListStates(user_id=user_id), request_options=request_options)
+        return await self(ListStates(user_id=user_id))
 
     async def list_user(
         self,
@@ -829,8 +888,6 @@ class GeneratedMarketFacade:
         delete_startDate: str | None = None,
         delete_endDate: str | None = None,
         filter_by_delete_date: bool | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> ListUserResponse:
         """Generated by forge — DO NOT EDIT. Get All User Accounts.
         Sourced from the official OpenAPI spec (readme.io).
@@ -894,8 +951,7 @@ class GeneratedMarketFacade:
                 delete_startDate=delete_startDate,
                 delete_endDate=delete_endDate,
                 filter_by_delete_date=filter_by_delete_date,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def list_viewed(
@@ -912,8 +968,6 @@ class GeneratedMarketFacade:
         sb_by_me: bool | None = None,
         nsb: bool | None = None,
         nsb_by_me: bool | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> ListViewedResponse:
         """Generated by forge — DO NOT EDIT. Get All Viewed Accounts.
         Sourced from the official OpenAPI spec (readme.io).
@@ -949,13 +1003,10 @@ class GeneratedMarketFacade:
                 sb_by_me=sb_by_me,
                 nsb=nsb,
                 nsb_by_me=nsb_by_me,
-            ),
-            request_options=request_options,
+            )
         )
 
-    async def managing_ai_price(
-        self, item_id: int, *, request_options: RequestOptions | None = None
-    ) -> int:
+    async def managing_ai_price(self, item_id: int) -> int:
         """Generated by forge — DO NOT EDIT. Get AI Price.
         Sourced from the official OpenAPI spec (readme.io).
         Get AI-suggested price for the account.
@@ -965,11 +1016,22 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingaiprice
         """
-        return await self(ManagingAIPrice(item_id=item_id), request_options=request_options)
+        return await self(ManagingAIPrice(item_id=item_id))
 
-    async def managing_auto_bump_disable(
-        self, item_id: int, *, request_options: RequestOptions | None = None
-    ) -> MarketStatusMessageResponse:
+    async def managing_auto_bump(self, item_id: int, hour: int) -> MarketStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Auto Bump.
+        Sourced from the official OpenAPI spec (readme.io).
+        Enables/edits automatic bumping for the specified account.
+
+        Args:
+            item_id: Item id.
+            hour: Interval in hours
+
+        Docs: https://lzt-market.readme.io/reference/managingautobump
+        """
+        return await self(ManagingAutoBump(item_id=item_id, hour=hour))
+
+    async def managing_auto_bump_disable(self, item_id: int) -> MarketStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Disable Auto Bump.
         Sourced from the official OpenAPI spec (readme.io).
         Disables automatic bumping for the specified account.
@@ -979,11 +1041,9 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingautobumpdisable
         """
-        return await self(ManagingAutoBumpDisable(item_id=item_id), request_options=request_options)
+        return await self(ManagingAutoBumpDisable(item_id=item_id))
 
-    async def managing_auto_buy_price(
-        self, item_id: int, *, request_options: RequestOptions | None = None
-    ) -> int:
+    async def managing_auto_buy_price(self, item_id: int) -> int:
         """Generated by forge — DO NOT EDIT. Get Auto Buy Price.
         Sourced from the official OpenAPI spec (readme.io).
         Get auto buy price for the account.
@@ -993,14 +1053,10 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingautobuyprice
         """
-        return await self(ManagingAutoBuyPrice(item_id=item_id), request_options=request_options)
+        return await self(ManagingAutoBuyPrice(item_id=item_id))
 
     async def managing_bulk_get(
-        self,
-        item_id: tuple[int, ...] | None = None,
-        parse_same_item_ids: bool | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        self, item_id: tuple[int, ...] | None = None, parse_same_item_ids: bool | None = None
     ) -> ManagingBulkGetResponse:
         """Generated by forge — DO NOT EDIT. Bulk Get Accounts.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1012,14 +1068,9 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingbulkget
         """
-        return await self(
-            ManagingBulkGet(item_id=item_id, parse_same_item_ids=parse_same_item_ids),
-            request_options=request_options,
-        )
+        return await self(ManagingBulkGet(item_id=item_id, parse_same_item_ids=parse_same_item_ids))
 
-    async def managing_bump(
-        self, item_id: int, *, request_options: RequestOptions | None = None
-    ) -> MarketStatusMessageResponse:
+    async def managing_bump(self, item_id: int) -> MarketStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Bump Account.
         Sourced from the official OpenAPI spec (readme.io).
         Bumps account in the search.
@@ -1029,14 +1080,10 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingbump
         """
-        return await self(ManagingBump(item_id=item_id), request_options=request_options)
+        return await self(ManagingBump(item_id=item_id))
 
     async def managing_change_password(
-        self,
-        item_id: int,
-        cancel: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        self, item_id: int, cancel: int | None = None
     ) -> ManagingChangePasswordResponse:
         """Generated by forge — DO NOT EDIT. Change Password.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1048,13 +1095,9 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingchangepassword
         """
-        return await self(
-            ManagingChangePassword(item_id=item_id, cancel=cancel), request_options=request_options
-        )
+        return await self(ManagingChangePassword(item_id=item_id, cancel=cancel))
 
-    async def managing_check_guarantee(
-        self, item_id: int, *, request_options: RequestOptions | None = None
-    ) -> str:
+    async def managing_check_guarantee(self, item_id: int) -> str:
         """Generated by forge — DO NOT EDIT. Check Guarantee.
         Sourced from the official OpenAPI spec (readme.io).
         Checks the guarantee and cancels it if there are reasons to cancel it.
@@ -1064,11 +1107,9 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingcheckguarantee
         """
-        return await self(ManagingCheckGuarantee(item_id=item_id), request_options=request_options)
+        return await self(ManagingCheckGuarantee(item_id=item_id))
 
-    async def managing_close(
-        self, item_id: int, *, request_options: RequestOptions | None = None
-    ) -> MarketStatusMessageResponse:
+    async def managing_close(self, item_id: int) -> MarketStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Close Account.
         Sourced from the official OpenAPI spec (readme.io).
         Closes account.
@@ -1078,14 +1119,24 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingclose
         """
-        return await self(ManagingClose(item_id=item_id), request_options=request_options)
+        return await self(ManagingClose(item_id=item_id))
+
+    async def managing_create_claim(self, item_id: int, post_body: str) -> Thread:
+        """Generated by forge — DO NOT EDIT. Create Claim.
+        Sourced from the official OpenAPI spec (readme.io).
+        Create a claim.
+
+        Args:
+            post_body: You should describe what's happened. - describe the situation in a nutshell. If you wish, you can describe the situation in more detail using the "Spoiler" function. - attach screenshots of correspondence. You must upload to the site [Imgur](https://imgur.com/upload) - other evidence; - notify the respondent about the complaint you created, familiarize him with hidden content Describe the situation in as much detail as possible.
+
+        Docs: https://lzt-market.readme.io/reference/managingcreateclaim
+        """
+        return await self(ManagingCreateClaim(item_id=item_id, post_body=post_body))
 
     async def managing_decline_video_recording(
         self,
         item_id: int,
         i_voluntarily_and_with_full_awareness_of_my_actions_waive_any_claims_regarding_this_item: bool,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> MarketStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Decline Video Recording Request.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1101,8 +1152,7 @@ class GeneratedMarketFacade:
             ManagingDeclineVideoRecording(
                 item_id=item_id,
                 i_voluntarily_and_with_full_awareness_of_my_actions_waive_any_claims_regarding_this_item=i_voluntarily_and_with_full_awareness_of_my_actions_waive_any_claims_regarding_this_item,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def managing_edit(
@@ -1119,8 +1169,6 @@ class GeneratedMarketFacade:
         proxy_id: int | None = None,
         description: str | None = None,
         information: str | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> MarketStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Edit Account.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1155,13 +1203,10 @@ class GeneratedMarketFacade:
                 proxy_id=proxy_id,
                 description=description,
                 information=information,
-            ),
-            request_options=request_options,
+            )
         )
 
-    async def managing_email_code(
-        self, item_id: int, *, request_options: RequestOptions | None = None
-    ) -> MarketItemCodeDataResponse:
+    async def managing_email_code(self, item_id: int) -> MarketItemCodeDataResponse:
         """Generated by forge — DO NOT EDIT. Get Email Confirmation Code.
         Sourced from the official OpenAPI spec (readme.io).
         Gets confirmation code or link.
@@ -1172,14 +1217,22 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingemailcode
         """
-        return await self(ManagingEmailCode(item_id=item_id), request_options=request_options)
+        return await self(ManagingEmailCode(item_id=item_id))
+
+    async def managing_favorite(self, item_id: int) -> MarketStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Favorite.
+        Sourced from the official OpenAPI spec (readme.io).
+        Adds account to favorites.
+
+        Args:
+            item_id: Item id.
+
+        Docs: https://lzt-market.readme.io/reference/managingfavorite
+        """
+        return await self(ManagingFavorite(item_id=item_id))
 
     async def managing_get_letters(
-        self,
-        item_id: int,
-        limit: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        self, item_id: int, limit: int | None = None
     ) -> MarketEmailLettersResponse:
         """Generated by forge — DO NOT EDIT. Get Email Letters by Item ID.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1192,9 +1245,7 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managinggetletters
         """
-        return await self(
-            ManagingGetLetters(item_id=item_id, limit=limit), request_options=request_options
-        )
+        return await self(ManagingGetLetters(item_id=item_id, limit=limit))
 
     async def managing_get_letters2(
         self,
@@ -1202,8 +1253,6 @@ class GeneratedMarketFacade:
         email: str | None = None,
         password: str | None = None,
         limit: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> MarketEmailLettersResponse:
         """Generated by forge — DO NOT EDIT. Get Email Letters.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1221,13 +1270,10 @@ class GeneratedMarketFacade:
         return await self(
             ManagingGetLetters2(
                 email_password=email_password, email=email, password=password, limit=limit
-            ),
-            request_options=request_options,
+            )
         )
 
-    async def managing_image(
-        self, item_id: int, type: Type, *, request_options: RequestOptions | None = None
-    ) -> str:
+    async def managing_image(self, item_id: int, type: Type) -> str:
         """Generated by forge — DO NOT EDIT. Get Account Image.
         Sourced from the official OpenAPI spec (readme.io).
         Get account image.
@@ -1238,16 +1284,22 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingimage
         """
-        return await self(
-            ManagingImage(item_id=item_id, type=type), request_options=request_options
-        )
+        return await self(ManagingImage(item_id=item_id, type=type))
+
+    async def managing_note_delete(self, item_id: int) -> MarketStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Delete Note.
+        Sourced from the official OpenAPI spec (readme.io).
+        Deletes a note from the account.
+
+        Args:
+            item_id: Item id.
+
+        Docs: https://lzt-market.readme.io/reference/managingnotedelete
+        """
+        return await self(ManagingNoteDelete(item_id=item_id))
 
     async def managing_note_edit(
-        self,
-        item_id: int,
-        text: str | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        self, item_id: int, text: str | None = None
     ) -> MarketStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Edit Note.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1259,13 +1311,9 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingnoteedit
         """
-        return await self(
-            ManagingNoteEdit(item_id=item_id, text=text), request_options=request_options
-        )
+        return await self(ManagingNoteEdit(item_id=item_id, text=text))
 
-    async def managing_open(
-        self, item_id: int, *, request_options: RequestOptions | None = None
-    ) -> MarketStatusMessageResponse:
+    async def managing_open(self, item_id: int) -> MarketStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Open Account.
         Sourced from the official OpenAPI spec (readme.io).
         Opens account.
@@ -1275,10 +1323,25 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingopen
         """
-        return await self(ManagingOpen(item_id=item_id), request_options=request_options)
+        return await self(ManagingOpen(item_id=item_id))
+
+    async def managing_public_tag(
+        self, item_id: int, tag_id: int
+    ) -> MarketItemIdTagAddedTagIdDeleteTagsResponse:
+        """Generated by forge — DO NOT EDIT. Add a Public Tag.
+        Sourced from the official OpenAPI spec (readme.io).
+        Adds a public tag to the specified account.
+
+        Args:
+            item_id: Item id.
+            tag_id: Tag ID.
+
+        Docs: https://lzt-market.readme.io/reference/managingpublictag
+        """
+        return await self(ManagingPublicTag(item_id=item_id, tag_id=tag_id))
 
     async def managing_public_untag(
-        self, item_id: int, tag_id: int, *, request_options: RequestOptions | None = None
+        self, item_id: int, tag_id: int
     ) -> MarketItemIdTagAddedTagIdDeleteTagsResponse:
         """Generated by forge — DO NOT EDIT. Remove a Public Tag.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1290,13 +1353,9 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingpublicuntag
         """
-        return await self(
-            ManagingPublicUntag(item_id=item_id, tag_id=tag_id), request_options=request_options
-        )
+        return await self(ManagingPublicUntag(item_id=item_id, tag_id=tag_id))
 
-    async def managing_refuse_guarantee(
-        self, item_id: int, *, request_options: RequestOptions | None = None
-    ) -> MarketStatusMessageResponse:
+    async def managing_refuse_guarantee(self, item_id: int) -> MarketStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Cancel Guarantee.
         Sourced from the official OpenAPI spec (readme.io).
         Cancel guarantee of account. It can be useful for account reselling.
@@ -1306,11 +1365,21 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingrefuseguarantee
         """
-        return await self(ManagingRefuseGuarantee(item_id=item_id), request_options=request_options)
+        return await self(ManagingRefuseGuarantee(item_id=item_id))
 
-    async def managing_steam_get_mafile(
-        self, item_id: int, *, request_options: RequestOptions | None = None
-    ) -> MaFile:
+    async def managing_steam_add_mafile(self, item_id: int) -> MarketStatusMessageItemResponse:
+        """Generated by forge — DO NOT EDIT. Add Mafile.
+        Sourced from the official OpenAPI spec (readme.io).
+        Add a new Steam mafile to the account.
+
+        Args:
+            item_id: Item id.
+
+        Docs: https://lzt-market.readme.io/reference/managingsteamaddmafile
+        """
+        return await self(ManagingSteamAddMafile(item_id=item_id))
+
+    async def managing_steam_get_mafile(self, item_id: int) -> MaFile:
         """Generated by forge — DO NOT EDIT. Get Mafile.
         Sourced from the official OpenAPI spec (readme.io).
         Returns steam mafile.
@@ -1321,7 +1390,20 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingsteamgetmafile
         """
-        return await self(ManagingSteamGetMafile(item_id=item_id), request_options=request_options)
+        return await self(ManagingSteamGetMafile(item_id=item_id))
+
+    async def managing_steam_remove_mafile(self, item_id: int) -> MarketStatusMessageItemResponse:
+        """Generated by forge — DO NOT EDIT. Remove Mafile.
+        Sourced from the official OpenAPI spec (readme.io).
+        Remove steam mafile.
+        > ❗️ This will unlink the authenticator from the account and remove mafile from the item
+
+        Args:
+            item_id: Item id.
+
+        Docs: https://lzt-market.readme.io/reference/managingsteamremovemafile-1
+        """
+        return await self(ManagingSteamRemoveMafile(item_id=item_id))
 
     async def managing_steam_inventory_value(
         self,
@@ -1329,8 +1411,6 @@ class GeneratedMarketFacade:
         app_id: int | None = None,
         currency: Currency | None = None,
         ignore_cache: bool | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> MarketQueryDataAppIdResponse:
         """Generated by forge — DO NOT EDIT. Get Account Steam Inventory Value.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1347,13 +1427,10 @@ class GeneratedMarketFacade:
         return await self(
             ManagingSteamInventoryValue(
                 item_id=item_id, app_id=app_id, currency=currency, ignore_cache=ignore_cache
-            ),
-            request_options=request_options,
+            )
         )
 
-    async def managing_steam_mafile_code(
-        self, item_id: int, *, request_options: RequestOptions | None = None
-    ) -> MarketItemCodeDataResponse:
+    async def managing_steam_mafile_code(self, item_id: int) -> MarketItemCodeDataResponse:
         """Generated by forge — DO NOT EDIT. Get Mafile Confirmation Code.
         Sourced from the official OpenAPI spec (readme.io).
         Gets confirmation code from MaFile (Only for Steam accounts).
@@ -1363,15 +1440,9 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingsteammafilecode
         """
-        return await self(ManagingSteamMafileCode(item_id=item_id), request_options=request_options)
+        return await self(ManagingSteamMafileCode(item_id=item_id))
 
-    async def managing_steam_preview(
-        self,
-        item_id: int,
-        type: Type | None = None,
-        *,
-        request_options: RequestOptions | None = None,
-    ) -> str:
+    async def managing_steam_preview(self, item_id: int, type: Type | None = None) -> str:
         """Generated by forge — DO NOT EDIT. Get Steam HTML.
         Sourced from the official OpenAPI spec (readme.io).
         Returns Steam account profile/games preview.
@@ -1382,17 +1453,10 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingsteampreview
         """
-        return await self(
-            ManagingSteamPreview(item_id=item_id, type=type), request_options=request_options
-        )
+        return await self(ManagingSteamPreview(item_id=item_id, type=type))
 
     async def managing_steam_sda(
-        self,
-        item_id: int,
-        id: int | None = None,
-        nonce: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        self, item_id: int, id: int | None = None, nonce: int | None = None
     ) -> MarketStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Confirm SDA.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1407,9 +1471,7 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingsteamsda
         """
-        return await self(
-            ManagingSteamSDA(item_id=item_id, id=id, nonce=nonce), request_options=request_options
-        )
+        return await self(ManagingSteamSDA(item_id=item_id, id=id, nonce=nonce))
 
     async def managing_steam_update_value(
         self,
@@ -1417,8 +1479,6 @@ class GeneratedMarketFacade:
         all: bool | None = None,
         app_id: int | None = None,
         authorize: bool | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> MarketStatusItemResponse[ListUserItem]:
         """Generated by forge — DO NOT EDIT. Update Inventory Value.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1433,8 +1493,7 @@ class GeneratedMarketFacade:
         Docs: https://lzt-market.readme.io/reference/managingsteamupdatevalue
         """
         return await self(
-            ManagingSteamUpdateValue(item_id=item_id, all=all, app_id=app_id, authorize=authorize),
-            request_options=request_options,
+            ManagingSteamUpdateValue(item_id=item_id, all=all, app_id=app_id, authorize=authorize)
         )
 
     async def managing_steam_value(
@@ -1443,8 +1502,6 @@ class GeneratedMarketFacade:
         app_id: int | None = None,
         currency: Currency | None = None,
         ignore_cache: bool | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> MarketQueryDataAppIdResponse:
         """Generated by forge — DO NOT EDIT. Get Steam Inventory Value.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1462,13 +1519,37 @@ class GeneratedMarketFacade:
         return await self(
             ManagingSteamValue(
                 link=link, app_id=app_id, currency=currency, ignore_cache=ignore_cache
-            ),
-            request_options=request_options,
+            )
         )
 
-    async def managing_telegram_code(
-        self, item_id: int, *, request_options: RequestOptions | None = None
-    ) -> ManagingTelegramCodeResponse:
+    async def managing_stick(self, item_id: int) -> MarketStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Stick Account.
+        Sourced from the official OpenAPI spec (readme.io).
+        Stick account in the top of search.
+
+        Args:
+            item_id: Item id.
+
+        Docs: https://lzt-market.readme.io/reference/managingstick
+        """
+        return await self(ManagingStick(item_id=item_id))
+
+    async def managing_tag(
+        self, item_id: int, tag_id: int
+    ) -> MarketItemIdTagAddedTagIdDeleteTagsResponse:
+        """Generated by forge — DO NOT EDIT. Add a Tag.
+        Sourced from the official OpenAPI spec (readme.io).
+        Adds a tag to the specified account.
+
+        Args:
+            item_id: Item id.
+            tag_id: Tag ID.
+
+        Docs: https://lzt-market.readme.io/reference/managingtag
+        """
+        return await self(ManagingTag(item_id=item_id, tag_id=tag_id))
+
+    async def managing_telegram_code(self, item_id: int) -> ManagingTelegramCodeResponse:
         """Generated by forge — DO NOT EDIT. Get Telegram Confirmation Code.
         Sourced from the official OpenAPI spec (readme.io).
         Gets confirmation code from Telegram.
@@ -1478,11 +1559,9 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingtelegramcode
         """
-        return await self(ManagingTelegramCode(item_id=item_id), request_options=request_options)
+        return await self(ManagingTelegramCode(item_id=item_id))
 
-    async def managing_telegram_reset_auth(
-        self, item_id: int, *, request_options: RequestOptions | None = None
-    ) -> MarketStatusMessageResponse:
+    async def managing_telegram_reset_auth(self, item_id: int) -> MarketStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Telegram Reset Auth.
         Sourced from the official OpenAPI spec (readme.io).
         Resets Telegram authorizations.
@@ -1492,13 +1571,9 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingtelegramresetauth
         """
-        return await self(
-            ManagingTelegramResetAuth(item_id=item_id), request_options=request_options
-        )
+        return await self(ManagingTelegramResetAuth(item_id=item_id))
 
-    async def managing_temp_email_password(
-        self, item_id: int, *, request_options: RequestOptions | None = None
-    ) -> ManagingTempEmailPasswordItem:
+    async def managing_temp_email_password(self, item_id: int) -> ManagingTempEmailPasswordItem:
         """Generated by forge — DO NOT EDIT. Get Temp Email Password.
         Sourced from the official OpenAPI spec (readme.io).
         Gets password from temp email of account. After calling of this method, the guarantee will be cancelled and you cannot automatically resell account.
@@ -1509,19 +1584,17 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingtempemailpassword
         """
-        return await self(
-            ManagingTempEmailPassword(item_id=item_id), request_options=request_options
-        )
+        return await self(ManagingTempEmailPassword(item_id=item_id))
 
     async def managing_transfer(
         self,
         item_id: int,
         username: str,
         secret_answer: str,
-        *,
-        request_options: RequestOptions | None = None,
+        open: bool | None = None,
+        close: bool | None = None,
     ) -> MarketStatusMessageResponse:
-        """Generated by forge — DO NOT EDIT. Change Account Owner.
+        """Generated by forge — DO NOT EDIT. Transfer Account.
         Sourced from the official OpenAPI spec (readme.io).
         Transfer account to another user.
 
@@ -1529,17 +1602,22 @@ class GeneratedMarketFacade:
             item_id: Item id.
             username: The username of the new account owner.
             secret_answer: Secret answer of your account.
+            open: Open item after transfer.
+            close: Close item after transfer.
 
         Docs: https://lzt-market.readme.io/reference/managingtransfer
         """
         return await self(
-            ManagingTransfer(item_id=item_id, username=username, secret_answer=secret_answer),
-            request_options=request_options,
+            ManagingTransfer(
+                item_id=item_id,
+                username=username,
+                secret_answer=secret_answer,
+                open=open,
+                close=close,
+            )
         )
 
-    async def managing_unfavorite(
-        self, item_id: int, *, request_options: RequestOptions | None = None
-    ) -> MarketStatusMessageResponse:
+    async def managing_unfavorite(self, item_id: int) -> MarketStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Unfavorite.
         Sourced from the official OpenAPI spec (readme.io).
         Delete account from favorites.
@@ -1549,11 +1627,9 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingunfavorite
         """
-        return await self(ManagingUnfavorite(item_id=item_id), request_options=request_options)
+        return await self(ManagingUnfavorite(item_id=item_id))
 
-    async def managing_unstick(
-        self, item_id: int, *, request_options: RequestOptions | None = None
-    ) -> MarketStatusMessageResponse:
+    async def managing_unstick(self, item_id: int) -> MarketStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Unstick Account.
         Sourced from the official OpenAPI spec (readme.io).
         Unstick account from the top of search.
@@ -1563,10 +1639,10 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingunstick
         """
-        return await self(ManagingUnstick(item_id=item_id), request_options=request_options)
+        return await self(ManagingUnstick(item_id=item_id))
 
     async def managing_untag(
-        self, item_id: int, tag_id: int, *, request_options: RequestOptions | None = None
+        self, item_id: int, tag_id: int
     ) -> MarketItemIdTagAddedTagIdDeleteTagsResponse:
         """Generated by forge — DO NOT EDIT. Remove a Tag.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1578,13 +1654,9 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managinguntag
         """
-        return await self(
-            ManagingUntag(item_id=item_id, tag_id=tag_id), request_options=request_options
-        )
+        return await self(ManagingUntag(item_id=item_id, tag_id=tag_id))
 
-    async def manging_delete(
-        self, item_id: int, reason: str, *, request_options: RequestOptions | None = None
-    ) -> MarketStatusMessageResponse:
+    async def manging_delete(self, item_id: int, reason: str) -> MarketStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Delete Account.
         Sourced from the official OpenAPI spec (readme.io).
         Deletes your account from public search. Deletion type is soft. You can restore account after deletion if you want.
@@ -1595,16 +1667,10 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/mangingdelete
         """
-        return await self(
-            MangingDelete(item_id=item_id, reason=reason), request_options=request_options
-        )
+        return await self(MangingDelete(item_id=item_id, reason=reason))
 
     async def profile_claims(
-        self,
-        type: Type | None = None,
-        claim_state: ClaimState | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        self, type: Type | None = None, claim_state: ClaimState | None = None
     ) -> ProfileClaimsResponse:
         """Generated by forge — DO NOT EDIT. Get Claims.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1616,9 +1682,25 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/profileclaims
         """
-        return await self(
-            ProfileClaims(type=type, claim_state=claim_state), request_options=request_options
-        )
+        return await self(ProfileClaims(type=type, claim_state=claim_state))
+
+    async def cart_add(self, item_id: int) -> bool:
+        """Generated by forge — DO NOT EDIT. Add Item to Cart.
+        Sourced from the official OpenAPI spec (readme.io).
+        Adds item to your cart.
+
+        Docs: https://lzt-market.readme.io/reference/cartadd
+        """
+        return await self(CartAdd(item_id=item_id))
+
+    async def cart_delete(self, item_id: int | None = None) -> bool:
+        """Generated by forge — DO NOT EDIT. Delete Item From Cart.
+        Sourced from the official OpenAPI spec (readme.io).
+        Deletes an item from the cart.
+
+        Docs: https://lzt-market.readme.io/reference/cartdelete
+        """
+        return await self(CartDelete(item_id=item_id))
 
     async def cart_get(
         self,
@@ -1644,8 +1726,6 @@ class GeneratedMarketFacade:
         email_provider: tuple[EmailProvider, ...] | None = None,
         not_email_provider: NotEmailProvider | None = None,
         parse_same_item_ids: bool | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> CartGetResponse:
         """Generated by forge — DO NOT EDIT. Get Cart Items.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1701,8 +1781,7 @@ class GeneratedMarketFacade:
                 email_provider=email_provider,
                 not_email_provider=not_email_provider,
                 parse_same_item_ids=parse_same_item_ids,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def category_all(
@@ -1728,8 +1807,6 @@ class GeneratedMarketFacade:
         email_provider: tuple[EmailProvider, ...] | None = None,
         not_email_provider: NotEmailProvider | None = None,
         parse_same_item_ids: bool | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> CartGetResponse:
         """Generated by forge — DO NOT EDIT. Get Last Accounts.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1783,8 +1860,7 @@ class GeneratedMarketFacade:
                 email_provider=email_provider,
                 not_email_provider=not_email_provider,
                 parse_same_item_ids=parse_same_item_ids,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def category_battle_net(
@@ -1825,8 +1901,6 @@ class GeneratedMarketFacade:
         no_bans: Tristate | None = None,
         balance_min: int | None = None,
         balance_max: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> CategoryResponse[BattleNetItem]:
         """Generated by forge — DO NOT EDIT. BattleNet.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1910,8 +1984,7 @@ class GeneratedMarketFacade:
                 no_bans=no_bans,
                 balance_min=balance_min,
                 balance_max=balance_max,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def category_discord(
@@ -1984,8 +2057,6 @@ class GeneratedMarketFacade:
         max_owner: int | None = None,
         username_min: int | None = None,
         username_max: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> CategoryResponse[DiscordItem]:
         """Generated by forge — DO NOT EDIT. Discord.
         Sourced from the official OpenAPI spec (readme.io).
@@ -2133,8 +2204,7 @@ class GeneratedMarketFacade:
                 max_owner=max_owner,
                 username_min=username_min,
                 username_max=username_max,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def category_ea(
@@ -2167,8 +2237,8 @@ class GeneratedMarketFacade:
         not_country: tuple[str, ...] | None = None,
         gmin: int | None = None,
         gmax: int | None = None,
-        al_rank_min: int | None = None,
-        al_rank_max: int | None = None,
+        al_rank_min: AlRankMin | None = None,
+        al_rank_max: AlRankMax | None = None,
         al_level_min: int | None = None,
         al_level_max: int | None = None,
         has_ban: Tristate | None = None,
@@ -2181,8 +2251,6 @@ class GeneratedMarketFacade:
         hours_played: dict[str, Any] | None = None,
         hours_played_max: dict[str, Any] | None = None,
         transactions: Tristate | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> CategoryResponse[EAItem]:
         """Generated by forge — DO NOT EDIT. EA (Origin).
         Sourced from the official OpenAPI spec (readme.io).
@@ -2278,8 +2346,7 @@ class GeneratedMarketFacade:
                 hours_played=hours_played,
                 hours_played_max=hours_played_max,
                 transactions=transactions,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def category_epic_games(
@@ -2325,8 +2392,6 @@ class GeneratedMarketFacade:
         no_trans: bool | None = None,
         last_trans_date: int | None = None,
         last_trans_date_period: str | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> CategoryResponse[EpicGamesItem]:
         """Generated by forge — DO NOT EDIT. Epic Games.
         Sourced from the official OpenAPI spec (readme.io).
@@ -2420,8 +2485,7 @@ class GeneratedMarketFacade:
                 no_trans=no_trans,
                 last_trans_date=last_trans_date,
                 last_trans_date_period=last_trans_date_period,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def category_escape_from_tarkov(
@@ -2458,8 +2522,18 @@ class GeneratedMarketFacade:
         pve: Tristate | None = None,
         side: Side | None = None,
         sc: tuple[Sc, ...] | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        alpha_armband: Tristate | None = None,
+        hours_min: int | None = None,
+        hours_max: int | None = None,
+        stash_min: int | None = None,
+        stash_max: int | None = None,
+        prestige_min: int | None = None,
+        prestige_max: int | None = None,
+        kd_min: int | None = None,
+        kd_max: int | None = None,
+        last_raid: int | None = None,
+        last_raid_period: LastRaidPeriod | None = None,
+        achievements: tuple[str, ...] | None = None,
     ) -> CategoryResponse[EscapeFromTarkovItem]:
         """Generated by forge — DO NOT EDIT. Escape from Tarkov.
         Sourced from the official OpenAPI spec (readme.io).
@@ -2498,6 +2572,18 @@ class GeneratedMarketFacade:
             pve: Access to pve.
             side: Side in current wipe.
             sc: Secured container.
+            alpha_armband: Has Alpha armband.
+            hours_min: Minimum hours in game.
+            hours_max: Maximum hours in game.
+            stash_min: Minimum stash value (rubles).
+            stash_max: Maximum stash value (rubles).
+            prestige_min: Minimum prestige level.
+            prestige_max: Maximum prestige level.
+            kd_min: Minimum K/D.
+            kd_max: Maximum K/D.
+            last_raid: Raided within the last period.
+            last_raid_period: In what notation is time measured.
+            achievements: Owned legendary achievements (all must be present).
 
         Docs: https://lzt-market.readme.io/reference/categoryescapefromtarkov
         """
@@ -2535,8 +2621,19 @@ class GeneratedMarketFacade:
                 pve=pve,
                 side=side,
                 sc=sc,
-            ),
-            request_options=request_options,
+                alpha_armband=alpha_armband,
+                hours_min=hours_min,
+                hours_max=hours_max,
+                stash_min=stash_min,
+                stash_max=stash_max,
+                prestige_min=prestige_min,
+                prestige_max=prestige_max,
+                kd_min=kd_min,
+                kd_max=kd_max,
+                last_raid=last_raid,
+                last_raid_period=last_raid_period,
+                achievements=achievements,
+            )
         )
 
     async def category_fortnite(
@@ -2620,8 +2717,6 @@ class GeneratedMarketFacade:
         not_stw: tuple[NotStw, ...] | None = None,
         friends_min: int | None = None,
         friends_max: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> CategoryResponse[FortniteItem]:
         """Generated by forge — DO NOT EDIT. Fortnite.
         Sourced from the official OpenAPI spec (readme.io).
@@ -2791,8 +2886,7 @@ class GeneratedMarketFacade:
                 not_stw=not_stw,
                 friends_min=friends_min,
                 friends_max=friends_max,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def category_gifts(
@@ -2821,8 +2915,6 @@ class GeneratedMarketFacade:
         subscription: Subscription | None = None,
         subscription_length: int | None = None,
         subscription_period: SubscriptionPeriod | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> CategoryResponse[GiftsItem]:
         """Generated by forge — DO NOT EDIT. Gifts.
         Sourced from the official OpenAPI spec (readme.io).
@@ -2882,8 +2974,7 @@ class GeneratedMarketFacade:
                 subscription=subscription,
                 subscription_length=subscription_length,
                 subscription_period=subscription_period,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def category_hytale(
@@ -2912,8 +3003,6 @@ class GeneratedMarketFacade:
         edition: tuple[Edition, ...] | None = None,
         profiles_min: int | None = None,
         profiles_max: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> CategoryResponse[HytaleItem]:
         """Generated by forge — DO NOT EDIT. Hytale.
         Sourced from the official OpenAPI spec (readme.io).
@@ -2973,8 +3062,7 @@ class GeneratedMarketFacade:
                 edition=edition,
                 profiles_min=profiles_min,
                 profiles_max=profiles_max,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def category_instagram(
@@ -3013,8 +3101,6 @@ class GeneratedMarketFacade:
         post_max: int | None = None,
         reg: int | None = None,
         reg_period: RegPeriod | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> CategoryResponse[InstagramItem]:
         """Generated by forge — DO NOT EDIT. Instagram.
         Sourced from the official OpenAPI spec (readme.io).
@@ -3094,8 +3180,7 @@ class GeneratedMarketFacade:
                 post_max=post_max,
                 reg=reg,
                 reg_period=reg_period,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def category_llm(
@@ -3139,8 +3224,6 @@ class GeneratedMarketFacade:
         usage_percent_max: int | None = None,
         balance_min: int | None = None,
         balance_max: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> CategoryResponse[LLMItem]:
         """Generated by forge — DO NOT EDIT. LLM.
         Sourced from the official OpenAPI spec (readme.io).
@@ -3230,8 +3313,272 @@ class GeneratedMarketFacade:
                 usage_percent_max=usage_percent_max,
                 balance_min=balance_min,
                 balance_max=balance_max,
-            ),
-            request_options=request_options,
+            )
+        )
+
+    async def category_mihoyo(
+        self,
+        page: int | None = None,
+        pmin: float | None = None,
+        pmax: float | None = None,
+        title: str | None = None,
+        order_by: OrderBy | None = None,
+        tag_id: tuple[int, ...] | None = None,
+        not_tag_id: tuple[int, ...] | None = None,
+        public_tag_id: tuple[int, ...] | None = None,
+        not_public_tag_id: tuple[int, ...] | None = None,
+        origin: Origin | None = None,
+        not_origin: tuple[NotOrigin, ...] | None = None,
+        user_id: int | None = None,
+        nsb: bool | None = None,
+        sb: bool | None = None,
+        nsb_by_me: bool | None = None,
+        sb_by_me: bool | None = None,
+        currency: Currency | None = None,
+        email_login_data: bool | None = None,
+        email_provider: tuple[EmailProvider, ...] | None = None,
+        not_email_provider: NotEmailProvider | None = None,
+        email_type: tuple[EmailType, ...] | None = None,
+        parse_same_item_ids: bool | None = None,
+        item_domain: str | None = None,
+        email: Tristate | None = None,
+        ea: Tristate | None = None,
+        region: tuple[Region, ...] | None = None,
+        not_region: tuple[NotRegion, ...] | None = None,
+        genshin_character: tuple[int, ...] | None = None,
+        genshin_character_constellations: dict[str, Any] | None = None,
+        genshin_character_constellations_max: dict[str, Any] | None = None,
+        genshin_weapon: tuple[int, ...] | None = None,
+        genshin_char_min: int | None = None,
+        genshin_char_max: int | None = None,
+        genshin_legendary_min: int | None = None,
+        genshin_legendary_max: int | None = None,
+        genshin_level_min: int | None = None,
+        genshin_level_max: int | None = None,
+        genshin_legendary_weapon_min: int | None = None,
+        genshin_legendary_weapon_max: int | None = None,
+        constellations_min: int | None = None,
+        constellations_max: int | None = None,
+        genshin_achievement_min: int | None = None,
+        genshin_achievement_max: int | None = None,
+        genshin_currency_min: int | None = None,
+        genshin_currency_max: int | None = None,
+        honkai_character: tuple[int, ...] | None = None,
+        honkai_character_eidolons: dict[str, Any] | None = None,
+        honkai_character_eidolons_max: dict[str, Any] | None = None,
+        honkai_weapon: tuple[int, ...] | None = None,
+        honkai_char_min: int | None = None,
+        honkai_char_max: int | None = None,
+        honkai_legendary_min: int | None = None,
+        honkai_legendary_max: int | None = None,
+        honkai_level_min: int | None = None,
+        honkai_level_max: int | None = None,
+        honkai_legendary_weapon_min: int | None = None,
+        honkai_legendary_weapon_max: int | None = None,
+        eidolons_min: int | None = None,
+        eidolons_max: int | None = None,
+        honkai_achievement_min: int | None = None,
+        honkai_achievement_max: int | None = None,
+        honkai_currency_min: int | None = None,
+        honkai_currency_max: int | None = None,
+        zenless_character: tuple[int, ...] | None = None,
+        zenless_character_cinemas: dict[str, Any] | None = None,
+        zenless_character_cinemas_max: dict[str, Any] | None = None,
+        zenless_weapon: tuple[int, ...] | None = None,
+        zenless_legendary_min: int | None = None,
+        zenless_legendary_max: int | None = None,
+        cinemas_min: int | None = None,
+        cinemas_max: int | None = None,
+        zenless_legendary_weapon_min: int | None = None,
+        zenless_legendary_weapon_max: int | None = None,
+        zenless_char_min: int | None = None,
+        zenless_char_max: int | None = None,
+        zenless_level_min: int | None = None,
+        zenless_level_max: int | None = None,
+        zenless_achievement_min: int | None = None,
+        zenless_achievement_max: int | None = None,
+        zenless_currency_min: int | None = None,
+        zenless_currency_max: int | None = None,
+        daybreak: int | None = None,
+        mihoyo_game: tuple[MihoyoGame, ...] | None = None,
+    ) -> CategoryResponse[MihoyoItem]:
+        """Generated by forge — DO NOT EDIT. miHoYo.
+        Sourced from the official OpenAPI spec (readme.io).
+        Displays a list of accounts in a specific category according to your parameters.
+
+        Args:
+            page: The number of the page to display results from.
+            pmin: Minimal price of account (Inclusive).
+            pmax: Maximum price of account (Inclusive).
+            title: The word or words contained in the account title.
+            order_by: Order by.
+            tag_id: List of tag ids (Tag list is available via **GET /me**).
+            not_tag_id: List of tag ids that won't be included (Tag list is available via **GET /me**).
+            public_tag_id: List of tag ids (Tag list is available via **GET /me**).
+            not_public_tag_id: List of tag ids that won't be included (Tag list is available via **GET /me**).
+            origin: List of account origins.
+            not_origin: List of account origins that won't be included.
+            user_id: Search accounts of user.
+            nsb: Not sold before.
+            sb: Sold before.
+            nsb_by_me: Not sold by me before.
+            sb_by_me: Sold by me before.
+            currency: Currency in which the cost of the account will be searched.
+            email_login_data: Has email login data.
+            email_provider: Email provider.
+            not_email_provider: Email provider.
+            email_type: Email type.
+            parse_same_item_ids: Parse same item ids.
+            item_domain: Domain of native/autoreg email.
+            email: Has linked email.
+            ea: Has linked external accounts.
+            region: Region.
+            not_region: List of disallowed regions.
+            genshin_character: List of characters.
+            genshin_character_constellations: List of minimum constellations on characters.
+            genshin_character_constellations_max: List of maximum constellations on characters.
+            genshin_weapon: List of weapons.
+            genshin_char_min: Minimum number of characters.
+            genshin_char_max: Maximum number of characters.
+            genshin_legendary_min: Minimum number of legendary characters.
+            genshin_legendary_max: Maximum number of legendary characters.
+            genshin_level_min: Minimum level.
+            genshin_level_max: Maximum level.
+            genshin_legendary_weapon_min: Minimum number of legendary weapon characters.
+            genshin_legendary_weapon_max: Maximum number of legendary weapon characters.
+            constellations_min: Minimum number of constellations on legendary characters.
+            constellations_max: Maximum number of constellations on legendary characters.
+            genshin_achievement_min: Minimum number of achievements.
+            genshin_achievement_max: Maximum number of achievements.
+            genshin_currency_min: Minimum number of primogems.
+            genshin_currency_max: Maximum number of primogems.
+            honkai_character: List of characters.
+            honkai_character_eidolons: List of minimum eidolons on characters.
+            honkai_character_eidolons_max: List of maximum eidolons on characters.
+            honkai_weapon: List of weapons.
+            honkai_char_min: Minimum number of characters.
+            honkai_char_max: Maximum number of characters.
+            honkai_legendary_min: Minimum number of legendary characters.
+            honkai_legendary_max: Maximum number of legendary characters.
+            honkai_level_min: Minimum level.
+            honkai_level_max: Maximum level.
+            honkai_legendary_weapon_min: Minimum number of legendary weapon characters.
+            honkai_legendary_weapon_max: Maximum number of legendary weapon characters.
+            eidolons_min: Minimum number of constellations on Honkai: Star Rail legendary characters.
+            eidolons_max: Maximum number of legendary Honkai: Star Rail weapon characters.
+            honkai_achievement_min: Minimum number of achievements.
+            honkai_achievement_max: Maximum number of achievements.
+            honkai_currency_min: Minimum number of Stellar Jade.
+            honkai_currency_max: Maximum number of Stellar Jade.
+            zenless_character: List of Zenless Zone Zero characters.
+            zenless_character_cinemas: List of minimum cinemas on characters.
+            zenless_character_cinemas_max: List of maximum cinemas on characters.
+            zenless_weapon: List of Zenless Zone Zero weapons.
+            zenless_legendary_min: Minimum number of Zenless Zone Zero legendary characters.
+            zenless_legendary_max: Maximum number of Zenless Zone Zero legendary characters.
+            cinemas_min: Minimum number of cinemas on Zenless Zone Zero characters.
+            cinemas_max: Maximum number of cinemas on Zenless Zone Zero characters.
+            zenless_legendary_weapon_min: Minimum number of legendary Zenless Zone Zero weapon characters.
+            zenless_legendary_weapon_max: Maximum number of legendary Zenless Zone Zero weapon characters.
+            zenless_char_min: Minimum number of Zenless Zone Zero characters.
+            zenless_char_max: Maximum number of Zenless Zone Zero characters.
+            zenless_level_min: Minimum Zenless Zone Zero level.
+            zenless_level_max: Maximum Zenless Zone Zero level.
+            zenless_achievement_min: Minimum count of Zenless Zone Zero achievements.
+            zenless_achievement_max: Maximum count of Zenless Zone Zero achievements.
+            zenless_currency_min: Minimum count of Zenless Zone Zero polychrome.
+            zenless_currency_max: Maximum count of Zenless Zone Zero polychrome.
+            daybreak: Number of days the account has been offline.
+            mihoyo_game: List of miHoYo games the account must have.
+
+        Docs: https://lzt-market.readme.io/reference/categorymihoyo-1
+        """
+        return await self(
+            CategoryMihoyo(
+                page=page,
+                pmin=pmin,
+                pmax=pmax,
+                title=title,
+                order_by=order_by,
+                tag_id=tag_id,
+                not_tag_id=not_tag_id,
+                public_tag_id=public_tag_id,
+                not_public_tag_id=not_public_tag_id,
+                origin=origin,
+                not_origin=not_origin,
+                user_id=user_id,
+                nsb=nsb,
+                sb=sb,
+                nsb_by_me=nsb_by_me,
+                sb_by_me=sb_by_me,
+                currency=currency,
+                email_login_data=email_login_data,
+                email_provider=email_provider,
+                not_email_provider=not_email_provider,
+                email_type=email_type,
+                parse_same_item_ids=parse_same_item_ids,
+                item_domain=item_domain,
+                email=email,
+                ea=ea,
+                region=region,
+                not_region=not_region,
+                genshin_character=genshin_character,
+                genshin_character_constellations=genshin_character_constellations,
+                genshin_character_constellations_max=genshin_character_constellations_max,
+                genshin_weapon=genshin_weapon,
+                genshin_char_min=genshin_char_min,
+                genshin_char_max=genshin_char_max,
+                genshin_legendary_min=genshin_legendary_min,
+                genshin_legendary_max=genshin_legendary_max,
+                genshin_level_min=genshin_level_min,
+                genshin_level_max=genshin_level_max,
+                genshin_legendary_weapon_min=genshin_legendary_weapon_min,
+                genshin_legendary_weapon_max=genshin_legendary_weapon_max,
+                constellations_min=constellations_min,
+                constellations_max=constellations_max,
+                genshin_achievement_min=genshin_achievement_min,
+                genshin_achievement_max=genshin_achievement_max,
+                genshin_currency_min=genshin_currency_min,
+                genshin_currency_max=genshin_currency_max,
+                honkai_character=honkai_character,
+                honkai_character_eidolons=honkai_character_eidolons,
+                honkai_character_eidolons_max=honkai_character_eidolons_max,
+                honkai_weapon=honkai_weapon,
+                honkai_char_min=honkai_char_min,
+                honkai_char_max=honkai_char_max,
+                honkai_legendary_min=honkai_legendary_min,
+                honkai_legendary_max=honkai_legendary_max,
+                honkai_level_min=honkai_level_min,
+                honkai_level_max=honkai_level_max,
+                honkai_legendary_weapon_min=honkai_legendary_weapon_min,
+                honkai_legendary_weapon_max=honkai_legendary_weapon_max,
+                eidolons_min=eidolons_min,
+                eidolons_max=eidolons_max,
+                honkai_achievement_min=honkai_achievement_min,
+                honkai_achievement_max=honkai_achievement_max,
+                honkai_currency_min=honkai_currency_min,
+                honkai_currency_max=honkai_currency_max,
+                zenless_character=zenless_character,
+                zenless_character_cinemas=zenless_character_cinemas,
+                zenless_character_cinemas_max=zenless_character_cinemas_max,
+                zenless_weapon=zenless_weapon,
+                zenless_legendary_min=zenless_legendary_min,
+                zenless_legendary_max=zenless_legendary_max,
+                cinemas_min=cinemas_min,
+                cinemas_max=cinemas_max,
+                zenless_legendary_weapon_min=zenless_legendary_weapon_min,
+                zenless_legendary_weapon_max=zenless_legendary_weapon_max,
+                zenless_char_min=zenless_char_min,
+                zenless_char_max=zenless_char_max,
+                zenless_level_min=zenless_level_min,
+                zenless_level_max=zenless_level_max,
+                zenless_achievement_min=zenless_achievement_min,
+                zenless_achievement_max=zenless_achievement_max,
+                zenless_currency_min=zenless_currency_min,
+                zenless_currency_max=zenless_currency_max,
+                daybreak=daybreak,
+                mihoyo_game=mihoyo_game,
+            )
         )
 
     async def category_minecraft(
@@ -3292,8 +3639,6 @@ class GeneratedMarketFacade:
         hypixel_ban_parsed: Tristate | None = None,
         minecoins_min: int | None = None,
         minecoins_max: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> CategoryResponse[MinecraftItem]:
         """Generated by forge — DO NOT EDIT. Minecraft.
         Sourced from the official OpenAPI spec (readme.io).
@@ -3417,8 +3762,137 @@ class GeneratedMarketFacade:
                 hypixel_ban_parsed=hypixel_ban_parsed,
                 minecoins_min=minecoins_min,
                 minecoins_max=minecoins_max,
-            ),
-            request_options=request_options,
+            )
+        )
+
+    async def category_onlyfans(
+        self,
+        page: int | None = None,
+        pmin: float | None = None,
+        pmax: float | None = None,
+        title: str | None = None,
+        order_by: OrderBy | None = None,
+        tag_id: tuple[int, ...] | None = None,
+        not_tag_id: tuple[int, ...] | None = None,
+        public_tag_id: tuple[int, ...] | None = None,
+        not_public_tag_id: tuple[int, ...] | None = None,
+        origin: Origin | None = None,
+        not_origin: tuple[NotOrigin, ...] | None = None,
+        user_id: int | None = None,
+        nsb: bool | None = None,
+        sb: bool | None = None,
+        nsb_by_me: bool | None = None,
+        sb_by_me: bool | None = None,
+        currency: Currency | None = None,
+        email_login_data: bool | None = None,
+        email_provider: tuple[EmailProvider, ...] | None = None,
+        not_email_provider: NotEmailProvider | None = None,
+        parse_same_item_ids: bool | None = None,
+        creator: tuple[str, ...] | None = None,
+        subs_min: int | None = None,
+        subs_max: int | None = None,
+        subscribers_min: int | None = None,
+        subscribers_max: int | None = None,
+        posts_min: int | None = None,
+        posts_max: int | None = None,
+        balance_min: int | None = None,
+        balance_max: int | None = None,
+        kyc_verified: Tristate | None = None,
+        payout_approved: Tristate | None = None,
+        age_verified: Tristate | None = None,
+        card_verified: Tristate | None = None,
+        has_card: Tristate | None = None,
+        transactions: Tristate | None = None,
+        reg: int | None = None,
+        reg_period: RegPeriod | None = None,
+    ) -> CategoryOnlyfansResponse:
+        """Generated by forge — DO NOT EDIT. OnlyFans.
+        Sourced from the official OpenAPI spec (readme.io).
+        Displays a list of accounts in a specific category according to your parameters.
+
+        Args:
+            page: The number of the page to display results from.
+            pmin: Minimal price of account (Inclusive).
+            pmax: Maximum price of account (Inclusive).
+            title: The word or words contained in the account title.
+            order_by: Order by.
+            tag_id: List of tag ids (Tag list is available via **GET /me**).
+            not_tag_id: List of tag ids that won't be included (Tag list is available via **GET /me**).
+            public_tag_id: List of tag ids (Tag list is available via **GET /me**).
+            not_public_tag_id: List of tag ids that won't be included (Tag list is available via **GET /me**).
+            origin: List of account origins.
+            not_origin: List of account origins that won't be included.
+            user_id: Search accounts of user.
+            nsb: Not sold before.
+            sb: Sold before.
+            nsb_by_me: Not sold by me before.
+            sb_by_me: Sold by me before.
+            currency: Currency in which the cost of the account will be searched.
+            email_login_data: Has email login data.
+            email_provider: Email provider.
+            not_email_provider: Email provider.
+            parse_same_item_ids: Parse same item ids.
+            creator: List of subscribed creator ids.
+            subs_min: Minimum count of active paid subscriptions.
+            subs_max: Maximum count of active paid subscriptions.
+            subscribers_min: Minimum count of own subscribers.
+            subscribers_max: Maximum count of own subscribers.
+            posts_min: Minimum count of own posts.
+            posts_max: Maximum count of own posts.
+            balance_min: Minimum credit balance.
+            balance_max: Maximum credit balance.
+            kyc_verified: Identity verification passed.
+            payout_approved: Payout legal approve passed.
+            age_verified: Age verification passed.
+            card_verified: Payment card verified.
+            has_card: Has payment card attached.
+            transactions: Has transactions.
+            reg: How old is the account.
+            reg_period: In what notation is time measured.
+
+        Docs: https://lzt-market.readme.io/reference/categoryonlyfans
+        """
+        return await self(
+            CategoryOnlyfans(
+                page=page,
+                pmin=pmin,
+                pmax=pmax,
+                title=title,
+                order_by=order_by,
+                tag_id=tag_id,
+                not_tag_id=not_tag_id,
+                public_tag_id=public_tag_id,
+                not_public_tag_id=not_public_tag_id,
+                origin=origin,
+                not_origin=not_origin,
+                user_id=user_id,
+                nsb=nsb,
+                sb=sb,
+                nsb_by_me=nsb_by_me,
+                sb_by_me=sb_by_me,
+                currency=currency,
+                email_login_data=email_login_data,
+                email_provider=email_provider,
+                not_email_provider=not_email_provider,
+                parse_same_item_ids=parse_same_item_ids,
+                creator=creator,
+                subs_min=subs_min,
+                subs_max=subs_max,
+                subscribers_min=subscribers_min,
+                subscribers_max=subscribers_max,
+                posts_min=posts_min,
+                posts_max=posts_max,
+                balance_min=balance_min,
+                balance_max=balance_max,
+                kyc_verified=kyc_verified,
+                payout_approved=payout_approved,
+                age_verified=age_verified,
+                card_verified=card_verified,
+                has_card=has_card,
+                transactions=transactions,
+                reg=reg,
+                reg_period=reg_period,
+            )
         )
 
     async def category_riot(
@@ -3446,12 +3920,12 @@ class GeneratedMarketFacade:
         parse_same_item_ids: bool | None = None,
         email_type: tuple[EmailType, ...] | None = None,
         item_domain: str | None = None,
-        rmin: int | None = None,
-        rmax: int | None = None,
-        last_rmin: int | None = None,
-        last_rmax: int | None = None,
-        previous_rmin: int | None = None,
-        previous_rmax: int | None = None,
+        rmin: Rmin | None = None,
+        rmax: Rmax | None = None,
+        last_rmin: LastRmin | None = None,
+        last_rmax: LastRmax | None = None,
+        previous_rmin: PreviousRmin | None = None,
+        previous_rmax: PreviousRmax | None = None,
         weaponSkin: tuple[str, ...] | None = None,
         buddy: tuple[str, ...] | None = None,
         agent: tuple[str, ...] | None = None,
@@ -3501,8 +3975,7 @@ class GeneratedMarketFacade:
         fa_min: int | None = None,
         fa_max: int | None = None,
         lol_rank: tuple[LolRank, ...] | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        riot_game: tuple[RiotGame, ...] | None = None,
     ) -> CategoryResponse[RiotItem]:
         """Generated by forge — DO NOT EDIT. Riot.
         Sourced from the official OpenAPI spec (readme.io).
@@ -3587,6 +4060,7 @@ class GeneratedMarketFacade:
             fa_min: Minimum number of Valorant free agents.
             fa_max: Maximum number of Valorant free agents.
             lol_rank: List of allowed ranks in LoL.
+            riot_game: List of Riot games the account must have.
 
         Docs: https://lzt-market.readme.io/reference/categoryriot
         """
@@ -3670,8 +4144,8 @@ class GeneratedMarketFacade:
                 fa_min=fa_min,
                 fa_max=fa_max,
                 lol_rank=lol_rank,
-            ),
-            request_options=request_options,
+                riot_game=riot_game,
+            )
         )
 
     async def category_roblox(
@@ -3737,8 +4211,6 @@ class GeneratedMarketFacade:
         game_donation: tuple[str, ...] | None = None,
         donation_total: dict[str, Any] | None = None,
         donation_total_max: dict[str, Any] | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> CategoryResponse[RobloxItem]:
         """Generated by forge — DO NOT EDIT. Roblox.
         Sourced from the official OpenAPI spec (readme.io).
@@ -3872,8 +4344,7 @@ class GeneratedMarketFacade:
                 game_donation=game_donation,
                 donation_total=donation_total,
                 donation_total_max=donation_total_max,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def category_social_club(
@@ -3907,8 +4378,6 @@ class GeneratedMarketFacade:
         bank_cash_min: int | None = None,
         bank_cash_max: int | None = None,
         game: tuple[str, ...] | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> CategoryResponse[SocialClubItem]:
         """Generated by forge — DO NOT EDIT. Social Club.
         Sourced from the official OpenAPI spec (readme.io).
@@ -3978,8 +4447,7 @@ class GeneratedMarketFacade:
                 bank_cash_min=bank_cash_min,
                 bank_cash_max=bank_cash_max,
                 game=game,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def category_steam(
@@ -4023,15 +4491,13 @@ class GeneratedMarketFacade:
         reg_period: RegPeriod | None = None,
         lmin: int | None = None,
         lmax: int | None = None,
-        rmin: int | None = None,
-        rmax: int | None = None,
-        wingman_rmin: int | None = None,
-        wingman_rmax: int | None = None,
+        wingman_rmin: WingmanRmin | None = None,
+        wingman_rmax: WingmanRmax | None = None,
         no_vac: bool | None = None,
         mm_ban: Tristate | None = None,
         balance_min: int | None = None,
         balance_max: int | None = None,
-        inv_game: int | None = None,
+        inv_game: InvGame | None = None,
         inv_min: float | None = None,
         inv_max: float | None = None,
         friends_min: int | None = None,
@@ -4086,9 +4552,9 @@ class GeneratedMarketFacade:
         has_activated_keys: Tristate | None = None,
         elo_min: int | None = None,
         elo_max: int | None = None,
-        cs2_map_rank: int | None = None,
-        cs2_map_rmin: int | None = None,
-        cs2_map_rmax: int | None = None,
+        cs2_map_rank: Cs2MapRank | None = None,
+        cs2_map_rmin: Cs2MapRmin | None = None,
+        cs2_map_rmax: Cs2MapRmax | None = None,
         has_faceit: Tristate | None = None,
         faceit_csgo_lvl_min: int | None = None,
         faceit_csgo_lvl_max: int | None = None,
@@ -4110,8 +4576,12 @@ class GeneratedMarketFacade:
         pending_balance_max: int | None = None,
         d2_last_match_date_later: int | None = None,
         d2_last_match_date_later_period: D2LastMatchDateLaterPeriod | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        d2_low_priority_min: int | None = None,
+        d2_low_priority_max: int | None = None,
+        d2_low_priority: Tristate | None = None,
+        d2_ranked: Tristate | None = None,
+        spend_min: int | None = None,
+        spend_max: int | None = None,
     ) -> CategoryResponse[SteamItem]:
         """Generated by forge — DO NOT EDIT. Steam.
         Sourced from the official OpenAPI spec (readme.io).
@@ -4157,8 +4627,6 @@ class GeneratedMarketFacade:
             reg_period: In what notation is time measured.
             lmin: Minimum level.
             lmax: Maximum level.
-            rmin: Minimum rank in CS2 Matchmaking.
-            rmax: Maximum rank in CS2 Matchmaking.
             wingman_rmin: Minimum rank in CS2 Wingman.
             wingman_rmax: Maximum rank in CS2 Wingman.
             no_vac: Has no VAC ban.
@@ -4244,6 +4712,12 @@ class GeneratedMarketFacade:
             pending_balance_max: Maximum pending balance.
             d2_last_match_date_later: Last match of Dota 2 is later than.
             d2_last_match_date_later_period: In what notation is time measured.
+            d2_low_priority_min: Minimum number of Dota 2 low priority games.
+            d2_low_priority_max: Maximum number of Dota 2 low priority games.
+            d2_low_priority: Dota 2 low priority is active.
+            d2_ranked: Dota 2 ranked matchmaking unlocked.
+            spend_min: Minimum total spend amount.
+            spend_max: Maximum total spend amount.
 
         Docs: https://lzt-market.readme.io/reference/categorysteam
         """
@@ -4288,8 +4762,6 @@ class GeneratedMarketFacade:
                 reg_period=reg_period,
                 lmin=lmin,
                 lmax=lmax,
-                rmin=rmin,
-                rmax=rmax,
                 wingman_rmin=wingman_rmin,
                 wingman_rmax=wingman_rmax,
                 no_vac=no_vac,
@@ -4375,8 +4847,13 @@ class GeneratedMarketFacade:
                 pending_balance_max=pending_balance_max,
                 d2_last_match_date_later=d2_last_match_date_later,
                 d2_last_match_date_later_period=d2_last_match_date_later_period,
-            ),
-            request_options=request_options,
+                d2_low_priority_min=d2_low_priority_min,
+                d2_low_priority_max=d2_low_priority_max,
+                d2_low_priority=d2_low_priority,
+                d2_ranked=d2_ranked,
+                spend_min=spend_min,
+                spend_max=spend_max,
+            )
         )
 
     async def category_supercell(
@@ -4472,8 +4949,11 @@ class GeneratedMarketFacade:
         royale_league_trophies_max: int | None = None,
         royale_league_number_min: int | None = None,
         royale_league_number_max: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        supercell_game: tuple[SupercellGame, ...] | None = None,
+        prime_count_min: int | None = None,
+        prime_count_max: int | None = None,
+        royale_collection_level_min: int | None = None,
+        royale_collection_level_max: int | None = None,
     ) -> CategoryResponse[SupercellItem]:
         """Generated by forge — DO NOT EDIT. Supercell.
         Sourced from the official OpenAPI spec (readme.io).
@@ -4571,6 +5051,11 @@ class GeneratedMarketFacade:
             royale_league_trophies_max: Maximum league trophies in Clash Royale.
             royale_league_number_min: Minimum league number in Clash Royale.
             royale_league_number_max: Maximum league number in Clash Royale.
+            supercell_game: List of Supercell games the account must have.
+            prime_count_min: Minimum number of primes (prestiges) on the account.
+            prime_count_max: Maximum number of primes (prestiges) on the account.
+            royale_collection_level_min: Minimum Collection Level in Clash Royale.
+            royale_collection_level_max: Maximum Collection Level in Clash Royale.
 
         Docs: https://lzt-market.readme.io/reference/categorysupercell
         """
@@ -4667,8 +5152,12 @@ class GeneratedMarketFacade:
                 royale_league_trophies_max=royale_league_trophies_max,
                 royale_league_number_min=royale_league_number_min,
                 royale_league_number_max=royale_league_number_max,
-            ),
-            request_options=request_options,
+                supercell_game=supercell_game,
+                prime_count_min=prime_count_min,
+                prime_count_max=prime_count_max,
+                royale_collection_level_min=royale_collection_level_min,
+                royale_collection_level_max=royale_collection_level_max,
+            )
         )
 
     async def category_telegram(
@@ -4742,8 +5231,8 @@ class GeneratedMarketFacade:
         max_bot_active_users: int | None = None,
         min_stars_rating_level: int | None = None,
         max_stars_rating_level: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        min_gram: int | None = None,
+        max_gram: int | None = None,
     ) -> CategoryResponse[TelegramItem]:
         """Generated by forge — DO NOT EDIT. Telegram.
         Sourced from the official OpenAPI spec (readme.io).
@@ -4819,6 +5308,8 @@ class GeneratedMarketFacade:
             max_bot_active_users: Maximum active users in bot.
             min_stars_rating_level: Minimum Telegram Stars rating level.
             max_stars_rating_level: Maximum Telegram Stars rating level.
+            min_gram: Minimum number of Telegram GRAM.
+            max_gram: Maximum number of Telegram GRAM.
 
         Docs: https://lzt-market.readme.io/reference/categorytelegram
         """
@@ -4893,8 +5384,9 @@ class GeneratedMarketFacade:
                 max_bot_active_users=max_bot_active_users,
                 min_stars_rating_level=min_stars_rating_level,
                 max_stars_rating_level=max_stars_rating_level,
-            ),
-            request_options=request_options,
+                min_gram=min_gram,
+                max_gram=max_gram,
+            )
         )
 
     async def category_tik_tok(
@@ -4938,8 +5430,6 @@ class GeneratedMarketFacade:
         email: Tristate | None = None,
         can_stream: Tristate | None = None,
         can_stream_studio: Tristate | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> CategoryResponse[TikTokItem]:
         """Generated by forge — DO NOT EDIT. TikTok.
         Sourced from the official OpenAPI spec (readme.io).
@@ -5029,8 +5519,7 @@ class GeneratedMarketFacade:
                 email=email,
                 can_stream=can_stream,
                 can_stream_studio=can_stream_studio,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def category_uplay(
@@ -5069,8 +5558,8 @@ class GeneratedMarketFacade:
         subscription_period: SubscriptionPeriod | None = None,
         r6_level_min: int | None = None,
         r6_level_max: int | None = None,
-        r6_rank_min: int | None = None,
-        r6_rank_max: int | None = None,
+        r6_rank_min: R6RankMin | None = None,
+        r6_rank_max: R6RankMax | None = None,
         r6_operators_min: int | None = None,
         r6_operators_max: int | None = None,
         r6_ban: Tristate | None = None,
@@ -5086,8 +5575,6 @@ class GeneratedMarketFacade:
         transactions: Tristate | None = None,
         reg: int | None = None,
         reg_period: RegPeriod | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> CategoryResponse[UplayItem]:
         """Generated by forge — DO NOT EDIT. Uplay.
         Sourced from the official OpenAPI spec (readme.io).
@@ -5201,8 +5688,7 @@ class GeneratedMarketFacade:
                 transactions=transactions,
                 reg=reg,
                 reg_period=reg_period,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def category_vpn(
@@ -5232,8 +5718,6 @@ class GeneratedMarketFacade:
         subscription_length: int | None = None,
         subscription_period: SubscriptionPeriod | None = None,
         autorenewal: Tristate | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> CategoryResponse[VpnItem]:
         """Generated by forge — DO NOT EDIT. VPN.
         Sourced from the official OpenAPI spec (readme.io).
@@ -5295,8 +5779,7 @@ class GeneratedMarketFacade:
                 subscription_length=subscription_length,
                 subscription_period=subscription_period,
                 autorenewal=autorenewal,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def category_warface(
@@ -5332,8 +5815,6 @@ class GeneratedMarketFacade:
         kredits_max: int | None = None,
         total_kredits_min: int | None = None,
         total_kredits_max: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> CategoryResponse[WarfaceItem]:
         """Generated by forge — DO NOT EDIT. Warface.
         Sourced from the official OpenAPI spec (readme.io).
@@ -5407,41 +5888,559 @@ class GeneratedMarketFacade:
                 kredits_max=kredits_max,
                 total_kredits_min=total_kredits_min,
                 total_kredits_max=total_kredits_max,
-            ),
-            request_options=request_options,
+            )
         )
 
-    async def custom_discounts_get(
-        self, *, request_options: RequestOptions | None = None
-    ) -> CustomDiscountsGetResponse:
+    async def category_wot(
+        self,
+        page: int | None = None,
+        pmin: float | None = None,
+        pmax: float | None = None,
+        title: str | None = None,
+        order_by: OrderBy | None = None,
+        tag_id: tuple[int, ...] | None = None,
+        not_tag_id: tuple[int, ...] | None = None,
+        public_tag_id: tuple[int, ...] | None = None,
+        not_public_tag_id: tuple[int, ...] | None = None,
+        origin: Origin | None = None,
+        not_origin: tuple[NotOrigin, ...] | None = None,
+        user_id: int | None = None,
+        nsb: bool | None = None,
+        sb: bool | None = None,
+        nsb_by_me: bool | None = None,
+        sb_by_me: bool | None = None,
+        currency: Currency | None = None,
+        email_login_data: bool | None = None,
+        email_provider: tuple[EmailProvider, ...] | None = None,
+        not_email_provider: NotEmailProvider | None = None,
+        parse_same_item_ids: bool | None = None,
+        email_type: tuple[EmailType, ...] | None = None,
+        item_domain: str | None = None,
+        tel: Tristate | None = None,
+        daybreak: int | None = None,
+        battles_min: int | None = None,
+        battles_max: int | None = None,
+        gold_min: int | None = None,
+        gold_max: int | None = None,
+        silver_min: int | None = None,
+        silver_max: int | None = None,
+        top_min: int | None = None,
+        top_max: int | None = None,
+        prem_min: int | None = None,
+        prem_max: int | None = None,
+        top_prem_min: int | None = None,
+        top_prem_max: int | None = None,
+        win_pmin: int | None = None,
+        win_pmax: int | None = None,
+        tank: tuple[int, ...] | None = None,
+        region: tuple[Region, ...] | None = None,
+        not_region: tuple[NotRegion, ...] | None = None,
+        premium: Tristate | None = None,
+        premium_expiration: int | None = None,
+        premium_expiration_period: PremiumExpirationPeriod | None = None,
+        clan: Tristate | None = None,
+        clan_role: tuple[ClanRole, ...] | None = None,
+        not_clan_role: tuple[NotClanRole, ...] | None = None,
+        clan_gold_min: int | None = None,
+        clan_gold_max: int | None = None,
+        clan_crystal_min: int | None = None,
+        clan_crystal_max: int | None = None,
+        country: tuple[str, ...] | None = None,
+        not_country: tuple[str, ...] | None = None,
+        clan_members_min: int | None = None,
+        clan_members_max: int | None = None,
+    ) -> CategoryResponse[
+        CategoryWotItem2[
+            ItemWotTopPremiumTank,
+            ItemWotTopPremiumTank,
+            ItemWotTopPremiumTank,
+            ItemWotTopPremiumTank,
+        ]
+    ]:
+        """Generated by forge — DO NOT EDIT. World of Tanks.
+        Sourced from the official OpenAPI spec (readme.io).
+        Displays a list of accounts in a specific category according to your parameters.
+
+        Args:
+            page: The number of the page to display results from.
+            pmin: Minimal price of account (Inclusive).
+            pmax: Maximum price of account (Inclusive).
+            title: The word or words contained in the account title.
+            order_by: Order by.
+            tag_id: List of tag ids (Tag list is available via **GET /me**).
+            not_tag_id: List of tag ids that won't be included (Tag list is available via **GET /me**).
+            public_tag_id: List of tag ids (Tag list is available via **GET /me**).
+            not_public_tag_id: List of tag ids that won't be included (Tag list is available via **GET /me**).
+            origin: List of account origins.
+            not_origin: List of account origins that won't be included.
+            user_id: Search accounts of user.
+            nsb: Not sold before.
+            sb: Sold before.
+            nsb_by_me: Not sold by me before.
+            sb_by_me: Sold by me before.
+            currency: Currency in which the cost of the account will be searched.
+            email_login_data: Has email login data.
+            email_provider: Email provider.
+            not_email_provider: Email provider.
+            parse_same_item_ids: Parse same item ids.
+            email_type: Email type.
+            item_domain: Domain of native/autoreg email.
+            tel: Has linked mobile.
+            daybreak: Number of days the account has been offline.
+            battles_min: Minimum number of battles.
+            battles_max: Maximum number of battles.
+            gold_min: Minimum number of gold.
+            gold_max: Maximum number of gold.
+            silver_min: Minimum number of silver.
+            silver_max: Maximum number of silver.
+            top_min: Minimum number of top tanks.
+            top_max: Maximum number of top tanks.
+            prem_min: Minimum number of premium tanks.
+            prem_max: Maximum number of premium tanks.
+            top_prem_min: Minimum number of top premium tanks.
+            top_prem_max: Maximum number of top premium tanks.
+            win_pmin: Minimum number of wins.
+            win_pmax: Maximum number of wins.
+            tank: List of tanks.
+            region: Region.
+            not_region: Exclude region.
+            premium: Has a premium subscription.
+            premium_expiration: When premium subscription will be active
+            premium_expiration_period: In what notation is time measured
+            clan: Has clan.
+            clan_role: List of allowed clan role.
+            not_clan_role: List of disallowed clan role.
+            clan_gold_min: Minimum number of gold in clan treasure.
+            clan_gold_max: Maximum number of gold in clan treasure.
+            clan_crystal_min: Minimum number of crystal in clan treasure.
+            clan_crystal_max: Maximum number of crystal in clan treasure.
+            country: List of allowed countries.
+            not_country: List of disallowed countries.
+            clan_members_min: Minimum number of members in clan.
+            clan_members_max: Maximum number of members in clan.
+
+        Docs: https://lzt-market.readme.io/reference/categorywot-1
+        """
+        return await self(
+            CategoryWot(
+                page=page,
+                pmin=pmin,
+                pmax=pmax,
+                title=title,
+                order_by=order_by,
+                tag_id=tag_id,
+                not_tag_id=not_tag_id,
+                public_tag_id=public_tag_id,
+                not_public_tag_id=not_public_tag_id,
+                origin=origin,
+                not_origin=not_origin,
+                user_id=user_id,
+                nsb=nsb,
+                sb=sb,
+                nsb_by_me=nsb_by_me,
+                sb_by_me=sb_by_me,
+                currency=currency,
+                email_login_data=email_login_data,
+                email_provider=email_provider,
+                not_email_provider=not_email_provider,
+                parse_same_item_ids=parse_same_item_ids,
+                email_type=email_type,
+                item_domain=item_domain,
+                tel=tel,
+                daybreak=daybreak,
+                battles_min=battles_min,
+                battles_max=battles_max,
+                gold_min=gold_min,
+                gold_max=gold_max,
+                silver_min=silver_min,
+                silver_max=silver_max,
+                top_min=top_min,
+                top_max=top_max,
+                prem_min=prem_min,
+                prem_max=prem_max,
+                top_prem_min=top_prem_min,
+                top_prem_max=top_prem_max,
+                win_pmin=win_pmin,
+                win_pmax=win_pmax,
+                tank=tank,
+                region=region,
+                not_region=not_region,
+                premium=premium,
+                premium_expiration=premium_expiration,
+                premium_expiration_period=premium_expiration_period,
+                clan=clan,
+                clan_role=clan_role,
+                not_clan_role=not_clan_role,
+                clan_gold_min=clan_gold_min,
+                clan_gold_max=clan_gold_max,
+                clan_crystal_min=clan_crystal_min,
+                clan_crystal_max=clan_crystal_max,
+                country=country,
+                not_country=not_country,
+                clan_members_min=clan_members_min,
+                clan_members_max=clan_members_max,
+            )
+        )
+
+    async def category_wot_blitz(
+        self,
+        page: int | None = None,
+        pmin: float | None = None,
+        pmax: float | None = None,
+        title: str | None = None,
+        order_by: OrderBy | None = None,
+        tag_id: tuple[int, ...] | None = None,
+        not_tag_id: tuple[int, ...] | None = None,
+        public_tag_id: tuple[int, ...] | None = None,
+        not_public_tag_id: tuple[int, ...] | None = None,
+        origin: Origin | None = None,
+        not_origin: tuple[NotOrigin, ...] | None = None,
+        user_id: int | None = None,
+        nsb: bool | None = None,
+        sb: bool | None = None,
+        nsb_by_me: bool | None = None,
+        sb_by_me: bool | None = None,
+        currency: Currency | None = None,
+        email_login_data: bool | None = None,
+        email_provider: tuple[EmailProvider, ...] | None = None,
+        not_email_provider: NotEmailProvider | None = None,
+        parse_same_item_ids: bool | None = None,
+        email_type: tuple[EmailType, ...] | None = None,
+        item_domain: str | None = None,
+        tel: Tristate | None = None,
+        daybreak: int | None = None,
+        battles_min: int | None = None,
+        battles_max: int | None = None,
+        gold_min: int | None = None,
+        gold_max: int | None = None,
+        silver_min: int | None = None,
+        silver_max: int | None = None,
+        top_min: int | None = None,
+        top_max: int | None = None,
+        prem_min: int | None = None,
+        prem_max: int | None = None,
+        top_prem_min: int | None = None,
+        top_prem_max: int | None = None,
+        win_pmin: int | None = None,
+        win_pmax: int | None = None,
+        tank: tuple[int, ...] | None = None,
+        region: tuple[Region, ...] | None = None,
+        not_region: tuple[NotRegion, ...] | None = None,
+        premium: Tristate | None = None,
+        premium_expiration: int | None = None,
+        premium_expiration_period: PremiumExpirationPeriod | None = None,
+        clan: Tristate | None = None,
+        clan_role: tuple[ClanRole, ...] | None = None,
+        not_clan_role: tuple[NotClanRole, ...] | None = None,
+        clan_gold_min: int | None = None,
+        clan_gold_max: int | None = None,
+        clan_crystal_min: int | None = None,
+        clan_crystal_max: int | None = None,
+        country: tuple[str, ...] | None = None,
+        not_country: tuple[str, ...] | None = None,
+        clan_members_min: int | None = None,
+        clan_members_max: int | None = None,
+    ) -> CategoryResponse[
+        CategoryWotItem2[
+            BlitzWotTopPremiumTank,
+            BlitzWotTopPremiumTank,
+            BlitzWotTopPremiumTank,
+            BlitzWotTopPremiumTank,
+        ]
+    ]:
+        """Generated by forge — DO NOT EDIT. WoT Blitz.
+        Sourced from the official OpenAPI spec (readme.io).
+        Displays a list of accounts in a specific category according to your parameters.
+
+        Args:
+            page: The number of the page to display results from.
+            pmin: Minimal price of account (Inclusive).
+            pmax: Maximum price of account (Inclusive).
+            title: The word or words contained in the account title.
+            order_by: Order by.
+            tag_id: List of tag ids (Tag list is available via **GET /me**).
+            not_tag_id: List of tag ids that won't be included (Tag list is available via **GET /me**).
+            public_tag_id: List of tag ids (Tag list is available via **GET /me**).
+            not_public_tag_id: List of tag ids that won't be included (Tag list is available via **GET /me**).
+            origin: List of account origins.
+            not_origin: List of account origins that won't be included.
+            user_id: Search accounts of user.
+            nsb: Not sold before.
+            sb: Sold before.
+            nsb_by_me: Not sold by me before.
+            sb_by_me: Sold by me before.
+            currency: Currency in which the cost of the account will be searched.
+            email_login_data: Has email login data.
+            email_provider: Email provider.
+            not_email_provider: Email provider.
+            parse_same_item_ids: Parse same item ids.
+            email_type: Email type.
+            item_domain: Domain of native/autoreg email.
+            tel: Has linked mobile.
+            daybreak: Number of days the account has been offline.
+            battles_min: Minimum number of battles.
+            battles_max: Maximum number of battles.
+            gold_min: Minimum number of gold.
+            gold_max: Maximum number of gold.
+            silver_min: Minimum number of silver.
+            silver_max: Maximum number of silver.
+            top_min: Minimum number of top tanks.
+            top_max: Maximum number of top tanks.
+            prem_min: Minimum number of premium tanks.
+            prem_max: Maximum number of premium tanks.
+            top_prem_min: Minimum number of top premium tanks.
+            top_prem_max: Maximum number of top premium tanks.
+            win_pmin: Minimum number of wins.
+            win_pmax: Maximum number of wins.
+            tank: List of tanks.
+            region: Region.
+            not_region: Exclude region.
+            premium: Has a premium subscription.
+            premium_expiration: When premium subscription will be active
+            premium_expiration_period: In what notation is time measured
+            clan: Has clan.
+            clan_role: List of allowed clan role.
+            not_clan_role: List of disallowed clan role.
+            clan_gold_min: Minimum number of gold in clan treasure.
+            clan_gold_max: Maximum number of gold in clan treasure.
+            clan_crystal_min: Minimum number of crystal in clan treasure.
+            clan_crystal_max: Maximum number of crystal in clan treasure.
+            country: List of allowed countries.
+            not_country: List of disallowed countries.
+            clan_members_min: Minimum number of members in clan.
+            clan_members_max: Maximum number of members in clan.
+
+        Docs: https://lzt-market.readme.io/reference/categorywotblitz-1
+        """
+        return await self(
+            CategoryWotBlitz(
+                page=page,
+                pmin=pmin,
+                pmax=pmax,
+                title=title,
+                order_by=order_by,
+                tag_id=tag_id,
+                not_tag_id=not_tag_id,
+                public_tag_id=public_tag_id,
+                not_public_tag_id=not_public_tag_id,
+                origin=origin,
+                not_origin=not_origin,
+                user_id=user_id,
+                nsb=nsb,
+                sb=sb,
+                nsb_by_me=nsb_by_me,
+                sb_by_me=sb_by_me,
+                currency=currency,
+                email_login_data=email_login_data,
+                email_provider=email_provider,
+                not_email_provider=not_email_provider,
+                parse_same_item_ids=parse_same_item_ids,
+                email_type=email_type,
+                item_domain=item_domain,
+                tel=tel,
+                daybreak=daybreak,
+                battles_min=battles_min,
+                battles_max=battles_max,
+                gold_min=gold_min,
+                gold_max=gold_max,
+                silver_min=silver_min,
+                silver_max=silver_max,
+                top_min=top_min,
+                top_max=top_max,
+                prem_min=prem_min,
+                prem_max=prem_max,
+                top_prem_min=top_prem_min,
+                top_prem_max=top_prem_max,
+                win_pmin=win_pmin,
+                win_pmax=win_pmax,
+                tank=tank,
+                region=region,
+                not_region=not_region,
+                premium=premium,
+                premium_expiration=premium_expiration,
+                premium_expiration_period=premium_expiration_period,
+                clan=clan,
+                clan_role=clan_role,
+                not_clan_role=not_clan_role,
+                clan_gold_min=clan_gold_min,
+                clan_gold_max=clan_gold_max,
+                clan_crystal_min=clan_crystal_min,
+                clan_crystal_max=clan_crystal_max,
+                country=country,
+                not_country=not_country,
+                clan_members_min=clan_members_min,
+                clan_members_max=clan_members_max,
+            )
+        )
+
+    async def custom_discounts_create(
+        self,
+        user_id: int,
+        category_id: int,
+        discount_percent: float,
+        min_price: float,
+        max_price: float | None = None,
+        currency: Currency | None = None,
+    ) -> CustomDiscountsCreateResponse:
+        """Generated by forge — DO NOT EDIT. Create Custom Discount.
+        Sourced from the official OpenAPI spec (readme.io).
+        Creates a new custom discount.
+
+        Args:
+            user_id: User ID.
+            discount_percent: Discount percent to apply.
+            min_price: Minimum accounts price for which the discount applies.
+            max_price: Maximum accounts price for which the discount applies.
+
+        Docs: https://lzt-market.readme.io/reference/customdiscountscreate
+        """
+        return await self(
+            CustomDiscountsCreate(
+                user_id=user_id,
+                category_id=category_id,
+                discount_percent=discount_percent,
+                min_price=min_price,
+                max_price=max_price,
+                currency=currency,
+            )
+        )
+
+    async def custom_discounts_delete(self, discount_id: int) -> MarketStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Delete Custom Discount.
+        Sourced from the official OpenAPI spec (readme.io).
+        Delete an existing custom discount.
+
+        Args:
+            discount_id: ID of the discount to delete.
+
+        Docs: https://lzt-market.readme.io/reference/customdiscountsdelete
+        """
+        return await self(CustomDiscountsDelete(discount_id=discount_id))
+
+    async def custom_discounts_edit(
+        self,
+        discount_id: int,
+        discount_percent: float | None = None,
+        min_price: float | None = None,
+        max_price: float | None = None,
+    ) -> MarketDiscountsTotalResponse:
+        """Generated by forge — DO NOT EDIT. Edit Custom Discount.
+        Sourced from the official OpenAPI spec (readme.io).
+        Edit an existing custom discount.
+
+        Args:
+            discount_id: ID of the discount to edit.
+            discount_percent: Discount percent to apply.
+            min_price: Minimum price for which the discount applies.
+            max_price: Maximum price for which the discount applies.
+
+        Docs: https://lzt-market.readme.io/reference/customdiscountsedit
+        """
+        return await self(
+            CustomDiscountsEdit(
+                discount_id=discount_id,
+                discount_percent=discount_percent,
+                min_price=min_price,
+                max_price=max_price,
+            )
+        )
+
+    async def custom_discounts_get(self) -> MarketDiscountsTotalResponse:
         """Generated by forge — DO NOT EDIT. Get Custom Discounts.
         Sourced from the official OpenAPI spec (readme.io).
         Get a list of custom discounts.
 
         Docs: https://lzt-market.readme.io/reference/customdiscountsget
         """
-        return await self(CustomDiscountsGet(), request_options=request_options)
+        return await self(CustomDiscountsGet())
 
-    async def imap_delete(
-        self, domain: str, *, request_options: RequestOptions | None = None
+    async def imap_create(
+        self, domain: str, imap_server: str, port: int, secure: bool
     ) -> MarketStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Create IMAP Configuration.
+        Sourced from the official OpenAPI spec (readme.io).
+        Create an IMAP configuration for a domain.
+
+        Args:
+            domain: Name (domain) of IMAP configuration, required for future IMAP config deletion.
+            imap_server: IMAP server address.
+            port: IMAP server port.
+            secure: Whether to use a secure connection.
+
+        Docs: https://lzt-market.readme.io/reference/imapcreate
+        """
+        return await self(
+            ImapCreate(domain=domain, imap_server=imap_server, port=port, secure=secure)
+        )
+
+    async def imap_delete(self, domain: str) -> MarketStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Delete IMAP Configuration.
         Sourced from the official OpenAPI spec (readme.io).
         Delete an IMAP configuration for a domain.
 
         Args:
-            domain: Domain to delete IMAP configuration for.
+            domain: Name (domain) of IMAP configuration.
 
         Docs: https://lzt-market.readme.io/reference/imapdelete
         """
-        return await self(ImapDelete(domain=domain), request_options=request_options)
+        return await self(ImapDelete(domain=domain))
+
+    async def payments_invoice_create(
+        self,
+        currency: Currency,
+        amount: float,
+        payment_id: str,
+        comment: str,
+        url_success: str,
+        merchant_id: int,
+        url_callback: str | None = None,
+        required_telegram_id: int | None = None,
+        required_telegram_username: str | None = None,
+        lifetime: float | None = None,
+        additional_data: str | None = None,
+        is_test: bool | None = None,
+    ) -> Invoice:
+        """Generated by forge — DO NOT EDIT. Create Invoice.
+        Sourced from the official OpenAPI spec (readme.io).
+        Create invoice.
+        Required scopes:
+        + **invoice**
+
+        Args:
+            currency: Currency that will be used to create the invoice.
+            amount: Invoice amount.
+            payment_id: Payment ID in your system (must be unique within the merchant / invoices).
+            comment: Comment to the invoice.
+            url_success: URL to redirect to after successful payment.
+            merchant_id: Merchant ID.
+            url_callback: Callback url.
+            required_telegram_id: Telegram User ID for which the invoice was created.
+            required_telegram_username: Telegram Username (including @) for which the invoice was created (if any).
+            lifetime: Invoice lifetime.
+            additional_data: Additional information for you.
+            is_test: Create a test invoice.
+
+        Docs: https://lzt-market.readme.io/reference/paymentsinvoicecreate
+        """
+        return await self(
+            PaymentsInvoiceCreate(
+                currency=currency,
+                amount=amount,
+                payment_id=payment_id,
+                comment=comment,
+                url_success=url_success,
+                merchant_id=merchant_id,
+                url_callback=url_callback,
+                required_telegram_id=required_telegram_id,
+                required_telegram_username=required_telegram_username,
+                lifetime=lifetime,
+                additional_data=additional_data,
+                is_test=is_test,
+            )
+        )
 
     async def payments_invoice_get(
-        self,
-        invoice_id: int | None = None,
-        payment_id: str | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        self, invoice_id: int | None = None, payment_id: str | None = None
     ) -> Invoice:
         """Generated by forge — DO NOT EDIT. Get Invoice.
         Sourced from the official OpenAPI spec (readme.io).
@@ -5455,10 +6454,7 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/paymentsinvoiceget
         """
-        return await self(
-            PaymentsInvoiceGet(invoice_id=invoice_id, payment_id=payment_id),
-            request_options=request_options,
-        )
+        return await self(PaymentsInvoiceGet(invoice_id=invoice_id, payment_id=payment_id))
 
     async def payments_invoice_list(
         self,
@@ -5467,8 +6463,6 @@ class GeneratedMarketFacade:
         status: Status | None = None,
         amount: float | None = None,
         merchant_id: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> PaymentsInvoiceListResponse:
         """Generated by forge — DO NOT EDIT. Get Invoice List.
         Sourced from the official OpenAPI spec (readme.io).
@@ -5488,13 +6482,46 @@ class GeneratedMarketFacade:
         return await self(
             PaymentsInvoiceList(
                 page=page, currency=currency, status=status, amount=amount, merchant_id=merchant_id
-            ),
-            request_options=request_options,
+            )
         )
 
-    async def auto_payments_delete(
-        self, auto_payment_id: int, *, request_options: RequestOptions | None = None
-    ) -> MarketStatusMessageResponse:
+    async def auto_payments_create(
+        self,
+        username_receiver: str,
+        day: int,
+        amount: float,
+        secret_answer: str | None = None,
+        currency: Currency | None = None,
+        description: str | None = None,
+    ) -> AutoPaymentsCreateResponse:
+        """Generated by forge — DO NOT EDIT. Create Auto Payment.
+        Sourced from the official OpenAPI spec (readme.io).
+        Creates auto payment.
+        Required scopes:
+        + **payment**
+
+        Args:
+            username_receiver: Username of the payment receiver.
+            day: Day of the month for the payment. (Use "0" for the last day of the month)
+            amount: Amount to be transferred.
+            secret_answer: Secret answer.
+            currency: Currency for the payment.
+            description: Payment description.
+
+        Docs: https://lzt-market.readme.io/reference/autopaymentscreate
+        """
+        return await self(
+            AutoPaymentsCreate(
+                username_receiver=username_receiver,
+                day=day,
+                amount=amount,
+                secret_answer=secret_answer,
+                currency=currency,
+                description=description,
+            )
+        )
+
+    async def auto_payments_delete(self, auto_payment_id: int) -> MarketStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Delete Auto Payment.
         Sourced from the official OpenAPI spec (readme.io).
         Deletes an auto payment.
@@ -5506,13 +6533,9 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/autopaymentsdelete
         """
-        return await self(
-            AutoPaymentsDelete(auto_payment_id=auto_payment_id), request_options=request_options
-        )
+        return await self(AutoPaymentsDelete(auto_payment_id=auto_payment_id))
 
-    async def auto_payments_list(
-        self, *, request_options: RequestOptions | None = None
-    ) -> dict[str, Any]:
+    async def auto_payments_list(self) -> dict[str, Any]:
         """Generated by forge — DO NOT EDIT. Get Auto Payments.
         Sourced from the official OpenAPI spec (readme.io).
         Get auto payments list.
@@ -5521,11 +6544,27 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/autopaymentslist
         """
-        return await self(AutoPaymentsList(), request_options=request_options)
+        return await self(AutoPaymentsList())
 
-    async def payments_cancel(
-        self, payment_id: int, *, request_options: RequestOptions | None = None
-    ) -> MarketStatusMessageResponse:
+    async def payments_balance_exchange(
+        self, from_balance: str, to_balance: str, amount: int
+    ) -> PaymentsBalanceExchangeResponse:
+        """Generated by forge — DO NOT EDIT. Exchange Balance.
+        Sourced from the official OpenAPI spec (readme.io).
+        Transfer funds from one balance to another.
+
+        Args:
+            from_balance: Source balance type
+            to_balance: Target balance type
+            amount: Amount to exchange
+
+        Docs: https://lzt-market.readme.io/reference/paymentsbalanceexchange
+        """
+        return await self(
+            PaymentsBalanceExchange(from_balance=from_balance, to_balance=to_balance, amount=amount)
+        )
+
+    async def payments_cancel(self, payment_id: int) -> MarketStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Cancel Transfer.
         Sourced from the official OpenAPI spec (readme.io).
         Cancels a transfer with a hold that was sent to your account.
@@ -5537,25 +6576,19 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/paymentscancel
         """
-        return await self(PaymentsCancel(payment_id=payment_id), request_options=request_options)
+        return await self(PaymentsCancel(payment_id=payment_id))
 
-    async def payments_currency(
-        self, *, request_options: RequestOptions | None = None
-    ) -> PaymentsCurrencyResponse:
+    async def payments_currency(self) -> PaymentsCurrencyResponse:
         """Generated by forge — DO NOT EDIT. Get Currency.
         Sourced from the official OpenAPI spec (readme.io).
         Get currency list.
 
         Docs: https://lzt-market.readme.io/reference/paymentscurrency
         """
-        return await self(PaymentsCurrency(), request_options=request_options)
+        return await self(PaymentsCurrency())
 
     async def payments_fee(
-        self,
-        currency: Currency,
-        amount: float | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        self, currency: Currency, amount: float | None = None
     ) -> PaymentsFeeResponse:
         """Generated by forge — DO NOT EDIT. Check Transfer Fee.
         Sourced from the official OpenAPI spec (readme.io).
@@ -5569,9 +6602,7 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/paymentsfee
         """
-        return await self(
-            PaymentsFee(currency=currency, amount=amount), request_options=request_options
-        )
+        return await self(PaymentsFee(currency=currency, amount=amount))
 
     async def payments_payout(
         self,
@@ -5581,8 +6612,6 @@ class GeneratedMarketFacade:
         currency: Currency,
         include_fee: bool | None = None,
         extra: dict[str, Any] | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> MarketStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Create Payout.
         Sourced from the official OpenAPI spec (readme.io).
@@ -5598,20 +6627,17 @@ class GeneratedMarketFacade:
                 currency=currency,
                 include_fee=include_fee,
                 extra=extra,
-            ),
-            request_options=request_options,
+            )
         )
 
-    async def payments_payout_services(
-        self, *, request_options: RequestOptions | None = None
-    ) -> list[System]:
+    async def payments_payout_services(self) -> list[System]:
         """Generated by forge — DO NOT EDIT. Get Payout Services.
         Sourced from the official OpenAPI spec (readme.io).
         Get a list of available payout services.
 
         Docs: https://lzt-market.readme.io/reference/paymentspayoutservices
         """
-        return await self(PaymentsPayoutServices(), request_options=request_options)
+        return await self(PaymentsPayoutServices())
 
     async def payments_transfer(
         self,
@@ -5625,8 +6651,6 @@ class GeneratedMarketFacade:
         transfer_hold: bool | None = None,
         hold_length_value: int | None = None,
         hold_length_option: HoldLengthOption | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> MarketStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Transfer Money.
         Sourced from the official OpenAPI spec (readme.io).
@@ -5659,16 +6683,62 @@ class GeneratedMarketFacade:
                 transfer_hold=transfer_hold,
                 hold_length_value=hold_length_value,
                 hold_length_option=hold_length_option,
-            ),
-            request_options=request_options,
+            )
+        )
+
+    async def profile_edit(
+        self,
+        user: dict[str, Any] | None = None,
+        option: dict[str, Any] | None = None,
+        allow_accept_accounts: tuple[str, ...] | None = None,
+        telegram_api_id: str | None = None,
+        telegram_api_hash: str | None = None,
+        telegram_device_model: str | None = None,
+        telegram_system_version: str | None = None,
+        telegram_app_version: str | None = None,
+        telegram_lang_pack: str | None = None,
+        telegram_lang_code: str | None = None,
+        telegram_system_lang_code: str | None = None,
+        clear_telegram_client: bool | None = None,
+    ) -> MarketStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Edit Market Settings.
+        Sourced from the official OpenAPI spec (readme.io).
+        Change settings about your profile on the market.
+
+        Args:
+            allow_accept_accounts: Usernames who can transfer market accounts to you. Separate values with a comma.
+            telegram_api_id: Telegram api id.
+            telegram_api_hash: Telegram api hash.
+            telegram_device_model: Telegram device model.
+            telegram_system_version: Telegram system version.
+            telegram_app_version: Telegram app version.
+            telegram_lang_pack: Telegram lang pack.
+            telegram_lang_code: Telegram lang code.
+            telegram_system_lang_code: Telegram system lang code.
+            clear_telegram_client: Clear Telegram data.
+
+        Docs: https://lzt-market.readme.io/reference/profileedit
+        """
+        return await self(
+            ProfileEdit(
+                user=user,
+                option=option,
+                allow_accept_accounts=allow_accept_accounts,
+                telegram_api_id=telegram_api_id,
+                telegram_api_hash=telegram_api_hash,
+                telegram_device_model=telegram_device_model,
+                telegram_system_version=telegram_system_version,
+                telegram_app_version=telegram_app_version,
+                telegram_lang_pack=telegram_lang_pack,
+                telegram_lang_code=telegram_lang_code,
+                telegram_system_lang_code=telegram_system_lang_code,
+                clear_telegram_client=clear_telegram_client,
+            )
         )
 
     async def profile_get(
-        self,
-        fields_include: tuple[FieldsInclude, ...] | None = None,
-        *,
-        request_options: RequestOptions | None = None,
-    ) -> ProfileGetUser:
+        self, fields_include: tuple[FieldsInclude, ...] | None = None
+    ) -> ToBalance:
         """Generated by forge — DO NOT EDIT. Get Profile.
         Sourced from the official OpenAPI spec (readme.io).
         Displays info about your profile.
@@ -5678,33 +6748,119 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/profileget
         """
+        return await self(ProfileGet(fields_include=fields_include))
+
+    async def proxy_add(
+        self,
+        proxy_ip: str | None = None,
+        proxy_port: int | None = None,
+        proxy_user: str | None = None,
+        proxy_pass: str | None = None,
+        proxy_row: str | None = None,
+    ) -> MarketStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Add Proxy.
+        Sourced from the official OpenAPI spec (readme.io).
+        Add single proxy or proxy list.
+        To add single proxy use this parameters:
+        + **proxy_ip** (required) - proxy ip or host
+        + **proxy_port** (required) - proxy port
+        + **proxy_user** (optional) - proxy username
+        + **proxy_pass** (optional) - proxy password
+        To add proxy list use this parameters:
+        + **proxy_row** (required) - proxy list in String format ip:port:user:pass. Each proxy must be start with new line (use \n separator)
+
+        Args:
+            proxy_ip: Proxy ip or host. Required if **proxy_row** is not specified.
+            proxy_port: Proxy port. Required if **proxy_row** is not specified.
+            proxy_user: Proxy username. Required if **proxy_row** is not specified.
+            proxy_pass: Proxy password. Required if **proxy_row** is not specified.
+            proxy_row: Proxy list in String format ip:port:user:pass. Each proxy must be start with new line (use \r\n separator)
+
+        Docs: https://lzt-market.readme.io/reference/proxyadd
+        """
         return await self(
-            ProfileGet(fields_include=fields_include), request_options=request_options
+            ProxyAdd(
+                proxy_ip=proxy_ip,
+                proxy_port=proxy_port,
+                proxy_user=proxy_user,
+                proxy_pass=proxy_pass,
+                proxy_row=proxy_row,
+            )
         )
 
-    async def proxy_get(self, *, request_options: RequestOptions | None = None) -> list[Proxy]:
+    async def proxy_delete(
+        self, proxy_id: int | None = None, delete_all: bool | None = None
+    ) -> MarketStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Delete Proxy.
+        Sourced from the official OpenAPI spec (readme.io).
+        Delete single or all proxies.
+
+        Args:
+            proxy_id: Id of an existing proxy.
+            delete_all: Delete all proxies.
+
+        Docs: https://lzt-market.readme.io/reference/proxydelete
+        """
+        return await self(ProxyDelete(proxy_id=proxy_id, delete_all=delete_all))
+
+    async def proxy_get(self) -> list[Proxy]:
         """Generated by forge — DO NOT EDIT. Get Proxy.
         Sourced from the official OpenAPI spec (readme.io).
         Gets your proxy list.
 
         Docs: https://lzt-market.readme.io/reference/proxyget
         """
-        return await self(ProxyGet(), request_options=request_options)
+        return await self(ProxyGet())
+
+    async def managing_tags_create(
+        self, title: str, bc: str
+    ) -> MarketTagIdTitleIsDefaultForOwnedAccountsOnlyBcResponse:
+        """Generated by forge — DO NOT EDIT. Create Tag.
+        Sourced from the official OpenAPI spec (readme.io).
+        Creates Tag.
+
+        Args:
+            bc: Background Color
+
+        Docs: https://lzt-market.readme.io/reference/managingtagscreate
+        """
+        return await self(ManagingTagsCreate(title=title, bc=bc))
+
+    async def managing_tags_delete(self, tag_id: int) -> MarketStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Delete Tag.
+        Sourced from the official OpenAPI spec (readme.io).
+        Deletes a tag.
+
+        Docs: https://lzt-market.readme.io/reference/managingtagsdelete
+        """
+        return await self(ManagingTagsDelete(tag_id=tag_id))
+
+    async def managing_tags_edit(
+        self, tag_id: int, title: str, bc: str
+    ) -> MarketTagIdTitleIsDefaultForOwnedAccountsOnlyBcResponse:
+        """Generated by forge — DO NOT EDIT. Update Tag.
+        Sourced from the official OpenAPI spec (readme.io).
+        Updates a specified tag.
+
+        Args:
+            bc: Background Color
+
+        Docs: https://lzt-market.readme.io/reference/managingtagsedit
+        """
+        return await self(ManagingTagsEdit(tag_id=tag_id, title=title, bc=bc))
 
     async def managing_tags_list(
-        self, *, request_options: RequestOptions | None = None
-    ) -> list[Tag]:
+        self,
+    ) -> list[MarketTagIdTitleIsDefaultForOwnedAccountsOnlyBcResponse]:
         """Generated by forge — DO NOT EDIT. Get All Tags.
         Sourced from the official OpenAPI spec (readme.io).
         Returns a list of your tags.
 
         Docs: https://lzt-market.readme.io/reference/managingtagslist
         """
-        return await self(ManagingTagsList(), request_options=request_options)
+        return await self(ManagingTagsList())
 
-    async def managing_tags_order(
-        self, tag_order: tuple[int, ...], *, request_options: RequestOptions | None = None
-    ) -> MarketStatusMessageResponse:
+    async def managing_tags_order(self, tag_order: tuple[int, ...]) -> MarketStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Reorder Tags.
         Sourced from the official OpenAPI spec (readme.io).
         Reorder your tags.
@@ -5715,4 +6871,4 @@ class GeneratedMarketFacade:
 
         Docs: https://lzt-market.readme.io/reference/managingtagsorder
         """
-        return await self(ManagingTagsOrder(tag_order=tag_order), request_options=request_options)
+        return await self(ManagingTagsOrder(tag_order=tag_order))

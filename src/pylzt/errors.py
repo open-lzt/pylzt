@@ -43,8 +43,6 @@ class ErrorCode(StrEnum):
     MIXED_BATCH_API_TARGETS = "mixed_batch_api_targets"
     AMBIGUOUS_PLUGIN = "ambiguous_plugin"
     MEDIA_NOT_BATCHABLE = "media_not_batchable"
-    TOTAL_TIMEOUT = "total_timeout"
-    OPTIONS_NOT_BATCHABLE = "options_not_batchable"
 
 
 def _messages(body: Mapping[str, Any]) -> str:
@@ -201,25 +199,15 @@ class Forbidden(LztError):
     __wire__ = True
     __priority__ = 60
 
-    def __init__(self, reason: str | None = None) -> None:
-        self.reason = reason
+    def __init__(self, scope: str | None = None) -> None:
+        self.scope = scope
         super().__init__(ErrorCode.FORBIDDEN)
-        if reason:
-            # `LztError.__init__` seeds args with the bare code, so an untouched Forbidden prints
-            # as "forbidden" and a log line carries nothing. Put the marketplace's own words in
-            # args too, where repr() and any generic handler will find them.
-            self.args = (ErrorCode.FORBIDDEN.value, reason)
 
     @classmethod
     def check(
         cls, status: int, headers: Mapping[str, str], body: Mapping[str, Any]
     ) -> LztError | None:
-        if status != 403:
-            return None
-        # A bare Forbidden tells an operator nothing, and 403 is the marketplace's answer to a
-        # dozen unrelated situations — lot already sold, purchase requires confirmation, category
-        # closed to this account. The reason is in the body; carry it or the caller has to guess.
-        return cls(_messages(body) or None)
+        return cls(None) if status == 403 else None
 
 
 class NotFound(LztError):
@@ -265,34 +253,6 @@ class TransportError(LztError):
         cls, status: int, headers: Mapping[str, str], body: Mapping[str, Any]
     ) -> LztError | None:
         return cls(status) if status >= 500 else None
-
-
-class TotalTimeoutExceeded(LztError):
-    """`RequestOptions.total_timeout` ran out across the whole attempt chain.
-
-    Distinct from a per-attempt timeout, which surfaces as `TransportError` from the wire and is
-    retryable: this one means the caller's own budget for the entire call — every retry and every
-    backoff sleep between them — is spent, so retrying is exactly what it forbids. Client-side, so
-    `__wire__` stays False and `match()` never returns it.
-    """
-
-    def __init__(self, total_timeout: float, attempts: int) -> None:
-        self.total_timeout = total_timeout
-        self.attempts = attempts
-        super().__init__(ErrorCode.TOTAL_TIMEOUT)
-
-
-class OptionsNotBatchable(LztError):
-    """Per-call options were given to a /batch job.
-
-    N jobs travel in ONE HTTP request, so per-job headers, cookies or timeouts cannot be honoured —
-    there is no per-job HTTP call to attach them to. Raised rather than silently dropped: a caller
-    who set a 5s timeout on a job and got the batch's timeout instead was told something untrue.
-    """
-
-    def __init__(self, method_name: str) -> None:
-        self.method_name = method_name
-        super().__init__(ErrorCode.OPTIONS_NOT_BATCHABLE)
 
 
 class DependencyMissing(LztError):

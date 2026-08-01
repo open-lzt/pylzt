@@ -54,6 +54,10 @@ class ScrapeStats:
     with_openapi_fragment: int = 0
     failed: list[str] = field(default_factory=list)
     component_conflicts: list[str] = field(default_factory=list)
+    #: `"GET /conversations"` entries where two doc pages defined the same path AND the same
+    #: verb with different bodies. A path shared by DIFFERENT verbs is normal and merges
+    #: quietly; only a genuine verb-level clash lands here.
+    operation_conflicts: list[str] = field(default_factory=list)
 
 
 def _cache_key(url: str) -> str:
@@ -122,7 +126,17 @@ def merge_fragment(
         for op in methods.values():
             if isinstance(op, dict):
                 op["x-source-url"] = doc_url
-    merged["paths"].update(fragment.get("paths", {}))
+    # Merge PER VERB, not per path: one doc page per operation means `GET /conversations` and
+    # `POST /conversations` arrive separately, and a path-level `update` silently dropped
+    # whichever verb was scraped first.
+    for path, methods in fragment.get("paths", {}).items():
+        target = merged["paths"].setdefault(path, {})
+        for verb, op in methods.items():
+            existing = target.get(verb)
+            if existing is not None and existing != op:
+                stats.operation_conflicts.append(f"{verb.upper()} {path}")
+                continue
+            target[verb] = op
 
     for comp_kind, comp_map in fragment.get("components", {}).items():
         bucket = merged["components"].setdefault(comp_kind, {})
@@ -134,7 +148,25 @@ def merge_fragment(
             bucket[name] = defn
 
 
-def scrape_site(site: str, out_path: Path, refresh: bool = False) -> ScrapeStats:
+class ScrapeShrank(RuntimeError):
+    """A run produced fewer operations than the spec it was about to overwrite."""
+
+    def __init__(self, site: str, before: int, after: int) -> None:
+        super().__init__(
+            f"[{site}] scrape produced {after} operations, previous spec had {before}. "
+            "Refusing to overwrite — a partial scrape (docs reshuffled, a selector broken, "
+            "pages 404ing) shrinks the generated SDK with no other symptom. "
+            "Re-run with --allow-shrink once the drop is understood."
+        )
+
+
+def _operation_count(spec: dict[str, Any]) -> int:
+    return sum(len(methods) for methods in spec.get("paths", {}).values())
+
+
+def scrape_site(
+    site: str, out_path: Path, refresh: bool = False, allow_shrink: bool = False
+) -> ScrapeStats:
     site_base = SITES[site]
     stats = ScrapeStats()
     cache_dir = out_path.parent / ".page_cache" / site
@@ -167,6 +199,18 @@ def scrape_site(site: str, out_path: Path, refresh: bool = False) -> ScrapeStats
         if not from_cache:  # only throttle real network hits
             time.sleep(REQUEST_DELAY_SECONDS)
 
+    # The floor. A run that returns nothing is already caught downstream ("nothing staged"),
+    # but a PARTIAL miss was caught by nothing at all: it just wrote a smaller spec, and the
+    # next build quietly emitted a smaller SDK.
+    after = _operation_count(merged)
+    if out_path.exists():
+        previous = json.loads(out_path.read_text(encoding="utf-8"))
+        before = _operation_count(previous)
+        if after < before and not allow_shrink:
+            raise ScrapeShrank(site, before, after)
+    elif after == 0:
+        raise ScrapeShrank(site, 0, 0)
+
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(merged, indent=2, ensure_ascii=False), encoding="utf-8")
     return stats
@@ -177,9 +221,14 @@ def main() -> None:
     parser.add_argument("--site", choices=sorted(SITES), required=True)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--refresh", action="store_true", help="ignore the page cache and refetch")
+    parser.add_argument(
+        "--allow-shrink",
+        action="store_true",
+        help="write the spec even if it holds fewer operations than the one it replaces",
+    )
     args = parser.parse_args()
 
-    stats = scrape_site(args.site, args.out, refresh=args.refresh)
+    stats = scrape_site(args.site, args.out, refresh=args.refresh, allow_shrink=args.allow_shrink)
 
     print(f"\n=== {args.site} ===", file=sys.stderr)
     print(

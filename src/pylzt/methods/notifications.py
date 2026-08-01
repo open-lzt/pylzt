@@ -10,6 +10,7 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from pylzt.methods.base import BaseMethod
+from pylzt.models.envelopes import NotificationsListResponse
 from pylzt.models.notification import Notification
 from pylzt.pagination import Page
 from pylzt.types import ApiTarget, HttpMethod, RateClass
@@ -25,12 +26,15 @@ class ListNotifications(BaseMethod[Page[Notification]]):
 
     __http_method__ = HttpMethod.GET
     __url__ = "/notifications"
+    __returning__ = NotificationsListResponse
     __api__ = ApiTarget.FORUM
     __rate_class__ = RateClass.FORUM
-    __query_fields__ = frozenset({"type", "limit"})
+    __query_fields__ = frozenset({"type", "limit", "page"})
 
     type: str
     limit: int
+    # Documented on GET /notifications; without it every poll re-reads page 1.
+    page: int | None = None
 
     def parse_response(self, response: Response) -> Page[Notification]:
         notifications = _parse_notifications(response.body)

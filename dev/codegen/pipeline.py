@@ -19,6 +19,7 @@ they're told apart by the auto-gen marker in the file header, and by the naming 
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -199,6 +200,34 @@ def _guard_no_clobber(staged: list[Path]) -> list[Path]:
     return safe
 
 
+def _still_needed_by_hand_patched(staged: list[Path]) -> set[Path]:
+    """Generated files a SKIPPED hand-patched module still imports — these must not be deleted.
+
+    Two mechanisms had no knowledge of each other: `_guard_no_clobber` refuses to overwrite a
+    hand-patched file, while install deletes every generated file absent from the new staging
+    set. A hand-patched model frozen against an older schema keeps importing a nested model the
+    current generation no longer emits, so the delete leaves the skipped file pointing at
+    nothing and the package stops importing — surfacing only as an opaque ModuleNotFoundError
+    inside the validation gate, which then rolls the whole install back. Net effect:
+    regeneration becomes impossible and the reason is invisible.
+
+    Keeping the referenced file preserves a stale generated module, which is the lesser evil —
+    the tree imports, the install completes, and the WARN names exactly what to reconcile.
+    """
+    staged_targets = {PKG_ROOT / s.relative_to(STAGING_ROOT) for s in staged}
+    wanted: set[Path] = set()
+    for f in PKG_ROOT.rglob("*.py"):
+        if _is_generated(f):
+            continue
+        for module in re.findall(
+            r"^from (pylzt\.[\w.]+) import", f.read_text(encoding="utf-8"), re.M
+        ):
+            target = PKG_ROOT / (module.removeprefix("pylzt.").replace(".", "/") + ".py")
+            if target.exists() and _is_generated(target) and target not in staged_targets:
+                wanted.add(target)
+    return wanted
+
+
 def _ruff_fix_format(files: list[Path]) -> None:
     """ruff --fix (import order) then ruff format (PEP 8 line wrapping) a batch of files —
     run once over the STAGING tree at the end of `generate` (so a reviewer reading staged
@@ -218,10 +247,22 @@ def install(*, do_validate: bool = True) -> int:
     staged = _guard_no_clobber(staged_all)
     skipped_count = len(staged_all) - len(staged)
 
+    preserved = _still_needed_by_hand_patched(staged)
+    if preserved:
+        print(
+            f"WARN keeping {len(preserved)} stale generated file(s) that hand-patched modules "
+            "still import: "
+            + ", ".join(sorted(str(p.relative_to(PKG_ROOT)) for p in preserved))
+            + " — the current spec no longer produces them; reconcile the hand-patched importer "
+            "against a live capture, then delete these."
+        )
+
     backup = Path(tempfile.mkdtemp(prefix="pylzt-codegen-backup-"))
     installed: list[Path] = []
     try:
         for f in _lib_generated_files():
+            if f in preserved:
+                continue
             dest = backup / f.relative_to(PKG_ROOT)
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(f, dest)

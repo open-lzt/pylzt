@@ -9,6 +9,10 @@ from pylzt.models.forum.category_links import CategoryLinks
 from pylzt.models.forum.category_permissions import CategoryPermissions
 from pylzt.models.forum.chatbox_index_response import ChatboxIndexResponse
 from pylzt.models.forum.claim import Claim
+from pylzt.models.forum.comment import Comment
+from pylzt.models.forum.comment_links import CommentLinks
+from pylzt.models.forum.comment_permissions import CommentPermissions
+from pylzt.models.forum.config import Config
 from pylzt.models.forum.content import Content
 from pylzt.models.forum.content_contest import ContentContest
 from pylzt.models.forum.content_first_post import ContentFirstPost
@@ -16,13 +20,12 @@ from pylzt.models.forum.content_links import ContentLinks
 from pylzt.models.forum.content_permissions import ContentPermissions
 from pylzt.models.forum.content_thread_prefixe import ContentThreadPrefixe
 from pylzt.models.forum.contest_permissions import ContestPermissions
-from pylzt.models.forum.conversations_messages_edit_message import ConversationsMessagesEditMessage
-from pylzt.models.forum.conversations_messages_list_message import ConversationsMessagesListMessage
-from pylzt.models.forum.conversations_messages_list_message_links import (
-    ConversationsMessagesListMessageLinks,
-)
-from pylzt.models.forum.conversations_messages_list_message_permissions import (
-    ConversationsMessagesListMessagePermissions,
+from pylzt.models.forum.conversation import Conversation
+from pylzt.models.forum.conversation_links import ConversationLinks
+from pylzt.models.forum.conversation_permissions import ConversationPermissions
+from pylzt.models.forum.conversation_recipient import ConversationRecipient
+from pylzt.models.forum.conversations_messages_create_message import (
+    ConversationsMessagesCreateMessage,
 )
 from pylzt.models.forum.conversations_messages_list_response import (
     ConversationsMessagesListResponse,
@@ -51,18 +54,21 @@ from pylzt.models.forum.forums_list_tab import ForumsListTab
 from pylzt.models.forum.ignore import Ignore
 from pylzt.models.forum.ignore_custom_fields import IgnoreCustomFields
 from pylzt.models.forum.ignore_rendered import IgnoreRendered
+from pylzt.models.forum.ignored import Ignored
+from pylzt.models.forum.incident import Incident
 from pylzt.models.forum.leaderboard import Leaderboard
-from pylzt.models.forum.leaderboard_rendered import LeaderboardRendered
 from pylzt.models.forum.leaderboard_uniq_banner import LeaderboardUniqBanner
 from pylzt.models.forum.link_forum import LinkForum
 from pylzt.models.forum.link_forum_links import LinkForumLinks
 from pylzt.models.forum.links import Links
 from pylzt.models.forum.links_list_response import LinksListResponse
+from pylzt.models.forum.maintenance_list import MaintenanceList
+from pylzt.models.forum.maintenance_list_timeslot_list import MaintenanceListTimeslotList
 from pylzt.models.forum.message import Message
 from pylzt.models.forum.message_links import MessageLinks
 from pylzt.models.forum.message_permissions import MessagePermissions
-from pylzt.models.forum.message_recipient import MessageRecipient
 from pylzt.models.forum.message_room import MessageRoom
+from pylzt.models.forum.message_user import MessageUser
 from pylzt.models.forum.o_auth_token_response import OAuthTokenResponse
 from pylzt.models.forum.page import Page
 from pylzt.models.forum.page_links import PageLinks
@@ -71,20 +77,30 @@ from pylzt.models.forum.permissions import Permissions
 from pylzt.models.forum.permissions_bump import PermissionsBump
 from pylzt.models.forum.post import Post
 from pylzt.models.forum.post_thread import PostThread
+from pylzt.models.forum.profile_posts_comments_edit_comment import ProfilePostsCommentsEditComment
+from pylzt.models.forum.profile_posts_comments_edit_comment_links import (
+    ProfilePostsCommentsEditCommentLinks,
+)
+from pylzt.models.forum.profile_posts_comments_edit_comment_permissions import (
+    ProfilePostsCommentsEditCommentPermissions,
+)
 from pylzt.models.forum.profile_thread_links import ProfileThreadLinks
 from pylzt.models.forum.profile_thread_permissions import ProfileThreadPermissions
+from pylzt.models.forum.public_group_list import PublicGroupList
+from pylzt.models.forum.public_group_list_monitor_list import PublicGroupListMonitorList
 from pylzt.models.forum.rendered_avatars import RenderedAvatars
 from pylzt.models.forum.room import Room
 from pylzt.models.forum.rooms_online import RoomsOnline
 from pylzt.models.forum.search_all_permissions_bump import SearchAllPermissionsBump
 from pylzt.models.forum.search_all_response import SearchAllResponse
-from pylzt.models.forum.search_all_user import SearchAllUser
 from pylzt.models.forum.stats import Stats
 from pylzt.models.forum.stats_market import StatsMarket
 from pylzt.models.forum.tab import Tab
 from pylzt.models.forum.trophy import Trophy
 from pylzt.models.forum.trophy_progresse import TrophyProgresse
 from pylzt.models.forum.trophy_progresse_progress import TrophyProgresseProgress
+from pylzt.models.forum.uptime_heartbeat_response import UptimeHeartbeatResponse
+from pylzt.models.forum.uptime_info_response import UptimeInfoResponse
 from pylzt.models.forum.user import User
 from pylzt.models.forum.user_custom_fields import UserCustomFields
 from pylzt.models.forum.user_edit_permissions import UserEditPermissions
@@ -101,16 +117,12 @@ from pylzt.models.forum.user_user_following import UserUserFollowing
 from pylzt.models.forum.user_user_group import UserUserGroup
 from pylzt.models.forum.users_claims_response import UsersClaimsResponse
 from pylzt.models.forum.users_ignored_user import UsersIgnoredUser
+from pylzt.models.forum.users_ignored_user_rendered import UsersIgnoredUserRendered
 from pylzt.models.forum.users_likes_response import UsersLikesResponse
 from pylzt.models.forum.users_list_response import UsersListResponse
 from pylzt.models.forum.users_sa_reset_response import UsersSAResetResponse
 from pylzt.models.forum.users_secret_answer_types_data import UsersSecretAnswerTypesData
 from pylzt.models.forum.users_trophies_response import UsersTrophiesResponse
-
-# Backward-compatible aliases: these names shipped unprefixed before the response
-# roots were API-qualified. Deprecated — prefer the qualified name; removable in the
-# next major, once no caller imports the bare form.
-DataDataTotalLinksResponse = ForumDataDataTotalLinksResponse
 
 __all__ = [
     "CategoriesListResponse",
@@ -119,6 +131,10 @@ __all__ = [
     "CategoryPermissions",
     "ChatboxIndexResponse",
     "Claim",
+    "Comment",
+    "CommentLinks",
+    "CommentPermissions",
+    "Config",
     "Content",
     "ContentContest",
     "ContentFirstPost",
@@ -126,13 +142,13 @@ __all__ = [
     "ContentPermissions",
     "ContentThreadPrefixe",
     "ContestPermissions",
-    "ConversationsMessagesEditMessage",
-    "ConversationsMessagesListMessage",
-    "ConversationsMessagesListMessageLinks",
-    "ConversationsMessagesListMessagePermissions",
+    "Conversation",
+    "ConversationLinks",
+    "ConversationPermissions",
+    "ConversationRecipient",
+    "ConversationsMessagesCreateMessage",
     "ConversationsMessagesListResponse",
     "ConversationsSearchResponse",
-    "DataDataTotalLinksResponse",
     "FieldChoice",
     "FieldFieldChoices",
     "FirstPostDeleteInfo",
@@ -156,18 +172,21 @@ __all__ = [
     "Ignore",
     "IgnoreCustomFields",
     "IgnoreRendered",
+    "Ignored",
+    "Incident",
     "Leaderboard",
-    "LeaderboardRendered",
     "LeaderboardUniqBanner",
     "LinkForum",
     "LinkForumLinks",
     "Links",
     "LinksListResponse",
+    "MaintenanceList",
+    "MaintenanceListTimeslotList",
     "Message",
     "MessageLinks",
     "MessagePermissions",
-    "MessageRecipient",
     "MessageRoom",
+    "MessageUser",
     "OAuthTokenResponse",
     "Page",
     "PageLinks",
@@ -176,20 +195,26 @@ __all__ = [
     "PermissionsBump",
     "Post",
     "PostThread",
+    "ProfilePostsCommentsEditComment",
+    "ProfilePostsCommentsEditCommentLinks",
+    "ProfilePostsCommentsEditCommentPermissions",
     "ProfileThreadLinks",
     "ProfileThreadPermissions",
+    "PublicGroupList",
+    "PublicGroupListMonitorList",
     "RenderedAvatars",
     "Room",
     "RoomsOnline",
     "SearchAllPermissionsBump",
     "SearchAllResponse",
-    "SearchAllUser",
     "Stats",
     "StatsMarket",
     "Tab",
     "Trophy",
     "TrophyProgresse",
     "TrophyProgresseProgress",
+    "UptimeHeartbeatResponse",
+    "UptimeInfoResponse",
     "User",
     "UserCustomFields",
     "UserEditPermissions",
@@ -206,6 +231,7 @@ __all__ = [
     "UserUserGroup",
     "UsersClaimsResponse",
     "UsersIgnoredUser",
+    "UsersIgnoredUserRendered",
     "UsersLikesResponse",
     "UsersListResponse",
     "UsersSAResetResponse",

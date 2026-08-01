@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from pylzt.methods.base import BaseMethod
+from pylzt.models.envelopes import PaymentsListResponse
 from pylzt.models.payment import PaymentOperation
 from pylzt.pagination import Page
 from pylzt.types import HttpMethod, RateClass
@@ -18,6 +19,7 @@ class ListPayments(BaseMethod[Page[PaymentOperation]]):
 
     __http_method__ = HttpMethod.GET
     __url__ = "/user/payments"
+    __returning__ = PaymentsListResponse
     __query_fields__ = frozenset({"operation_id_lt", "type"})
     __rate_class__ = RateClass.GENERAL
 

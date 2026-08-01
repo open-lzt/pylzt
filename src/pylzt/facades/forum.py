@@ -8,14 +8,22 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from pylzt.enums.forum import (
+    AllowInviteGroup,
+    AllowPostProfile,
+    AllowReceiveNewsFeed,
+    AllowSendPersonalConversation,
+    AllowViewProfile,
     ClaimState,
     ContentType,
     ContestType,
+    DeleteType,
     Direction,
     Duration,
     FieldsInclude,
+    Gender,
     LengthOption,
     LikeType,
+    MessageState,
     Order,
     PayClaim,
     Period,
@@ -29,35 +37,51 @@ from pylzt.methods.forum_assets import AssetsCss
 from pylzt.methods.forum_authentication import OAuthToken
 from pylzt.methods.forum_categories import CategoriesGet, CategoriesList
 from pylzt.methods.forum_chatbox import (
+    ChatboxDeleteIgnore,
+    ChatboxDeleteMessage,
+    ChatboxEditMessage,
+    ChatboxGetIgnore,
     ChatboxGetLeaderboard,
+    ChatboxGetMessages,
     ChatboxIndex,
     ChatboxOnline,
     ChatboxPostIgnore,
     ChatboxPostMessage,
+    ChatboxReport,
     ChatboxReportReasons,
 )
 from pylzt.methods.forum_content_tagging import TagsFind, TagsGet, TagsList, TagsPopular
 from pylzt.methods.forum_conversations import (
+    ConversationsAlertsDisable,
     ConversationsAlertsEnable,
+    ConversationsCreate,
+    ConversationsDelete,
     ConversationsGet,
     ConversationsInvite,
     ConversationsKick,
+    ConversationsMessagesCreate,
+    ConversationsMessagesDelete,
     ConversationsMessagesEdit,
     ConversationsMessagesGet,
     ConversationsMessagesList,
+    ConversationsMessagesStick,
     ConversationsMessagesUnstick,
     ConversationsRead,
     ConversationsReadAll,
     ConversationsSave,
     ConversationsSearch,
     ConversationsShareContent,
+    ConversationsStar,
     ConversationsStart,
     ConversationsUnstar,
     ConversationsUpdate,
 )
 from pylzt.methods.forum_forms import FormsCreate, FormsList
 from pylzt.methods.forum_forums import (
+    ForumsEditFeedOptions,
+    ForumsFollow,
     ForumsFollowed,
+    ForumsFollowers,
     ForumsGet,
     ForumsGetFeedOptions,
     ForumsGrouped,
@@ -67,24 +91,46 @@ from pylzt.methods.forum_forums import (
 from pylzt.methods.forum_link_forums import LinksGet, LinksList
 from pylzt.methods.forum_notifications import NotificationsGet, NotificationsRead
 from pylzt.methods.forum_pages import PagesGet, PagesList
-from pylzt.methods.forum_post_comments import PostsCommentsGet
+from pylzt.methods.forum_post_comments import (
+    PostsCommentsCreate,
+    PostsCommentsDelete,
+    PostsCommentsEdit,
+    PostsCommentsGet,
+)
 from pylzt.methods.forum_posts import (
+    PostsCommentsReport,
     PostsCommentsReportReasons,
+    PostsCreate,
+    PostsDelete,
+    PostsEdit,
     PostsGet,
+    PostsLike,
+    PostsLikes,
     PostsList,
+    PostsReport,
     PostsReportReasons,
     PostsUnlike,
 )
 from pylzt.methods.forum_profile_post_comments import (
+    ProfilePostsCommentsCreate,
+    ProfilePostsCommentsDelete,
+    ProfilePostsCommentsEdit,
     ProfilePostsCommentsGet,
     ProfilePostsCommentsList,
+    ProfilePostsCommentsReport,
     ProfilePostsCommentsReportReasons,
 )
 from pylzt.methods.forum_profile_posts import (
     ProfilePostsCreate,
+    ProfilePostsDelete,
+    ProfilePostsEdit,
     ProfilePostsGet,
+    ProfilePostsLike,
+    ProfilePostsLikes,
     ProfilePostsList,
+    ProfilePostsReport,
     ProfilePostsReportReasons,
+    ProfilePostsStick,
     ProfilePostsUnlike,
     ProfilePostsUnstick,
 )
@@ -100,35 +146,49 @@ from pylzt.methods.forum_searching import (
 from pylzt.methods.forum_threads import (
     ThreadsBump,
     ThreadsClaim,
+    ThreadsCreate,
     ThreadsCreateContest,
+    ThreadsDelete,
+    ThreadsEdit,
     ThreadsFinish,
+    ThreadsFollow,
     ThreadsFollowed,
+    ThreadsFollowers,
     ThreadsGet,
     ThreadsHide,
     ThreadsList,
     ThreadsMove,
-    ThreadsNavigation,
     ThreadsPollGet,
     ThreadsPollVote,
     ThreadsRecent,
+    ThreadsStar,
     ThreadsUnfollow,
     ThreadsUnread,
     ThreadsUnstar,
 )
+from pylzt.methods.forum_uptime_monitor import UptimeHeartbeat, UptimeInfo
 from pylzt.methods.forum_users import (
     UsersAvatarCrop,
+    UsersAvatarDelete,
     UsersAvatarUpload,
     UsersBackgroundCrop,
+    UsersBackgroundDelete,
     UsersBackgroundUpload,
     UsersClaims,
     UsersContents,
+    UsersEdit,
     UsersFields,
     UsersFind,
+    UsersFollow,
+    UsersFollowers,
     UsersFollowings,
     UsersGet,
+    UsersIgnore,
     UsersIgnored,
+    UsersIgnoreEdit,
     UsersLikes,
     UsersList,
+    UsersSACancelReset,
     UsersSAReset,
     UsersSecretAnswerTypes,
     UsersTrophies,
@@ -138,8 +198,10 @@ from pylzt.methods.forum_users import (
 from pylzt.models.forum import (
     CategoriesListResponse,
     ChatboxIndexResponse,
+    Comment,
     Content,
-    ConversationsMessagesEditMessage,
+    Conversation,
+    ConversationsMessagesCreateMessage,
     ConversationsMessagesListResponse,
     ConversationsSearchResponse,
     FormsCreateResponse,
@@ -149,15 +211,19 @@ from pylzt.models.forum import (
     ForumsGroupedResponse,
     ForumsListResponse,
     ForumStatusMessageResponse,
+    Ignored,
     Leaderboard,
     LinkForum,
     LinksListResponse,
     Message,
+    MessageUser,
     OAuthTokenResponse,
     PagesListResponse,
     Post,
+    ProfilePostsCommentsEditComment,
     SearchAllResponse,
-    SearchAllUser,
+    UptimeHeartbeatResponse,
+    UptimeInfoResponse,
     User,
     UsersClaimsResponse,
     UsersIgnoredUser,
@@ -167,7 +233,6 @@ from pylzt.models.forum import (
     UsersSecretAnswerTypesData,
     UsersTrophiesResponse,
 )
-from pylzt.transport.base import RequestOptions
 from pylzt.types import Currency
 
 if TYPE_CHECKING:
@@ -179,13 +244,9 @@ class GeneratedForumFacade:
 
     if TYPE_CHECKING:
 
-        async def __call__[T](
-            self, method: BaseMethod[T], *, request_options: RequestOptions | None = None
-        ) -> T: ...
+        async def __call__[T](self, method: BaseMethod[T]) -> T: ...
 
-    async def assets_css(
-        self, css: tuple[str, ...] | None = None, *, request_options: RequestOptions | None = None
-    ) -> str:
+    async def assets_css(self, css: tuple[str, ...] | None = None) -> str:
         """Generated by forge — DO NOT EDIT. Get CSS.
         Sourced from the official OpenAPI spec (readme.io).
         Gets css rulesets for requested selectors.
@@ -195,11 +256,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/assetscss
         """
-        return await self(AssetsCss(css=css), request_options=request_options)
+        return await self(AssetsCss(css=css))
 
-    async def o_auth_token(
-        self, *, request_options: RequestOptions | None = None
-    ) -> OAuthTokenResponse:
+    async def o_auth_token(self) -> OAuthTokenResponse:
         """Generated by forge — DO NOT EDIT. Get Access Token.
         Sourced from the official OpenAPI spec (readme.io).
         Obtain an access token using various grant types.
@@ -211,11 +270,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/oauthtoken
         """
-        return await self(OAuthToken(), request_options=request_options)
+        return await self(OAuthToken())
 
-    async def categories_get(
-        self, category_id: int, *, request_options: RequestOptions | None = None
-    ) -> str:
+    async def categories_get(self, category_id: int) -> str:
         """Generated by forge — DO NOT EDIT. Get Category.
         Sourced from the official OpenAPI spec (readme.io).
         Detail information of a category.
@@ -227,15 +284,13 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/categoriesget
         """
-        return await self(CategoriesGet(category_id=category_id), request_options=request_options)
+        return await self(CategoriesGet(category_id=category_id))
 
     async def categories_list(
         self,
         parent_category_id: int | None = None,
         parent_forum_id: int | None = None,
         order: Order | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> CategoriesListResponse:
         """Generated by forge — DO NOT EDIT. Get Categories.
         Sourced from the official OpenAPI spec (readme.io).
@@ -253,13 +308,61 @@ class GeneratedForumFacade:
         return await self(
             CategoriesList(
                 parent_category_id=parent_category_id, parent_forum_id=parent_forum_id, order=order
-            ),
-            request_options=request_options,
+            )
         )
 
-    async def chatbox_get_leaderboard(
-        self, duration: Duration | None = None, *, request_options: RequestOptions | None = None
-    ) -> list[Leaderboard]:
+    async def chatbox_delete_ignore(self, user_id: str) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Unignore Chat User.
+        Sourced from the official OpenAPI spec (readme.io).
+        Unignore chat user.
+        Required scopes:
+        + **chatbox**
+
+        Docs: https://lolzteam.readme.io/reference/chatboxdeleteignore
+        """
+        return await self(ChatboxDeleteIgnore(user_id=user_id))
+
+    async def chatbox_delete_message(self, message_id: int) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Delete Chat Message.
+        Sourced from the official OpenAPI spec (readme.io).
+        Delete chat message.
+        Required scopes:
+        + **chatbox**
+
+        Args:
+            message_id: Message id.
+
+        Docs: https://lolzteam.readme.io/reference/chatboxdeletemessage
+        """
+        return await self(ChatboxDeleteMessage(message_id=message_id))
+
+    async def chatbox_edit_message(self, message_id: int, message: str) -> Message:
+        """Generated by forge — DO NOT EDIT. Edit Chat Message.
+        Sourced from the official OpenAPI spec (readme.io).
+        Edit chat message.
+        Required scopes:
+        + **chatbox**
+
+        Args:
+            message_id: Message id.
+            message: New content of the chat message.
+
+        Docs: https://lolzteam.readme.io/reference/chatboxeditmessage
+        """
+        return await self(ChatboxEditMessage(message_id=message_id, message=message))
+
+    async def chatbox_get_ignore(self) -> list[Ignored]:
+        """Generated by forge — DO NOT EDIT. Get Ignored Chat Users.
+        Sourced from the official OpenAPI spec (readme.io).
+        Get list of ignored chat users.
+        Required scopes:
+        + **chatbox**
+
+        Docs: https://lolzteam.readme.io/reference/chatboxgetignore
+        """
+        return await self(ChatboxGetIgnore())
+
+    async def chatbox_get_leaderboard(self, duration: Duration | None = None) -> list[Leaderboard]:
         """Generated by forge — DO NOT EDIT. Get Chat Leaderboard.
         Sourced from the official OpenAPI spec (readme.io).
         Get chat leaderboard.
@@ -271,11 +374,26 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/chatboxgetleaderboard
         """
-        return await self(ChatboxGetLeaderboard(duration=duration), request_options=request_options)
+        return await self(ChatboxGetLeaderboard(duration=duration))
 
-    async def chatbox_index(
-        self, room_id: int | None = None, *, request_options: RequestOptions | None = None
-    ) -> ChatboxIndexResponse:
+    async def chatbox_get_messages(
+        self, room_id: int, before_message_id: int | None = None
+    ) -> list[Message]:
+        """Generated by forge — DO NOT EDIT. Get Chat Messages.
+        Sourced from the official OpenAPI spec (readme.io).
+        Get chat messages.
+        Required scopes:
+        + **chatbox**
+
+        Args:
+            room_id: Room id.
+            before_message_id: Message id to get older chat messages.
+
+        Docs: https://lolzteam.readme.io/reference/chatboxgetmessages
+        """
+        return await self(ChatboxGetMessages(room_id=room_id, before_message_id=before_message_id))
+
+    async def chatbox_index(self, room_id: int | None = None) -> ChatboxIndexResponse:
         """Generated by forge — DO NOT EDIT. Get Chats.
         Sourced from the official OpenAPI spec (readme.io).
         Get chat rooms.
@@ -287,11 +405,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/chatboxindex
         """
-        return await self(ChatboxIndex(room_id=room_id), request_options=request_options)
+        return await self(ChatboxIndex(room_id=room_id))
 
-    async def chatbox_online(
-        self, room_id: int, *, request_options: RequestOptions | None = None
-    ) -> list[User]:
+    async def chatbox_online(self, room_id: int) -> list[MessageUser]:
         """Generated by forge — DO NOT EDIT. Get Chat Online.
         Sourced from the official OpenAPI spec (readme.io).
         Get chat Online Users.
@@ -303,11 +419,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/chatboxonline
         """
-        return await self(ChatboxOnline(room_id=room_id), request_options=request_options)
+        return await self(ChatboxOnline(room_id=room_id))
 
-    async def chatbox_post_ignore(
-        self, user_id: str, *, request_options: RequestOptions | None = None
-    ) -> ForumStatusMessageResponse:
+    async def chatbox_post_ignore(self, user_id: str) -> ForumStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Ignore Chat User.
         Sourced from the official OpenAPI spec (readme.io).
         Ignore chat user.
@@ -316,15 +430,10 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/chatboxpostignore
         """
-        return await self(ChatboxPostIgnore(user_id=user_id), request_options=request_options)
+        return await self(ChatboxPostIgnore(user_id=user_id))
 
     async def chatbox_post_message(
-        self,
-        room_id: int,
-        message: str,
-        reply_message_id: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        self, room_id: int, message: str, reply_message_id: int | None = None
     ) -> Message:
         """Generated by forge — DO NOT EDIT. Create Chat Message.
         Sourced from the official OpenAPI spec (readme.io).
@@ -339,13 +448,25 @@ class GeneratedForumFacade:
         Docs: https://lolzteam.readme.io/reference/chatboxpostmessage
         """
         return await self(
-            ChatboxPostMessage(room_id=room_id, message=message, reply_message_id=reply_message_id),
-            request_options=request_options,
+            ChatboxPostMessage(room_id=room_id, message=message, reply_message_id=reply_message_id)
         )
 
-    async def chatbox_report_reasons(
-        self, message_id: int, *, request_options: RequestOptions | None = None
-    ) -> list[str]:
+    async def chatbox_report(self, message_id: int, reason: str) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Report Chat Message.
+        Sourced from the official OpenAPI spec (readme.io).
+        Report chat message.
+        Required scopes:
+        + **chatbox**
+
+        Args:
+            message_id: Message id.
+            reason: Report reason.
+
+        Docs: https://lolzteam.readme.io/reference/chatboxreport
+        """
+        return await self(ChatboxReport(message_id=message_id, reason=reason))
+
+    async def chatbox_report_reasons(self, message_id: int) -> list[str]:
         """Generated by forge — DO NOT EDIT. Get Chat Message Report Reasons.
         Sourced from the official OpenAPI spec (readme.io).
         Report chat message.
@@ -357,11 +478,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/chatboxreportreasons
         """
-        return await self(
-            ChatboxReportReasons(message_id=message_id), request_options=request_options
-        )
+        return await self(ChatboxReportReasons(message_id=message_id))
 
-    async def tags_find(self, tag: str, *, request_options: RequestOptions | None = None) -> str:
+    async def tags_find(self, tag: str) -> str:
         """Generated by forge — DO NOT EDIT. Get Filtered Content.
         Sourced from the official OpenAPI spec (readme.io).
         Filtered list of tags.
@@ -373,16 +492,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/tagsfind
         """
-        return await self(TagsFind(tag=tag), request_options=request_options)
+        return await self(TagsFind(tag=tag))
 
-    async def tags_get(
-        self,
-        tag_id: int,
-        page: int | None = None,
-        limit: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
-    ) -> str:
+    async def tags_get(self, tag_id: int, page: int | None = None, limit: int | None = None) -> str:
         """Generated by forge — DO NOT EDIT. Get Tagged Content.
         Sourced from the official OpenAPI spec (readme.io).
         List of tagged contents.
@@ -396,17 +508,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/tagsget
         """
-        return await self(
-            TagsGet(tag_id=tag_id, page=page, limit=limit), request_options=request_options
-        )
+        return await self(TagsGet(tag_id=tag_id, page=page, limit=limit))
 
-    async def tags_list(
-        self,
-        page: int | None = None,
-        limit: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
-    ) -> str:
+    async def tags_list(self, page: int | None = None, limit: int | None = None) -> str:
         """Generated by forge — DO NOT EDIT. Get Tags.
         Sourced from the official OpenAPI spec (readme.io).
         List of tags.
@@ -419,9 +523,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/tagslist
         """
-        return await self(TagsList(page=page, limit=limit), request_options=request_options)
+        return await self(TagsList(page=page, limit=limit))
 
-    async def tags_popular(self, *, request_options: RequestOptions | None = None) -> str:
+    async def tags_popular(self) -> str:
         """Generated by forge — DO NOT EDIT. Get Popular Tags.
         Sourced from the official OpenAPI spec (readme.io).
         List of popular tags (no pagination).
@@ -430,11 +534,26 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/tagspopular
         """
-        return await self(TagsPopular(), request_options=request_options)
+        return await self(TagsPopular())
 
-    async def conversations_alerts_enable(
-        self, conversation_id: int, *, request_options: RequestOptions | None = None
+    async def conversations_alerts_disable(
+        self, conversation_id: int
     ) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Disable Conversation Alerts.
+        Sourced from the official OpenAPI spec (readme.io).
+        Disable alerts for conversation.
+        Required scopes:
+        + **post**
+        + **conversate**
+
+        Args:
+            conversation_id: Id of conversation.
+
+        Docs: https://lolzteam.readme.io/reference/conversationsalertsdisable
+        """
+        return await self(ConversationsAlertsDisable(conversation_id=conversation_id))
+
+    async def conversations_alerts_enable(self, conversation_id: int) -> ForumStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Enable Conversation Alerts.
         Sourced from the official OpenAPI spec (readme.io).
         Enable alerts for conversation.
@@ -447,14 +566,75 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/conversationsalertsenable
         """
+        return await self(ConversationsAlertsEnable(conversation_id=conversation_id))
+
+    async def conversations_create(
+        self,
+        recipient_id: int | None = None,
+        recipients: tuple[str, ...] | None = None,
+        is_group: bool | None = None,
+        title: str | None = None,
+        open_invite: bool | None = None,
+        allow_edit_messages: bool | None = None,
+        allow_sticky_messages: bool | None = None,
+        allow_delete_own_messages: bool | None = None,
+        message_body: str | None = None,
+    ) -> Conversation:
+        """Generated by forge — DO NOT EDIT. Create Conversation.
+        Sourced from the official OpenAPI spec (readme.io).
+        Create a new conversation.
+        Required scopes:
+        + **post**
+        + **conversate**
+
+        Args:
+            recipient_id: Id of recipient. Required if **is_group=false**.
+            recipients: List of recipients username's. Max recipients count is 10. Required if **is_group=true**.
+            is_group: Is group. Set **false** if personal conversation, or set **true** if group.
+            title: The title of new conversation. Required if **is_group=1**.
+            open_invite: Open invite.
+            allow_edit_messages: Allow edit messages.
+            allow_sticky_messages: Allow members to stick messages.
+            allow_delete_own_messages: Allow members to delete their own messages.
+            message_body: First message. Required if **is_group**=false
+
+        Docs: https://lolzteam.readme.io/reference/conversationscreate
+        """
         return await self(
-            ConversationsAlertsEnable(conversation_id=conversation_id),
-            request_options=request_options,
+            ConversationsCreate(
+                recipient_id=recipient_id,
+                recipients=recipients,
+                is_group=is_group,
+                title=title,
+                open_invite=open_invite,
+                allow_edit_messages=allow_edit_messages,
+                allow_sticky_messages=allow_sticky_messages,
+                allow_delete_own_messages=allow_delete_own_messages,
+                message_body=message_body,
+            )
         )
 
-    async def conversations_get(
-        self, conversation_id: int, *, request_options: RequestOptions | None = None
-    ) -> str:
+    async def conversations_delete(
+        self, conversation_id: int, delete_type: DeleteType
+    ) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Leave Conversation.
+        Sourced from the official OpenAPI spec (readme.io).
+        Leave the conversation.
+        Required scopes:
+        + **post**
+        + **conversate**
+
+        Args:
+            conversation_id: Id of conversation.
+            delete_type: Deletion type.
+
+        Docs: https://lolzteam.readme.io/reference/conversationsdelete
+        """
+        return await self(
+            ConversationsDelete(conversation_id=conversation_id, delete_type=delete_type)
+        )
+
+    async def conversations_get(self, conversation_id: int) -> str:
         """Generated by forge — DO NOT EDIT. Get Conversation.
         Sourced from the official OpenAPI spec (readme.io).
         Detail information of a conversation.
@@ -467,16 +647,10 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/conversationsget
         """
-        return await self(
-            ConversationsGet(conversation_id=conversation_id), request_options=request_options
-        )
+        return await self(ConversationsGet(conversation_id=conversation_id))
 
     async def conversations_invite(
-        self,
-        conversation_id: int,
-        recipients: tuple[str, ...],
-        *,
-        request_options: RequestOptions | None = None,
+        self, conversation_id: int, recipients: tuple[str, ...]
     ) -> ForumStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Invite Users to Conversation.
         Sourced from the official OpenAPI spec (readme.io).
@@ -492,12 +666,11 @@ class GeneratedForumFacade:
         Docs: https://lolzteam.readme.io/reference/conversationsinvite
         """
         return await self(
-            ConversationsInvite(conversation_id=conversation_id, recipients=recipients),
-            request_options=request_options,
+            ConversationsInvite(conversation_id=conversation_id, recipients=recipients)
         )
 
     async def conversations_kick(
-        self, conversation_id: int, user_id: int, *, request_options: RequestOptions | None = None
+        self, conversation_id: int, user_id: int
     ) -> ForumStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Kick User from Conversation.
         Sourced from the official OpenAPI spec (readme.io).
@@ -511,19 +684,55 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/conversationskick
         """
+        return await self(ConversationsKick(conversation_id=conversation_id, user_id=user_id))
+
+    async def conversations_messages_create(
+        self, conversation_id: int, message_body: str, reply_message_id: int | None = None
+    ) -> ConversationsMessagesCreateMessage:
+        """Generated by forge — DO NOT EDIT. Create Conversation Message.
+        Sourced from the official OpenAPI spec (readme.io).
+        Create a new conversation message.
+        Required scopes:
+        + **post**
+        + **conversate**
+
+        Args:
+            conversation_id: Id of conversation.
+            message_body: Content of the new message.
+            reply_message_id: ID of the message being replied to.
+
+        Docs: https://lolzteam.readme.io/reference/conversationsmessagescreate
+        """
         return await self(
-            ConversationsKick(conversation_id=conversation_id, user_id=user_id),
-            request_options=request_options,
+            ConversationsMessagesCreate(
+                conversation_id=conversation_id,
+                message_body=message_body,
+                reply_message_id=reply_message_id,
+            )
+        )
+
+    async def conversations_messages_delete(
+        self, conversation_id: int, message_id: int
+    ) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Delete Conversation Message.
+        Sourced from the official OpenAPI spec (readme.io).
+        Deletes a message from a conversation.
+        Required scopes:
+        + **conversate**
+
+        Args:
+            conversation_id: Id of conversation.
+            message_id: Id of message.
+
+        Docs: https://lolzteam.readme.io/reference/conversationsmessagesdelete
+        """
+        return await self(
+            ConversationsMessagesDelete(conversation_id=conversation_id, message_id=message_id)
         )
 
     async def conversations_messages_edit(
-        self,
-        conversation_id: int,
-        message_id: int,
-        message_body: str,
-        *,
-        request_options: RequestOptions | None = None,
-    ) -> ConversationsMessagesEditMessage:
+        self, conversation_id: int, message_id: int, message_body: str
+    ) -> Conversation:
         """Generated by forge — DO NOT EDIT. Edit Conversation Message.
         Sourced from the official OpenAPI spec (readme.io).
         Edit a message.
@@ -541,13 +750,10 @@ class GeneratedForumFacade:
         return await self(
             ConversationsMessagesEdit(
                 conversation_id=conversation_id, message_id=message_id, message_body=message_body
-            ),
-            request_options=request_options,
+            )
         )
 
-    async def conversations_messages_get(
-        self, message_id: int, *, request_options: RequestOptions | None = None
-    ) -> str:
+    async def conversations_messages_get(self, message_id: int) -> str:
         """Generated by forge — DO NOT EDIT. Get Conversation Message.
         Sourced from the official OpenAPI spec (readme.io).
         Detail information of a message.
@@ -560,9 +766,7 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/conversationsmessagesget
         """
-        return await self(
-            ConversationsMessagesGet(message_id=message_id), request_options=request_options
-        )
+        return await self(ConversationsMessagesGet(message_id=message_id))
 
     async def conversations_messages_list(
         self,
@@ -572,8 +776,6 @@ class GeneratedForumFacade:
         order: Order | None = None,
         before: int | None = None,
         after: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> ConversationsMessagesListResponse:
         """Generated by forge — DO NOT EDIT. Get Conversation Messages.
         Sourced from the official OpenAPI spec (readme.io).
@@ -600,16 +802,31 @@ class GeneratedForumFacade:
                 order=order,
                 before=before,
                 after=after,
-            ),
-            request_options=request_options,
+            )
+        )
+
+    async def conversations_messages_stick(
+        self, conversation_id: int, message_id: int
+    ) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Stick Conversation Message.
+        Sourced from the official OpenAPI spec (readme.io).
+        Stick a message in a conversation.
+        Required scopes:
+        + **post**
+        + **conversate**
+
+        Args:
+            conversation_id: Id of conversation.
+            message_id: Id of message.
+
+        Docs: https://lolzteam.readme.io/reference/conversationsmessagesstick
+        """
+        return await self(
+            ConversationsMessagesStick(conversation_id=conversation_id, message_id=message_id)
         )
 
     async def conversations_messages_unstick(
-        self,
-        conversation_id: int,
-        message_id: int,
-        *,
-        request_options: RequestOptions | None = None,
+        self, conversation_id: int, message_id: int
     ) -> ForumStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Unstick Conversation Message.
         Sourced from the official OpenAPI spec (readme.io).
@@ -625,13 +842,10 @@ class GeneratedForumFacade:
         Docs: https://lolzteam.readme.io/reference/conversationsmessagesunstick
         """
         return await self(
-            ConversationsMessagesUnstick(conversation_id=conversation_id, message_id=message_id),
-            request_options=request_options,
+            ConversationsMessagesUnstick(conversation_id=conversation_id, message_id=message_id)
         )
 
-    async def conversations_read(
-        self, conversation_id: int, *, request_options: RequestOptions | None = None
-    ) -> ForumStatusMessageResponse:
+    async def conversations_read(self, conversation_id: int) -> ForumStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Read Conversation.
         Sourced from the official OpenAPI spec (readme.io).
         Read a specific conversation.
@@ -643,13 +857,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/conversationsread
         """
-        return await self(
-            ConversationsRead(conversation_id=conversation_id), request_options=request_options
-        )
+        return await self(ConversationsRead(conversation_id=conversation_id))
 
-    async def conversations_read_all(
-        self, *, request_options: RequestOptions | None = None
-    ) -> ForumStatusMessageResponse:
+    async def conversations_read_all(self) -> ForumStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Read All Conversations.
         Sourced from the official OpenAPI spec (readme.io).
         Mark all conversations as read.
@@ -659,11 +869,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/conversationsreadall
         """
-        return await self(ConversationsReadAll(), request_options=request_options)
+        return await self(ConversationsReadAll())
 
-    async def conversations_save(
-        self, link: str, *, request_options: RequestOptions | None = None
-    ) -> ForumStatusMessageResponse:
+    async def conversations_save(self, link: str) -> ForumStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Send Content To Saved Messages.
         Sourced from the official OpenAPI spec (readme.io).
         Send content to Saved Messages.
@@ -675,15 +883,13 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/conversationssave
         """
-        return await self(ConversationsSave(link=link), request_options=request_options)
+        return await self(ConversationsSave(link=link))
 
     async def conversations_search(
         self,
         q: str | None = None,
         conversation_id: int | None = None,
         search_recipients: bool | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> ConversationsSearchResponse:
         """Generated by forge — DO NOT EDIT. Search Conversations Messages.
         Sourced from the official OpenAPI spec (readme.io).
@@ -702,13 +908,10 @@ class GeneratedForumFacade:
         return await self(
             ConversationsSearch(
                 q=q, conversation_id=conversation_id, search_recipients=search_recipients
-            ),
-            request_options=request_options,
+            )
         )
 
-    async def conversations_share_content(
-        self, thread_id: int, *, request_options: RequestOptions | None = None
-    ) -> str:
+    async def conversations_share_content(self, thread_id: int) -> str:
         """Generated by forge — DO NOT EDIT. Get Shareable Thread Content.
         Sourced from the official OpenAPI spec (readme.io).
         Get a shareable thread content (hides).
@@ -721,13 +924,24 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/conversationssharecontent
         """
-        return await self(
-            ConversationsShareContent(thread_id=thread_id), request_options=request_options
-        )
+        return await self(ConversationsShareContent(thread_id=thread_id))
 
-    async def conversations_start(
-        self, user_id: str, *, request_options: RequestOptions | None = None
-    ) -> ConversationsMessagesEditMessage:
+    async def conversations_star(self, conversation_id: int) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Star Conversation.
+        Sourced from the official OpenAPI spec (readme.io).
+        Star conversation.
+        Required scopes:
+        + **post**
+        + **conversate**
+
+        Args:
+            conversation_id: Id of conversation.
+
+        Docs: https://lolzteam.readme.io/reference/conversationsstar
+        """
+        return await self(ConversationsStar(conversation_id=conversation_id))
+
+    async def conversations_start(self, user_id: str) -> Conversation:
         """Generated by forge — DO NOT EDIT. Start Conversation.
         Sourced from the official OpenAPI spec (readme.io).
         Start a new conversation with a user.
@@ -736,11 +950,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/conversationsstart
         """
-        return await self(ConversationsStart(user_id=user_id), request_options=request_options)
+        return await self(ConversationsStart(user_id=user_id))
 
-    async def conversations_unstar(
-        self, conversation_id: int, *, request_options: RequestOptions | None = None
-    ) -> ForumStatusMessageResponse:
+    async def conversations_unstar(self, conversation_id: int) -> ForumStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Unstar Conversation.
         Sourced from the official OpenAPI spec (readme.io).
         Unstar conversation.
@@ -753,9 +965,7 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/conversationsunstar
         """
-        return await self(
-            ConversationsUnstar(conversation_id=conversation_id), request_options=request_options
-        )
+        return await self(ConversationsUnstar(conversation_id=conversation_id))
 
     async def conversations_update(
         self,
@@ -766,8 +976,6 @@ class GeneratedForumFacade:
         allow_edit_messages: bool | None = None,
         allow_sticky_messages: bool | None = None,
         allow_delete_own_messages: bool | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> str:
         """Generated by forge — DO NOT EDIT. Edit Conversation.
         Sourced from the official OpenAPI spec (readme.io).
@@ -795,24 +1003,19 @@ class GeneratedForumFacade:
                 allow_edit_messages=allow_edit_messages,
                 allow_sticky_messages=allow_sticky_messages,
                 allow_delete_own_messages=allow_delete_own_messages,
-            ),
-            request_options=request_options,
+            )
         )
 
-    async def forms_create(
-        self, *, request_options: RequestOptions | None = None
-    ) -> FormsCreateResponse:
+    async def forms_create(self) -> FormsCreateResponse:
         """Generated by forge — DO NOT EDIT. Create Form.
         Sourced from the official OpenAPI spec (readme.io).
         Create Form.
 
         Docs: https://lolzteam.readme.io/reference/formscreate
         """
-        return await self(FormsCreate(), request_options=request_options)
+        return await self(FormsCreate())
 
-    async def forms_list(
-        self, page: int | None = None, *, request_options: RequestOptions | None = None
-    ) -> FormsListResponse:
+    async def forms_list(self, page: int | None = None) -> FormsListResponse:
         """Generated by forge — DO NOT EDIT. Get Forms List.
         Sourced from the official OpenAPI spec (readme.io).
         Get Forms List
@@ -822,11 +1025,62 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/formslist
         """
-        return await self(FormsList(page=page), request_options=request_options)
+        return await self(FormsList(page=page))
 
-    async def forums_followed(
-        self, total: bool | None = None, *, request_options: RequestOptions | None = None
-    ) -> str:
+    async def forums_edit_feed_options(
+        self, node_ids: tuple[int, ...] | None = None, keywords: tuple[str, ...] | None = None
+    ) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Edit Feed Options.
+        Sourced from the official OpenAPI spec (readme.io).
+        Edit feed options.
+        Required scopes:
+        + **post**
+
+        Args:
+            node_ids: Array of forum ids to exclude from the feed.
+            keywords: List of keywords to exclude specific threads from the feed.
+
+        Docs: https://lolzteam.readme.io/reference/forumseditfeedoptions
+        """
+        return await self(ForumsEditFeedOptions(node_ids=node_ids, keywords=keywords))
+
+    async def forums_follow(
+        self,
+        forum_id: int,
+        post: bool | None = None,
+        alert: bool | None = None,
+        email: bool | None = None,
+        prefix_ids: tuple[int, ...] | None = None,
+        minimal_contest_amount: int | None = None,
+    ) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Follow Forum.
+        Sourced from the official OpenAPI spec (readme.io).
+        Follow a forum.
+        Required scopes:
+        + **post**
+
+        Args:
+            forum_id: Id of forum.
+            post: Whether to receive notification for post.
+            alert: Whether to receive notification as alert.
+            email: Whether to receive notification as email.
+            prefix_ids: Prefix ids.
+            minimal_contest_amount: Minimal contest amount. (Only for 766 forumId)
+
+        Docs: https://lolzteam.readme.io/reference/forumsfollow
+        """
+        return await self(
+            ForumsFollow(
+                forum_id=forum_id,
+                post=post,
+                alert=alert,
+                email=email,
+                prefix_ids=prefix_ids,
+                minimal_contest_amount=minimal_contest_amount,
+            )
+        )
+
+    async def forums_followed(self, total: bool | None = None) -> str:
         """Generated by forge — DO NOT EDIT. Get Followed Forums.
         Sourced from the official OpenAPI spec (readme.io).
         List of followed forums by current user.
@@ -838,11 +1092,23 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/forumsfollowed
         """
-        return await self(ForumsFollowed(total=total), request_options=request_options)
+        return await self(ForumsFollowed(total=total))
 
-    async def forums_get(
-        self, forum_id: int, *, request_options: RequestOptions | None = None
-    ) -> str:
+    async def forums_followers(self, forum_id: int) -> str:
+        """Generated by forge — DO NOT EDIT. Get Followers.
+        Sourced from the official OpenAPI spec (readme.io).
+        List of a forum's followers. For privacy reason, only the current user will be included in the list (if the user follows the specified forum).
+        Required scopes:
+        + **read**
+
+        Args:
+            forum_id: Id of forum.
+
+        Docs: https://lolzteam.readme.io/reference/forumsfollowers
+        """
+        return await self(ForumsFollowers(forum_id=forum_id))
+
+    async def forums_get(self, forum_id: int) -> str:
         """Generated by forge — DO NOT EDIT. Get Forum.
         Sourced from the official OpenAPI spec (readme.io).
         Detail information of a forum.
@@ -854,11 +1120,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/forumsget
         """
-        return await self(ForumsGet(forum_id=forum_id), request_options=request_options)
+        return await self(ForumsGet(forum_id=forum_id))
 
-    async def forums_get_feed_options(
-        self, *, request_options: RequestOptions | None = None
-    ) -> ForumsGetFeedOptionsResponse:
+    async def forums_get_feed_options(self) -> ForumsGetFeedOptionsResponse:
         """Generated by forge — DO NOT EDIT. Get Feed Options.
         Sourced from the official OpenAPI spec (readme.io).
         Returns available options for the forums feed.
@@ -867,11 +1131,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/forumsgetfeedoptions
         """
-        return await self(ForumsGetFeedOptions(), request_options=request_options)
+        return await self(ForumsGetFeedOptions())
 
-    async def forums_grouped(
-        self, *, request_options: RequestOptions | None = None
-    ) -> ForumsGroupedResponse:
+    async def forums_grouped(self) -> ForumsGroupedResponse:
         """Generated by forge — DO NOT EDIT. Get Forums Tree.
         Sourced from the official OpenAPI spec (readme.io).
         Returns grouped forums.
@@ -880,15 +1142,13 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/forumsgrouped
         """
-        return await self(ForumsGrouped(), request_options=request_options)
+        return await self(ForumsGrouped())
 
     async def forums_list(
         self,
         parent_category_id: int | None = None,
         parent_forum_id: int | None = None,
         order: Order | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> ForumsListResponse:
         """Generated by forge — DO NOT EDIT. Get Forums.
         Sourced from the official OpenAPI spec (readme.io).
@@ -906,13 +1166,10 @@ class GeneratedForumFacade:
         return await self(
             ForumsList(
                 parent_category_id=parent_category_id, parent_forum_id=parent_forum_id, order=order
-            ),
-            request_options=request_options,
+            )
         )
 
-    async def forums_unfollow(
-        self, forum_id: int, *, request_options: RequestOptions | None = None
-    ) -> ForumStatusMessageResponse:
+    async def forums_unfollow(self, forum_id: int) -> ForumStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Unfollow Forum.
         Sourced from the official OpenAPI spec (readme.io).
         Unfollow a forum.
@@ -924,11 +1181,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/forumsunfollow
         """
-        return await self(ForumsUnfollow(forum_id=forum_id), request_options=request_options)
+        return await self(ForumsUnfollow(forum_id=forum_id))
 
-    async def links_get(
-        self, link_id: int, *, request_options: RequestOptions | None = None
-    ) -> LinkForum:
+    async def links_get(self, link_id: int) -> LinkForum:
         """Generated by forge — DO NOT EDIT. Get Link Forum.
         Sourced from the official OpenAPI spec (readme.io).
         Detail information of a link forum.
@@ -940,11 +1195,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/linksget
         """
-        return await self(LinksGet(link_id=link_id), request_options=request_options)
+        return await self(LinksGet(link_id=link_id))
 
-    async def links_list(
-        self, *, request_options: RequestOptions | None = None
-    ) -> LinksListResponse:
+    async def links_list(self) -> LinksListResponse:
         """Generated by forge — DO NOT EDIT. Get Links Forum.
         Sourced from the official OpenAPI spec (readme.io).
         List of all link forums.
@@ -953,11 +1206,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/linkslist
         """
-        return await self(LinksList(), request_options=request_options)
+        return await self(LinksList())
 
-    async def notifications_get(
-        self, notification_id: int, *, request_options: RequestOptions | None = None
-    ) -> str:
+    async def notifications_get(self, notification_id: int) -> str:
         """Generated by forge — DO NOT EDIT. Get Notification.
         Sourced from the official OpenAPI spec (readme.io).
         Get associated content of notification. The response depends on the content type.
@@ -969,12 +1220,10 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/notificationsget
         """
-        return await self(
-            NotificationsGet(notification_id=notification_id), request_options=request_options
-        )
+        return await self(NotificationsGet(notification_id=notification_id))
 
     async def notifications_read(
-        self, notification_id: int | None = None, *, request_options: RequestOptions | None = None
+        self, notification_id: int | None = None
     ) -> ForumStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Mark Notification Read.
         Sourced from the official OpenAPI spec (readme.io).
@@ -987,13 +1236,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/notificationsread
         """
-        return await self(
-            NotificationsRead(notification_id=notification_id), request_options=request_options
-        )
+        return await self(NotificationsRead(notification_id=notification_id))
 
-    async def pages_get(
-        self, page_id: int, *, request_options: RequestOptions | None = None
-    ) -> str:
+    async def pages_get(self, page_id: int) -> str:
         """Generated by forge — DO NOT EDIT. Get Page.
         Sourced from the official OpenAPI spec (readme.io).
         Detail information of a page.
@@ -1005,14 +1250,10 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/pagesget
         """
-        return await self(PagesGet(page_id=page_id), request_options=request_options)
+        return await self(PagesGet(page_id=page_id))
 
     async def pages_list(
-        self,
-        parent_page_id: int | None = None,
-        order: Order | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        self, parent_page_id: int | None = None, order: Order | None = None
     ) -> PagesListResponse:
         """Generated by forge — DO NOT EDIT. Get Pages.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1026,8 +1267,61 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/pageslist
         """
+        return await self(PagesList(parent_page_id=parent_page_id, order=order))
+
+    async def posts_comments_create(self, post_id: int, comment_body: str) -> str:
+        """Generated by forge — DO NOT EDIT. Create Post Comment.
+        Sourced from the official OpenAPI spec (readme.io).
+        Create a post comment.
+        Required scopes:
+        + **post**
+
+        Args:
+            post_id: Id of post.
+            comment_body: Content of the a post comment.
+
+        Docs: https://lolzteam.readme.io/reference/postscommentscreate
+        """
+        return await self(PostsCommentsCreate(post_id=post_id, comment_body=comment_body))
+
+    async def posts_comments_delete(
+        self, post_comment_id: int, reason: str | None = None
+    ) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Delete Post Comment.
+        Sourced from the official OpenAPI spec (readme.io).
+        Delete a post comment.
+        Required scopes:
+        + **post**
+
+        Args:
+            post_comment_id: Id of post comment.
+            reason: Reason of a post comment removal.
+
+        Docs: https://lolzteam.readme.io/reference/postscommentsdelete
+        """
+        return await self(PostsCommentsDelete(post_comment_id=post_comment_id, reason=reason))
+
+    async def posts_comments_edit(
+        self, post_comment_id: int, comment_body: str, message_state: MessageState | None = None
+    ) -> Comment:
+        """Generated by forge — DO NOT EDIT. Edit Post Comment.
+        Sourced from the official OpenAPI spec (readme.io).
+        Edit a post comment.
+        Required scopes:
+        + **post**
+
+        Args:
+            post_comment_id: Id of post.
+            comment_body: Content of the new post comment.
+
+        Docs: https://lolzteam.readme.io/reference/postscommentsedit
+        """
         return await self(
-            PagesList(parent_page_id=parent_page_id, order=order), request_options=request_options
+            PostsCommentsEdit(
+                post_comment_id=post_comment_id,
+                comment_body=comment_body,
+                message_state=message_state,
+            )
         )
 
     async def posts_comments_get(
@@ -1036,8 +1330,6 @@ class GeneratedForumFacade:
         post_comment_id: int | None = None,
         before: int | None = None,
         before_comment: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> str:
         """Generated by forge — DO NOT EDIT. Get Post Comments.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1059,13 +1351,27 @@ class GeneratedForumFacade:
                 post_comment_id=post_comment_id,
                 before=before,
                 before_comment=before_comment,
-            ),
-            request_options=request_options,
+            )
         )
 
-    async def posts_comments_report_reasons(
-        self, post_comment_id: int, *, request_options: RequestOptions | None = None
-    ) -> list[str]:
+    async def posts_comments_report(
+        self, post_comment_id: int, message: str
+    ) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Report Post Comment.
+        Sourced from the official OpenAPI spec (readme.io).
+        Report a post comment.
+        Required scopes:
+        + **post**
+
+        Args:
+            post_comment_id: Id of post comment.
+            message: Reason of the report.
+
+        Docs: https://lolzteam.readme.io/reference/postscommentsreport
+        """
+        return await self(PostsCommentsReport(post_comment_id=post_comment_id, message=message))
+
+    async def posts_comments_report_reasons(self, post_comment_id: int) -> list[str]:
         """Generated by forge — DO NOT EDIT. Get Post Comment Report Reasons.
         Sourced from the official OpenAPI spec (readme.io).
         Get a post comment report reasons.
@@ -1077,14 +1383,65 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/postscommentsreportreasons
         """
+        return await self(PostsCommentsReportReasons(post_comment_id=post_comment_id))
+
+    async def posts_create(
+        self, post_body: str, thread_id: int | None = None, quote_post_id: int | None = None
+    ) -> Post:
+        """Generated by forge — DO NOT EDIT. Create Post.
+        Sourced from the official OpenAPI spec (readme.io).
+        Create a new post.
+        Required scopes:
+        + **post**
+
+        Args:
+            post_body: Content of the new post.
+            thread_id: Id of the target thread. **quote_post_id** can be skipped if this parameter is provided.
+            quote_post_id: Id of the quote post. **thread_id** can be skipped if this parameter is provided.
+
+        Docs: https://lolzteam.readme.io/reference/postscreate
+        """
         return await self(
-            PostsCommentsReportReasons(post_comment_id=post_comment_id),
-            request_options=request_options,
+            PostsCreate(post_body=post_body, thread_id=thread_id, quote_post_id=quote_post_id)
         )
 
-    async def posts_get(
-        self, post_id: int, *, request_options: RequestOptions | None = None
+    async def posts_delete(
+        self, post_id: int, reason: str | None = None
+    ) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Delete Post.
+        Sourced from the official OpenAPI spec (readme.io).
+        Delete a post.
+        Required scopes:
+        + **post**
+
+        Args:
+            post_id: Id of post.
+            reason: Reason of the post removal.
+
+        Docs: https://lolzteam.readme.io/reference/postsdelete
+        """
+        return await self(PostsDelete(post_id=post_id, reason=reason))
+
+    async def posts_edit(
+        self, post_id: int, post_body: str | None = None, message_state: MessageState | None = None
     ) -> Post:
+        """Generated by forge — DO NOT EDIT. Edit Post.
+        Sourced from the official OpenAPI spec (readme.io).
+        Edit a post.
+        Required scopes:
+        + **post**
+
+        Args:
+            post_id: Id of post.
+            post_body: Content of the post.
+
+        Docs: https://lolzteam.readme.io/reference/postsedit
+        """
+        return await self(
+            PostsEdit(post_id=post_id, post_body=post_body, message_state=message_state)
+        )
+
+    async def posts_get(self, post_id: int) -> Post:
         """Generated by forge — DO NOT EDIT. Get Post.
         Sourced from the official OpenAPI spec (readme.io).
         Detail information of a post.
@@ -1096,7 +1453,39 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/postsget
         """
-        return await self(PostsGet(post_id=post_id), request_options=request_options)
+        return await self(PostsGet(post_id=post_id))
+
+    async def posts_like(self, post_id: int) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Like Post.
+        Sourced from the official OpenAPI spec (readme.io).
+        Like a post.
+        Required scopes:
+        + **post**
+
+        Args:
+            post_id: Id of post.
+
+        Docs: https://lolzteam.readme.io/reference/postslike
+        """
+        return await self(PostsLike(post_id=post_id))
+
+    async def posts_likes(
+        self, post_id: int, page: int | None = None, limit: int | None = None
+    ) -> str:
+        """Generated by forge — DO NOT EDIT. Get Post Likes.
+        Sourced from the official OpenAPI spec (readme.io).
+        List of users who liked a post.
+        Required scopes:
+        + **read**
+
+        Args:
+            post_id: Id of post.
+            page: Page number of users.
+            limit: Number of users in a page.
+
+        Docs: https://lolzteam.readme.io/reference/postslikes
+        """
+        return await self(PostsLikes(post_id=post_id, page=page, limit=limit))
 
     async def posts_list(
         self,
@@ -1105,8 +1494,6 @@ class GeneratedForumFacade:
         page: int | None = None,
         limit: int | None = None,
         order: Order | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> str:
         """Generated by forge — DO NOT EDIT. Get Posts.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1130,13 +1517,25 @@ class GeneratedForumFacade:
                 page=page,
                 limit=limit,
                 order=order,
-            ),
-            request_options=request_options,
+            )
         )
 
-    async def posts_report_reasons(
-        self, post_id: int, *, request_options: RequestOptions | None = None
-    ) -> list[str]:
+    async def posts_report(self, post_id: int, message: str) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Report Post.
+        Sourced from the official OpenAPI spec (readme.io).
+        Report a post.
+        Required scopes:
+        + **post**
+
+        Args:
+            post_id: Id of post.
+            message: Reason of the report.
+
+        Docs: https://lolzteam.readme.io/reference/postsreport
+        """
+        return await self(PostsReport(post_id=post_id, message=message))
+
+    async def posts_report_reasons(self, post_id: int) -> list[str]:
         """Generated by forge — DO NOT EDIT. Get Post Report Reasons.
         Sourced from the official OpenAPI spec (readme.io).
         Get post report reasons.
@@ -1148,11 +1547,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/postsreportreasons
         """
-        return await self(PostsReportReasons(post_id=post_id), request_options=request_options)
+        return await self(PostsReportReasons(post_id=post_id))
 
-    async def posts_unlike(
-        self, post_id: int, *, request_options: RequestOptions | None = None
-    ) -> ForumStatusMessageResponse:
+    async def posts_unlike(self, post_id: int) -> ForumStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Unlike Post.
         Sourced from the official OpenAPI spec (readme.io).
         Unlike a post.
@@ -1164,15 +1561,61 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/postsunlike
         """
-        return await self(PostsUnlike(post_id=post_id), request_options=request_options)
+        return await self(PostsUnlike(post_id=post_id))
 
-    async def profile_posts_comments_get(
-        self,
-        profile_post_id: int,
-        comment_id: int,
-        *,
-        request_options: RequestOptions | None = None,
-    ) -> str:
+    async def profile_posts_comments_create(self, profile_post_id: int, comment_body: str) -> str:
+        """Generated by forge — DO NOT EDIT. Create Profile Post Comment.
+        Sourced from the official OpenAPI spec (readme.io).
+        Create a new profile post comment.
+        Required scopes:
+        + **post**
+
+        Args:
+            profile_post_id: Id of profile post.
+            comment_body: Content of the new profile post comment.
+
+        Docs: https://lolzteam.readme.io/reference/profilepostscommentscreate
+        """
+        return await self(
+            ProfilePostsCommentsCreate(profile_post_id=profile_post_id, comment_body=comment_body)
+        )
+
+    async def profile_posts_comments_delete(self, comment_id: int) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Delete Profile Post Comment.
+        Sourced from the official OpenAPI spec (readme.io).
+        Delete a profile post comment.
+        Required scopes:
+        + **post**
+
+        Args:
+            comment_id: Id of profile post comment.
+
+        Docs: https://lolzteam.readme.io/reference/profilepostscommentsdelete
+        """
+        return await self(ProfilePostsCommentsDelete(comment_id=comment_id))
+
+    async def profile_posts_comments_edit(
+        self, comment_id: int, comment_body: str, message_state: MessageState | None = None
+    ) -> ProfilePostsCommentsEditComment:
+        """Generated by forge — DO NOT EDIT. Edit Profile Post Comment.
+        Sourced from the official OpenAPI spec (readme.io).
+        Edit a profile post comment.
+        Required scopes:
+        + **post**
+
+        Args:
+            comment_id: Id of profile post comment.
+            comment_body: New content for the profile post comment.
+
+        Docs: https://lolzteam.readme.io/reference/profilepostscommentsedit
+        """
+        return await self(
+            ProfilePostsCommentsEdit(
+                comment_id=comment_id, comment_body=comment_body, message_state=message_state
+            )
+        )
+
+    async def profile_posts_comments_get(self, profile_post_id: int, comment_id: int) -> str:
         """Generated by forge — DO NOT EDIT. Get Profile Post Comment.
         Sourced from the official OpenAPI spec (readme.io).
         Detail information of a profile post comment.
@@ -1186,8 +1629,7 @@ class GeneratedForumFacade:
         Docs: https://lolzteam.readme.io/reference/profilepostscommentsget
         """
         return await self(
-            ProfilePostsCommentsGet(profile_post_id=profile_post_id, comment_id=comment_id),
-            request_options=request_options,
+            ProfilePostsCommentsGet(profile_post_id=profile_post_id, comment_id=comment_id)
         )
 
     async def profile_posts_comments_list(
@@ -1197,8 +1639,6 @@ class GeneratedForumFacade:
         page_of_comment_id: int | None = None,
         before: int | None = None,
         limit: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> str:
         """Generated by forge — DO NOT EDIT. Get Profile Post Comments.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1222,13 +1662,27 @@ class GeneratedForumFacade:
                 page_of_comment_id=page_of_comment_id,
                 before=before,
                 limit=limit,
-            ),
-            request_options=request_options,
+            )
         )
 
-    async def profile_posts_comments_report_reasons(
-        self, comment_id: int, *, request_options: RequestOptions | None = None
-    ) -> list[str]:
+    async def profile_posts_comments_report(
+        self, message: str, comment_id: int
+    ) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Report a Profile Post Comment.
+        Sourced from the official OpenAPI spec (readme.io).
+        Report a profile post comment.
+        Required scopes:
+        + **post**
+
+        Args:
+            message: Reason of the report.
+            comment_id: Id of profile post comment.
+
+        Docs: https://lolzteam.readme.io/reference/profilepostscommentsreport
+        """
+        return await self(ProfilePostsCommentsReport(message=message, comment_id=comment_id))
+
+    async def profile_posts_comments_report_reasons(self, comment_id: int) -> list[str]:
         """Generated by forge — DO NOT EDIT. Get Profile Post Comment Report Reasons.
         Sourced from the official OpenAPI spec (readme.io).
         Get profile post comment report reasons.
@@ -1240,14 +1694,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/profilepostscommentsreportreasons
         """
-        return await self(
-            ProfilePostsCommentsReportReasons(comment_id=comment_id),
-            request_options=request_options,
-        )
+        return await self(ProfilePostsCommentsReportReasons(comment_id=comment_id))
 
-    async def profile_posts_create(
-        self, user_id: str, post_body: str, *, request_options: RequestOptions | None = None
-    ) -> str:
+    async def profile_posts_create(self, user_id: str, post_body: str) -> str:
         """Generated by forge — DO NOT EDIT. Create Profile Post.
         Sourced from the official OpenAPI spec (readme.io).
         Create a profile post on a user profile.
@@ -1259,14 +1708,55 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/profilepostscreate
         """
+        return await self(ProfilePostsCreate(user_id=user_id, post_body=post_body))
+
+    async def profile_posts_delete(
+        self, profile_post_id: int, reason: str | None = None
+    ) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Delete Profile Post.
+        Sourced from the official OpenAPI spec (readme.io).
+        Delete a profile post.
+        Required scopes:
+        + **post**
+
+        Args:
+            profile_post_id: Id of profile post.
+            reason: Reason of the profile post removal.
+
+        Docs: https://lolzteam.readme.io/reference/profilepostsdelete
+        """
+        return await self(ProfilePostsDelete(profile_post_id=profile_post_id, reason=reason))
+
+    async def profile_posts_edit(
+        self,
+        profile_post_id: int,
+        post_body: str | None = None,
+        disable_comments: bool | None = None,
+        message_state: MessageState | None = None,
+    ) -> str:
+        """Generated by forge — DO NOT EDIT. Edit Profile Post.
+        Sourced from the official OpenAPI spec (readme.io).
+        Edit a profile post.
+        Required scopes:
+        + **post**
+
+        Args:
+            profile_post_id: Id of profile post.
+            post_body: New content of the profile post.
+            disable_comments: Disable comments.
+
+        Docs: https://lolzteam.readme.io/reference/profilepostsedit
+        """
         return await self(
-            ProfilePostsCreate(user_id=user_id, post_body=post_body),
-            request_options=request_options,
+            ProfilePostsEdit(
+                profile_post_id=profile_post_id,
+                post_body=post_body,
+                disable_comments=disable_comments,
+                message_state=message_state,
+            )
         )
 
-    async def profile_posts_get(
-        self, profile_post_id: int, *, request_options: RequestOptions | None = None
-    ) -> str:
+    async def profile_posts_get(self, profile_post_id: int) -> str:
         """Generated by forge — DO NOT EDIT. Get Profile Post.
         Sourced from the official OpenAPI spec (readme.io).
         Detail information of a profile post.
@@ -1278,9 +1768,35 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/profilepostsget
         """
-        return await self(
-            ProfilePostsGet(profile_post_id=profile_post_id), request_options=request_options
-        )
+        return await self(ProfilePostsGet(profile_post_id=profile_post_id))
+
+    async def profile_posts_like(self, profile_post_id: int) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Like Profile Post.
+        Sourced from the official OpenAPI spec (readme.io).
+        Like a profile post.
+        Required scopes:
+        + **post**
+
+        Args:
+            profile_post_id: Id of profile post.
+
+        Docs: https://lolzteam.readme.io/reference/profilepostslike
+        """
+        return await self(ProfilePostsLike(profile_post_id=profile_post_id))
+
+    async def profile_posts_likes(self, profile_post_id: int) -> str:
+        """Generated by forge — DO NOT EDIT. Get Profile Post Likes.
+        Sourced from the official OpenAPI spec (readme.io).
+        List of users who liked a profile post.
+        Required scopes:
+        + **read**
+
+        Args:
+            profile_post_id: Id of profile post.
+
+        Docs: https://lolzteam.readme.io/reference/profilepostslikes
+        """
+        return await self(ProfilePostsLikes(profile_post_id=profile_post_id))
 
     async def profile_posts_list(
         self,
@@ -1289,8 +1805,6 @@ class GeneratedForumFacade:
         page: int | None = None,
         limit: int | None = None,
         fields_include: tuple[FieldsInclude, ...] | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> str:
         """Generated by forge — DO NOT EDIT. Get Profile Posts.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1314,13 +1828,27 @@ class GeneratedForumFacade:
                 page=page,
                 limit=limit,
                 fields_include=fields_include,
-            ),
-            request_options=request_options,
+            )
         )
 
-    async def profile_posts_report_reasons(
-        self, profile_post_id: int, *, request_options: RequestOptions | None = None
-    ) -> list[str]:
+    async def profile_posts_report(
+        self, profile_post_id: int, message: str
+    ) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Report a Profile Post.
+        Sourced from the official OpenAPI spec (readme.io).
+        Report a profile post.
+        Required scopes:
+        + **post**
+
+        Args:
+            profile_post_id: Id of profile post.
+            message: Reason of the report.
+
+        Docs: https://lolzteam.readme.io/reference/profilepostsreport
+        """
+        return await self(ProfilePostsReport(profile_post_id=profile_post_id, message=message))
+
+    async def profile_posts_report_reasons(self, profile_post_id: int) -> list[str]:
         """Generated by forge — DO NOT EDIT. Get Profile Post Report Reasons.
         Sourced from the official OpenAPI spec (readme.io).
         Get Profile Post Report Reasons.
@@ -1332,14 +1860,23 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/profilepostsreportreasons
         """
-        return await self(
-            ProfilePostsReportReasons(profile_post_id=profile_post_id),
-            request_options=request_options,
-        )
+        return await self(ProfilePostsReportReasons(profile_post_id=profile_post_id))
 
-    async def profile_posts_unlike(
-        self, profile_post_id: int, *, request_options: RequestOptions | None = None
-    ) -> ForumStatusMessageResponse:
+    async def profile_posts_stick(self, profile_post_id: int) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Stick Profile Post.
+        Sourced from the official OpenAPI spec (readme.io).
+        Stick a profile post.
+        Required scopes:
+        + **post**
+
+        Args:
+            profile_post_id: Id of profile post.
+
+        Docs: https://lolzteam.readme.io/reference/profilepostsstick
+        """
+        return await self(ProfilePostsStick(profile_post_id=profile_post_id))
+
+    async def profile_posts_unlike(self, profile_post_id: int) -> ForumStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Unlike Profile Post.
         Sourced from the official OpenAPI spec (readme.io).
         Unlike a profile post.
@@ -1351,13 +1888,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/profilepostsunlike
         """
-        return await self(
-            ProfilePostsUnlike(profile_post_id=profile_post_id), request_options=request_options
-        )
+        return await self(ProfilePostsUnlike(profile_post_id=profile_post_id))
 
-    async def profile_posts_unstick(
-        self, profile_post_id: int, *, request_options: RequestOptions | None = None
-    ) -> ForumStatusMessageResponse:
+    async def profile_posts_unstick(self, profile_post_id: int) -> ForumStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Unstick Profile Post.
         Sourced from the official OpenAPI spec (readme.io).
         Unstick a profile post.
@@ -1369,9 +1902,7 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/profilepostsunstick
         """
-        return await self(
-            ProfilePostsUnstick(profile_post_id=profile_post_id), request_options=request_options
-        )
+        return await self(ProfilePostsUnstick(profile_post_id=profile_post_id))
 
     async def search_all(
         self,
@@ -1382,8 +1913,6 @@ class GeneratedForumFacade:
         page: int | None = None,
         limit: int | None = None,
         before: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> SearchAllResponse:
         """Generated by forge — DO NOT EDIT. Search.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1410,8 +1939,7 @@ class GeneratedForumFacade:
                 page=page,
                 limit=limit,
                 before=before,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def search_posts(
@@ -1424,8 +1952,6 @@ class GeneratedForumFacade:
         limit: int | None = None,
         data_limit: int | None = None,
         before: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> ForumDataDataTotalLinksResponse:
         """Generated by forge — DO NOT EDIT. Search Post.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1454,8 +1980,7 @@ class GeneratedForumFacade:
                 limit=limit,
                 data_limit=data_limit,
                 before=before,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def search_profile_posts(
@@ -1465,8 +1990,6 @@ class GeneratedForumFacade:
         page: int | None = None,
         limit: int | None = None,
         before: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> ForumDataDataTotalLinksResponse:
         """Generated by forge — DO NOT EDIT. Search Profile Posts.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1484,17 +2007,11 @@ class GeneratedForumFacade:
         Docs: https://lolzteam.readme.io/reference/searchprofileposts
         """
         return await self(
-            SearchProfilePosts(q=q, user_id=user_id, page=page, limit=limit, before=before),
-            request_options=request_options,
+            SearchProfilePosts(q=q, user_id=user_id, page=page, limit=limit, before=before)
         )
 
     async def search_results(
-        self,
-        search_id: str,
-        page: int | None = None,
-        limit: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        self, search_id: str, page: int | None = None, limit: int | None = None
     ) -> str:
         """Generated by forge — DO NOT EDIT. Get Search Results.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1509,10 +2026,7 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/searchresults
         """
-        return await self(
-            SearchResults(search_id=search_id, page=page, limit=limit),
-            request_options=request_options,
-        )
+        return await self(SearchResults(search_id=search_id, page=page, limit=limit))
 
     async def search_tagged(
         self,
@@ -1520,8 +2034,6 @@ class GeneratedForumFacade:
         tags: tuple[str, ...] | None = None,
         page: int | None = None,
         limit: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> ForumDataDataTotalLinksResponse:
         """Generated by forge — DO NOT EDIT. Search Tagged.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1537,10 +2049,7 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/searchtagged
         """
-        return await self(
-            SearchTagged(tag=tag, tags=tags, page=page, limit=limit),
-            request_options=request_options,
-        )
+        return await self(SearchTagged(tag=tag, tags=tags, page=page, limit=limit))
 
     async def search_threads(
         self,
@@ -1552,8 +2061,6 @@ class GeneratedForumFacade:
         limit: int | None = None,
         data_limit: int | None = None,
         before: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> ForumDataDataTotalLinksResponse:
         """Generated by forge — DO NOT EDIT. Search Thread.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1582,13 +2089,10 @@ class GeneratedForumFacade:
                 limit=limit,
                 data_limit=data_limit,
                 before=before,
-            ),
-            request_options=request_options,
+            )
         )
 
-    async def search_users(
-        self, q: str | None = None, *, request_options: RequestOptions | None = None
-    ) -> list[SearchAllUser]:
+    async def search_users(self, q: str | None = None) -> list[User]:
         """Generated by forge — DO NOT EDIT. Search Users.
         Sourced from the official OpenAPI spec (readme.io).
         Search for users.
@@ -1600,11 +2104,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/searchusers
         """
-        return await self(SearchUsers(q=q), request_options=request_options)
+        return await self(SearchUsers(q=q))
 
-    async def threads_bump(
-        self, thread_id: int, *, request_options: RequestOptions | None = None
-    ) -> str:
+    async def threads_bump(self, thread_id: int) -> str:
         """Generated by forge — DO NOT EDIT. Bump Thread.
         Sourced from the official OpenAPI spec (readme.io).
         Bump a thread.
@@ -1616,7 +2118,7 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/threadsbump
         """
-        return await self(ThreadsBump(thread_id=thread_id), request_options=request_options)
+        return await self(ThreadsBump(thread_id=thread_id))
 
     async def threads_claim(
         self,
@@ -1642,8 +2144,6 @@ class GeneratedForumFacade:
         watch_thread_state: bool | None = None,
         watch_thread: bool | None = None,
         watch_thread_email: bool | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> Content:
         """Generated by forge — DO NOT EDIT. Create Claim.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1701,8 +2201,73 @@ class GeneratedForumFacade:
                 watch_thread_state=watch_thread_state,
                 watch_thread=watch_thread,
                 watch_thread_email=watch_thread_email,
-            ),
-            request_options=request_options,
+            )
+        )
+
+    async def threads_create(
+        self,
+        post_body: str,
+        forum_id: int,
+        title: str | None = None,
+        title_en: str | None = None,
+        prefix_id: tuple[int, ...] | None = None,
+        tags: tuple[str, ...] | None = None,
+        hide_contacts: bool | None = None,
+        allow_ask_hidden_content: bool | None = None,
+        reply_group: int | None = None,
+        comment_ignore_group: bool | None = None,
+        dont_alert_followers: bool | None = None,
+        schedule_date: str | None = None,
+        schedule_time: str | None = None,
+        watch_thread_state: bool | None = None,
+        watch_thread: bool | None = None,
+        watch_thread_email: bool | None = None,
+    ) -> Content:
+        """Generated by forge — DO NOT EDIT. Create Thread.
+        Sourced from the official OpenAPI spec (readme.io).
+        Create a new thread.
+        Required scopes:
+        + **post**
+
+        Args:
+            post_body: Content of the new thread.
+            forum_id: Id of the target forum.
+            title: Thread title. Can be skipped if **title_en** set.
+            title_en: Thread english title. Can be skipped if **title** set.
+            prefix_id: Prefix ids.
+            tags: Thread tags.
+            hide_contacts: Hide contacts.
+            allow_ask_hidden_content: Allow ask hidden content.
+            reply_group: Allow to reply only users with chosen or higher group.
+            comment_ignore_group: Allow commenting if user can't post in thread.
+            dont_alert_followers: Don't alert followers about thread creation.
+            schedule_date: Date to schedule thread creation (format: `DD-MM-YYYY`).
+            schedule_time: Time to schedule thread creation (format: `HH:MM`).
+            watch_thread_state: Watch thread state.
+            watch_thread: Receive forum notifications of new posts in this thread.
+            watch_thread_email: Receive email notifications of new posts in this thread.
+
+        Docs: https://lolzteam.readme.io/reference/threadscreate
+        """
+        return await self(
+            ThreadsCreate(
+                post_body=post_body,
+                forum_id=forum_id,
+                title=title,
+                title_en=title_en,
+                prefix_id=prefix_id,
+                tags=tags,
+                hide_contacts=hide_contacts,
+                allow_ask_hidden_content=allow_ask_hidden_content,
+                reply_group=reply_group,
+                comment_ignore_group=comment_ignore_group,
+                dont_alert_followers=dont_alert_followers,
+                schedule_date=schedule_date,
+                schedule_time=schedule_time,
+                watch_thread_state=watch_thread_state,
+                watch_thread=watch_thread,
+                watch_thread_email=watch_thread_email,
+            )
         )
 
     async def threads_create_contest(
@@ -1733,8 +2298,6 @@ class GeneratedForumFacade:
         watch_thread_state: bool | None = None,
         watch_thread: bool | None = None,
         watch_thread_email: bool | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> Content:
         """Generated by forge — DO NOT EDIT. Create Contest.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1800,13 +2363,75 @@ class GeneratedForumFacade:
                 watch_thread_state=watch_thread_state,
                 watch_thread=watch_thread,
                 watch_thread_email=watch_thread_email,
-            ),
-            request_options=request_options,
+            )
         )
 
-    async def threads_finish(
-        self, thread_id: int, *, request_options: RequestOptions | None = None
+    async def threads_delete(
+        self, thread_id: int, reason: str | None = None
     ) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Delete Thread.
+        Sourced from the official OpenAPI spec (readme.io).
+        Delete a thread.
+        Required scopes:
+        + **post**
+
+        Args:
+            thread_id: Id of thread.
+            reason: Reason of the thread removal.
+
+        Docs: https://lolzteam.readme.io/reference/threadsdelete
+        """
+        return await self(ThreadsDelete(thread_id=thread_id, reason=reason))
+
+    async def threads_edit(
+        self,
+        thread_id: int,
+        title: str | None = None,
+        title_en: str | None = None,
+        prefix_id: tuple[int, ...] | None = None,
+        tags: tuple[str, ...] | None = None,
+        discussion_open: bool | None = None,
+        hide_contacts: bool | None = None,
+        allow_ask_hidden_content: bool | None = None,
+        reply_group: int | None = None,
+        comment_ignore_group: bool | None = None,
+    ) -> Content:
+        """Generated by forge — DO NOT EDIT. Edit thread.
+        Sourced from the official OpenAPI spec (readme.io).
+        Edit a thread.
+        Required scopes:
+        + **post**
+
+        Args:
+            thread_id: Id of thread.
+            title: Thread title.
+            title_en: Thread title english.
+            prefix_id: Prefix ids. Set "0" to remove all thread prefixes.
+            tags: Thread tags.
+            discussion_open: Discussion state.
+            hide_contacts: Hide contacts.
+            allow_ask_hidden_content: Allow ask hidden content.
+            reply_group: Allow to reply only users with chosen or higher group.
+            comment_ignore_group: Allow commenting if user can't post in thread.
+
+        Docs: https://lolzteam.readme.io/reference/threadsedit
+        """
+        return await self(
+            ThreadsEdit(
+                thread_id=thread_id,
+                title=title,
+                title_en=title_en,
+                prefix_id=prefix_id,
+                tags=tags,
+                discussion_open=discussion_open,
+                hide_contacts=hide_contacts,
+                allow_ask_hidden_content=allow_ask_hidden_content,
+                reply_group=reply_group,
+                comment_ignore_group=comment_ignore_group,
+            )
+        )
+
+    async def threads_finish(self, thread_id: int) -> ForumStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Finish Contest.
         Sourced from the official OpenAPI spec (readme.io).
         Finishes a contest.
@@ -1818,14 +2443,27 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/threadsfinish
         """
-        return await self(ThreadsFinish(thread_id=thread_id), request_options=request_options)
+        return await self(ThreadsFinish(thread_id=thread_id))
+
+    async def threads_follow(
+        self, thread_id: int, email: bool | None = None
+    ) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Follow Thread.
+        Sourced from the official OpenAPI spec (readme.io).
+        Follow a thread.
+        Required scopes:
+        + **post**
+
+        Args:
+            thread_id: Id of thread.
+            email: Whether to receive notification as email.
+
+        Docs: https://lolzteam.readme.io/reference/threadsfollow
+        """
+        return await self(ThreadsFollow(thread_id=thread_id, email=email))
 
     async def threads_followed(
-        self,
-        total: bool | None = None,
-        fields_include: tuple[FieldsInclude, ...] | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        self, total: bool | None = None, fields_include: tuple[FieldsInclude, ...] | None = None
     ) -> str:
         """Generated by forge — DO NOT EDIT. Get Followed Threads.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1839,17 +2477,24 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/threadsfollowed
         """
-        return await self(
-            ThreadsFollowed(total=total, fields_include=fields_include),
-            request_options=request_options,
-        )
+        return await self(ThreadsFollowed(total=total, fields_include=fields_include))
+
+    async def threads_followers(self, thread_id: int) -> str:
+        """Generated by forge — DO NOT EDIT. Get Thread Followers.
+        Sourced from the official OpenAPI spec (readme.io).
+        List of a thread's followers. For privacy reason, only the current user will be included in the list.
+        Required scopes:
+        + **read**
+
+        Args:
+            thread_id: Id of thread.
+
+        Docs: https://lolzteam.readme.io/reference/threadsfollowers
+        """
+        return await self(ThreadsFollowers(thread_id=thread_id))
 
     async def threads_get(
-        self,
-        thread_id: int,
-        fields_include: tuple[FieldsInclude, ...] | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        self, thread_id: int, fields_include: tuple[FieldsInclude, ...] | None = None
     ) -> Content:
         """Generated by forge — DO NOT EDIT. Get Thread.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1863,14 +2508,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/threadsget
         """
-        return await self(
-            ThreadsGet(thread_id=thread_id, fields_include=fields_include),
-            request_options=request_options,
-        )
+        return await self(ThreadsGet(thread_id=thread_id, fields_include=fields_include))
 
-    async def threads_hide(
-        self, thread_id: int, *, request_options: RequestOptions | None = None
-    ) -> str:
+    async def threads_hide(self, thread_id: int) -> str:
         """Generated by forge — DO NOT EDIT. Hide Thread.
         Sourced from the official OpenAPI spec (readme.io).
         Hide a thread from your feed.
@@ -1882,7 +2522,7 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/threadshide
         """
-        return await self(ThreadsHide(thread_id=thread_id), request_options=request_options)
+        return await self(ThreadsHide(thread_id=thread_id))
 
     async def threads_list(
         self,
@@ -1904,8 +2544,6 @@ class GeneratedForumFacade:
         thread_create_date: int | None = None,
         thread_update_date: int | None = None,
         fields_include: tuple[FieldsInclude, ...] | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> str:
         """Generated by forge — DO NOT EDIT. Get Threads.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1955,8 +2593,7 @@ class GeneratedForumFacade:
                 thread_create_date=thread_create_date,
                 thread_update_date=thread_update_date,
                 fields_include=fields_include,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def threads_move(
@@ -1968,8 +2605,6 @@ class GeneratedForumFacade:
         prefix_id: tuple[int, ...] | None = None,
         apply_thread_prefix: bool | None = None,
         send_alert: bool | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> ForumStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Move Thread.
         Sourced from the official OpenAPI spec (readme.io).
@@ -1997,29 +2632,10 @@ class GeneratedForumFacade:
                 prefix_id=prefix_id,
                 apply_thread_prefix=apply_thread_prefix,
                 send_alert=send_alert,
-            ),
-            request_options=request_options,
+            )
         )
 
-    async def threads_navigation(
-        self, thread_id: int, *, request_options: RequestOptions | None = None
-    ) -> str:
-        """Generated by forge — DO NOT EDIT. Get Navigation Elements.
-        Sourced from the official OpenAPI spec (readme.io).
-        List of navigation elements to reach the specified thread.
-        Required scopes:
-        + **read**
-
-        Args:
-            thread_id: Id of thread.
-
-        Docs: https://lolzteam.readme.io/reference/threadsnavigation
-        """
-        return await self(ThreadsNavigation(thread_id=thread_id), request_options=request_options)
-
-    async def threads_poll_get(
-        self, thread_id: int, *, request_options: RequestOptions | None = None
-    ) -> str:
+    async def threads_poll_get(self, thread_id: int) -> str:
         """Generated by forge — DO NOT EDIT. Get Poll.
         Sourced from the official OpenAPI spec (readme.io).
         Detail information of a poll.
@@ -2031,15 +2647,13 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/threadspollget
         """
-        return await self(ThreadsPollGet(thread_id=thread_id), request_options=request_options)
+        return await self(ThreadsPollGet(thread_id=thread_id))
 
     async def threads_poll_vote(
         self,
         thread_id: int,
         response_id: int | None = None,
         response_ids: tuple[int, ...] | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> ForumStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Vote Poll.
         Sourced from the official OpenAPI spec (readme.io).
@@ -2055,10 +2669,7 @@ class GeneratedForumFacade:
         Docs: https://lolzteam.readme.io/reference/threadspollvote
         """
         return await self(
-            ThreadsPollVote(
-                thread_id=thread_id, response_id=response_id, response_ids=response_ids
-            ),
-            request_options=request_options,
+            ThreadsPollVote(thread_id=thread_id, response_id=response_id, response_ids=response_ids)
         )
 
     async def threads_recent(
@@ -2067,8 +2678,6 @@ class GeneratedForumFacade:
         limit: int | None = None,
         forum_id: int | None = None,
         data_limit: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> str:
         """Generated by forge — DO NOT EDIT. Get Recent Threads.
         Sourced from the official OpenAPI spec (readme.io).
@@ -2085,13 +2694,24 @@ class GeneratedForumFacade:
         Docs: https://lolzteam.readme.io/reference/threadsrecent
         """
         return await self(
-            ThreadsRecent(days=days, limit=limit, forum_id=forum_id, data_limit=data_limit),
-            request_options=request_options,
+            ThreadsRecent(days=days, limit=limit, forum_id=forum_id, data_limit=data_limit)
         )
 
-    async def threads_unfollow(
-        self, thread_id: int, *, request_options: RequestOptions | None = None
-    ) -> ForumStatusMessageResponse:
+    async def threads_star(self, thread_id: int) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Bookmark Thread.
+        Sourced from the official OpenAPI spec (readme.io).
+        Bookmark a thread.
+        Required scopes:
+        + **post**
+
+        Args:
+            thread_id: Id of thread.
+
+        Docs: https://lolzteam.readme.io/reference/threadsstar
+        """
+        return await self(ThreadsStar(thread_id=thread_id))
+
+    async def threads_unfollow(self, thread_id: int) -> ForumStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Unfollow Thread.
         Sourced from the official OpenAPI spec (readme.io).
         Unfollow a thread.
@@ -2103,15 +2723,10 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/threadsunfollow
         """
-        return await self(ThreadsUnfollow(thread_id=thread_id), request_options=request_options)
+        return await self(ThreadsUnfollow(thread_id=thread_id))
 
     async def threads_unread(
-        self,
-        limit: int | None = None,
-        forum_id: int | None = None,
-        data_limit: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        self, limit: int | None = None, forum_id: int | None = None, data_limit: int | None = None
     ) -> str:
         """Generated by forge — DO NOT EDIT. Get Unread Threads.
         Sourced from the official OpenAPI spec (readme.io).
@@ -2126,14 +2741,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/threadsunread
         """
-        return await self(
-            ThreadsUnread(limit=limit, forum_id=forum_id, data_limit=data_limit),
-            request_options=request_options,
-        )
+        return await self(ThreadsUnread(limit=limit, forum_id=forum_id, data_limit=data_limit))
 
-    async def threads_unstar(
-        self, thread_id: int, *, request_options: RequestOptions | None = None
-    ) -> ForumStatusMessageResponse:
+    async def threads_unstar(self, thread_id: int) -> ForumStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Unbookmark Thread.
         Sourced from the official OpenAPI spec (readme.io).
         Unbookmark a thread.
@@ -2145,16 +2755,28 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/threadsunstar
         """
-        return await self(ThreadsUnstar(thread_id=thread_id), request_options=request_options)
+        return await self(ThreadsUnstar(thread_id=thread_id))
+
+    async def uptime_heartbeat(self) -> UptimeHeartbeatResponse:
+        """Generated by forge — DO NOT EDIT. Get Status Page Heartbeats & Uptime.
+        Sourced from the official OpenAPI spec (readme.io).
+        Get heartbeat and uptime.
+
+        Docs: https://lolzteam.readme.io/reference/uptimeheartbeat
+        """
+        return await self(UptimeHeartbeat())
+
+    async def uptime_info(self) -> UptimeInfoResponse:
+        """Generated by forge — DO NOT EDIT. Get Status Page Info.
+        Sourced from the official OpenAPI spec (readme.io).
+        Provide data for published public status pages.
+
+        Docs: https://lolzteam.readme.io/reference/uptimeinfo
+        """
+        return await self(UptimeInfo())
 
     async def users_avatar_crop(
-        self,
-        user_id: str,
-        x: int | None = None,
-        y: int | None = None,
-        crop: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        self, user_id: str, x: int | None = None, y: int | None = None, crop: int | None = None
     ) -> str:
         """Generated by forge — DO NOT EDIT. Crop Avatar.
         Sourced from the official OpenAPI spec (readme.io).
@@ -2170,9 +2792,21 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/usersavatarcrop
         """
-        return await self(
-            UsersAvatarCrop(user_id=user_id, x=x, y=y, crop=crop), request_options=request_options
-        )
+        return await self(UsersAvatarCrop(user_id=user_id, x=x, y=y, crop=crop))
+
+    async def users_avatar_delete(self, user_id: str) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Delete Avatar.
+        Sourced from the official OpenAPI spec (readme.io).
+        Delete avatar for a user.
+        Required scopes:
+        + **post**
+
+        Args:
+            user_id: User ID. > You can use shortlink `me` to interact with your profile.
+
+        Docs: https://lolzteam.readme.io/reference/usersavatardelete
+        """
+        return await self(UsersAvatarDelete(user_id=user_id))
 
     async def users_avatar_upload(
         self,
@@ -2181,8 +2815,6 @@ class GeneratedForumFacade:
         x: int | None = None,
         y: int | None = None,
         crop: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> str:
         """Generated by forge — DO NOT EDIT. Upload Avatar.
         Sourced from the official OpenAPI spec (readme.io).
@@ -2199,19 +2831,10 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/usersavatarupload
         """
-        return await self(
-            UsersAvatarUpload(user_id=user_id, avatar=avatar, x=x, y=y, crop=crop),
-            request_options=request_options,
-        )
+        return await self(UsersAvatarUpload(user_id=user_id, avatar=avatar, x=x, y=y, crop=crop))
 
     async def users_background_crop(
-        self,
-        user_id: str,
-        x: int | None = None,
-        y: int | None = None,
-        crop: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        self, user_id: str, x: int | None = None, y: int | None = None, crop: int | None = None
     ) -> str:
         """Generated by forge — DO NOT EDIT. Crop Background.
         Sourced from the official OpenAPI spec (readme.io).
@@ -2227,10 +2850,21 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/usersbackgroundcrop
         """
-        return await self(
-            UsersBackgroundCrop(user_id=user_id, x=x, y=y, crop=crop),
-            request_options=request_options,
-        )
+        return await self(UsersBackgroundCrop(user_id=user_id, x=x, y=y, crop=crop))
+
+    async def users_background_delete(self, user_id: str) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Delete Background.
+        Sourced from the official OpenAPI spec (readme.io).
+        Delete background for a user.
+        Required scopes:
+        + **post**
+
+        Args:
+            user_id: User ID. > You can use shortlink `me` to interact with your profile.
+
+        Docs: https://lolzteam.readme.io/reference/usersbackgrounddelete
+        """
+        return await self(UsersBackgroundDelete(user_id=user_id))
 
     async def users_background_upload(
         self,
@@ -2239,8 +2873,6 @@ class GeneratedForumFacade:
         x: int | None = None,
         y: int | None = None,
         crop: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> str:
         """Generated by forge — DO NOT EDIT. Upload Background.
         Sourced from the official OpenAPI spec (readme.io).
@@ -2258,17 +2890,11 @@ class GeneratedForumFacade:
         Docs: https://lolzteam.readme.io/reference/usersbackgroundupload
         """
         return await self(
-            UsersBackgroundUpload(user_id=user_id, background=background, x=x, y=y, crop=crop),
-            request_options=request_options,
+            UsersBackgroundUpload(user_id=user_id, background=background, x=x, y=y, crop=crop)
         )
 
     async def users_claims(
-        self,
-        user_id: str,
-        type: Type | None = None,
-        claim_state: ClaimState | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        self, user_id: str, type: Type | None = None, claim_state: ClaimState | None = None
     ) -> UsersClaimsResponse:
         """Generated by forge — DO NOT EDIT. Get User Claims.
         Sourced from the official OpenAPI spec (readme.io).
@@ -2283,18 +2909,10 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/usersclaims
         """
-        return await self(
-            UsersClaims(user_id=user_id, type=type, claim_state=claim_state),
-            request_options=request_options,
-        )
+        return await self(UsersClaims(user_id=user_id, type=type, claim_state=claim_state))
 
     async def users_contents(
-        self,
-        user_id: str,
-        page: int | None = None,
-        limit: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
+        self, user_id: str, page: int | None = None, limit: int | None = None
     ) -> str:
         """Generated by forge — DO NOT EDIT. Get Contents.
         Sourced from the official OpenAPI spec (readme.io).
@@ -2309,11 +2927,111 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/userscontents
         """
+        return await self(UsersContents(user_id=user_id, page=page, limit=limit))
+
+    async def users_edit(
+        self,
+        user_id: str,
+        username: str | None = None,
+        user_title: str | None = None,
+        display_group_id: int | None = None,
+        display_icon_group_id: int | None = None,
+        display_banner_id: int | None = None,
+        conv_welcome_message: str | None = None,
+        user_dob_day: int | None = None,
+        user_dob_month: int | None = None,
+        user_dob_year: int | None = None,
+        secret_answer: str | None = None,
+        secret_answer_type: int | None = None,
+        short_link: str | None = None,
+        language_id: int | None = None,
+        gender: Gender | None = None,
+        timezone: str | None = None,
+        receive_admin_email: bool | None = None,
+        activity_visible: bool | None = None,
+        show_dob_date: bool | None = None,
+        show_dob_year: bool | None = None,
+        hide_username_change_logs: bool | None = None,
+        allow_view_profile: AllowViewProfile | None = None,
+        allow_post_profile: AllowPostProfile | None = None,
+        allow_send_personal_conversation: AllowSendPersonalConversation | None = None,
+        allow_invite_group: AllowInviteGroup | None = None,
+        allow_receive_news_feed: AllowReceiveNewsFeed | None = None,
+        alert: dict[str, Any] | None = None,
+        fields: dict[str, Any] | None = None,
+    ) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Edit User.
+        Sourced from the official OpenAPI spec (readme.io).
+        Edit a user.
+        Required scopes:
+        + **post**
+
+        Args:
+            user_id: User ID. > You can use shortlink `me` to interact with your profile.
+            username: New username.
+            user_title: New custom title of the user.
+            display_group_id: Id of the group you want to display.
+            display_icon_group_id: Id of the icon group you want to display.
+            display_banner_id: Id of the banner you want to display.
+            conv_welcome_message: This message is shown when someone wants to write to you.
+            user_dob_day: Your date of birth (day).
+            user_dob_month: Your date of birth (month).
+            user_dob_year: Your date of birth (year).
+            secret_answer: Secret answer.
+            secret_answer_type: Secret answer type.
+            short_link: Profile short link.
+            language_id: User interface language ID.
+            gender: User gender.
+            timezone: User timezone.
+            receive_admin_email: Whether to receive admin emails.
+            activity_visible: Whether user activity is visible.
+            show_dob_date: Show date of birth (day and month).
+            show_dob_year: Show year of birth.
+            hide_username_change_logs: Hide username change logs.
+            allow_view_profile: Who can view your profile.
+            allow_post_profile: Who can post on your profile.
+            allow_send_personal_conversation: Who can send you personal conversations.
+            allow_invite_group: Who can invite you to groups.
+            allow_receive_news_feed: Who can see your news feed.
+            alert: Alert settings.
+            fields: Custom user profile fields.
+
+        Docs: https://lolzteam.readme.io/reference/usersedit
+        """
         return await self(
-            UsersContents(user_id=user_id, page=page, limit=limit), request_options=request_options
+            UsersEdit(
+                user_id=user_id,
+                username=username,
+                user_title=user_title,
+                display_group_id=display_group_id,
+                display_icon_group_id=display_icon_group_id,
+                display_banner_id=display_banner_id,
+                conv_welcome_message=conv_welcome_message,
+                user_dob_day=user_dob_day,
+                user_dob_month=user_dob_month,
+                user_dob_year=user_dob_year,
+                secret_answer=secret_answer,
+                secret_answer_type=secret_answer_type,
+                short_link=short_link,
+                language_id=language_id,
+                gender=gender,
+                timezone=timezone,
+                receive_admin_email=receive_admin_email,
+                activity_visible=activity_visible,
+                show_dob_date=show_dob_date,
+                show_dob_year=show_dob_year,
+                hide_username_change_logs=hide_username_change_logs,
+                allow_view_profile=allow_view_profile,
+                allow_post_profile=allow_post_profile,
+                allow_send_personal_conversation=allow_send_personal_conversation,
+                allow_invite_group=allow_invite_group,
+                allow_receive_news_feed=allow_receive_news_feed,
+                alert=alert,
+                fields=fields,
+            )
         )
 
-    async def users_fields(self, *, request_options: RequestOptions | None = None) -> str:
+    async def users_fields(self) -> str:
         """Generated by forge — DO NOT EDIT. Get User Fields.
         Sourced from the official OpenAPI spec (readme.io).
         List of user fields.
@@ -2322,15 +3040,13 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/usersfields
         """
-        return await self(UsersFields(), request_options=request_options)
+        return await self(UsersFields())
 
     async def users_find(
         self,
         username: str | None = None,
         custom_fields: dict[str, Any] | None = None,
         fields_include: tuple[FieldsInclude, ...] | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> str:
         """Generated by forge — DO NOT EDIT. Find Users.
         Sourced from the official OpenAPI spec (readme.io).
@@ -2346,11 +3062,45 @@ class GeneratedForumFacade:
         Docs: https://lolzteam.readme.io/reference/usersfind
         """
         return await self(
-            UsersFind(
-                username=username, custom_fields=custom_fields, fields_include=fields_include
-            ),
-            request_options=request_options,
+            UsersFind(username=username, custom_fields=custom_fields, fields_include=fields_include)
         )
+
+    async def users_follow(self, user_id: str) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Follow User.
+        Sourced from the official OpenAPI spec (readme.io).
+        Follow a user.
+        Required scopes:
+        + **post**
+
+        Args:
+            user_id: User ID. > You can use shortlink `me` to interact with your profile.
+
+        Docs: https://lolzteam.readme.io/reference/usersfollow
+        """
+        return await self(UsersFollow(user_id=user_id))
+
+    async def users_followers(
+        self,
+        user_id: str,
+        order: Order | None = None,
+        page: int | None = None,
+        limit: int | None = None,
+    ) -> str:
+        """Generated by forge — DO NOT EDIT. Get User Followers.
+        Sourced from the official OpenAPI spec (readme.io).
+        List of a user's followers.
+        Required scopes:
+        + **read**
+
+        Args:
+            user_id: User ID. > You can use shortlink `me` to interact with your profile.
+            order: Ordering of followers.
+            page: Page number of followers.
+            limit: Number of followers in a page.
+
+        Docs: https://lolzteam.readme.io/reference/usersfollowers
+        """
+        return await self(UsersFollowers(user_id=user_id, order=order, page=page, limit=limit))
 
     async def users_followings(
         self,
@@ -2358,8 +3108,6 @@ class GeneratedForumFacade:
         order: Order | None = None,
         page: int | None = None,
         limit: int | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> str:
         """Generated by forge — DO NOT EDIT. Get Followed Users By User.
         Sourced from the official OpenAPI spec (readme.io).
@@ -2375,18 +3123,11 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/usersfollowings
         """
-        return await self(
-            UsersFollowings(user_id=user_id, order=order, page=page, limit=limit),
-            request_options=request_options,
-        )
+        return await self(UsersFollowings(user_id=user_id, order=order, page=page, limit=limit))
 
     async def users_get(
-        self,
-        user_id: str,
-        fields_include: tuple[FieldsInclude, ...] | None = None,
-        *,
-        request_options: RequestOptions | None = None,
-    ) -> SearchAllUser:
+        self, user_id: str, fields_include: tuple[FieldsInclude, ...] | None = None
+    ) -> User:
         """Generated by forge — DO NOT EDIT. Get User.
         Sourced from the official OpenAPI spec (readme.io).
         Detail information of a user.
@@ -2400,14 +3141,53 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/usersget
         """
+        return await self(UsersGet(user_id=user_id, fields_include=fields_include))
+
+    async def users_ignore(self, user_id: str) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Ignore User.
+        Sourced from the official OpenAPI spec (readme.io).
+        Ignore a user.
+        Required scopes:
+        + **post**
+
+        Args:
+            user_id: User ID. > You can use shortlink `me` to interact with your profile.
+
+        Docs: https://lolzteam.readme.io/reference/usersignore
+        """
+        return await self(UsersIgnore(user_id=user_id))
+
+    async def users_ignore_edit(
+        self,
+        user_id: str,
+        ignore_conversations: bool | None = None,
+        ignore_content: bool | None = None,
+        restrict_view_profile: bool | None = None,
+    ) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Edit Ignoring Options.
+        Sourced from the official OpenAPI spec (readme.io).
+        Edit ignoring options.
+        Required scopes:
+        + **post**
+
+        Args:
+            user_id: User ID. > You can use shortlink `me` to interact with your profile.
+            ignore_conversations: Ignore user's conversations.
+            ignore_content: Ignore user's content.
+            restrict_view_profile: Restrict user from viewing your profile.
+
+        Docs: https://lolzteam.readme.io/reference/usersignoreedit
+        """
         return await self(
-            UsersGet(user_id=user_id, fields_include=fields_include),
-            request_options=request_options,
+            UsersIgnoreEdit(
+                user_id=user_id,
+                ignore_conversations=ignore_conversations,
+                ignore_content=ignore_content,
+                restrict_view_profile=restrict_view_profile,
+            )
         )
 
-    async def users_ignored(
-        self, total: bool | None = None, *, request_options: RequestOptions | None = None
-    ) -> list[UsersIgnoredUser]:
+    async def users_ignored(self, total: bool | None = None) -> list[UsersIgnoredUser]:
         """Generated by forge — DO NOT EDIT. Get Ignored Users.
         Sourced from the official OpenAPI spec (readme.io).
         List of ignored users of current user.
@@ -2419,7 +3199,7 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/usersignored
         """
-        return await self(UsersIgnored(total=total), request_options=request_options)
+        return await self(UsersIgnored(total=total))
 
     async def users_likes(
         self,
@@ -2431,8 +3211,6 @@ class GeneratedForumFacade:
         content_type: ContentType | None = None,
         search_user_id: int | None = None,
         stats: bool | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> UsersLikesResponse:
         """Generated by forge — DO NOT EDIT. Get User Likes.
         Sourced from the official OpenAPI spec (readme.io).
@@ -2462,8 +3240,7 @@ class GeneratedForumFacade:
                 content_type=content_type,
                 search_user_id=search_user_id,
                 stats=stats,
-            ),
-            request_options=request_options,
+            )
         )
 
     async def users_list(
@@ -2471,8 +3248,6 @@ class GeneratedForumFacade:
         page: int | None = None,
         limit: int | None = None,
         fields_include: tuple[FieldsInclude, ...] | None = None,
-        *,
-        request_options: RequestOptions | None = None,
     ) -> UsersListResponse:
         """Generated by forge — DO NOT EDIT. Get Users.
         Sourced from the official OpenAPI spec (readme.io).
@@ -2487,14 +3262,20 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/userslist
         """
-        return await self(
-            UsersList(page=page, limit=limit, fields_include=fields_include),
-            request_options=request_options,
-        )
+        return await self(UsersList(page=page, limit=limit, fields_include=fields_include))
 
-    async def users_sa_reset(
-        self, *, request_options: RequestOptions | None = None
-    ) -> UsersSAResetResponse:
+    async def users_sa_cancel_reset(self) -> ForumStatusMessageResponse:
+        """Generated by forge — DO NOT EDIT. Cancel Secret Answer Reset.
+        Sourced from the official OpenAPI spec (readme.io).
+        Cancel a pending secret answer reset request for the account.
+        Required scopes:
+        + **post**
+
+        Docs: https://lolzteam.readme.io/reference/userssacancelreset
+        """
+        return await self(UsersSACancelReset())
+
+    async def users_sa_reset(self) -> UsersSAResetResponse:
         """Generated by forge — DO NOT EDIT. Reset Secret Answer.
         Sourced from the official OpenAPI spec (readme.io).
         Request a reset of the secret answer for the account.
@@ -2503,11 +3284,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/userssareset
         """
-        return await self(UsersSAReset(), request_options=request_options)
+        return await self(UsersSAReset())
 
-    async def users_secret_answer_types(
-        self, *, request_options: RequestOptions | None = None
-    ) -> list[UsersSecretAnswerTypesData]:
+    async def users_secret_answer_types(self) -> list[UsersSecretAnswerTypesData]:
         """Generated by forge — DO NOT EDIT. Get Secret Answer Types.
         Sourced from the official OpenAPI spec (readme.io).
         Get available secret answer types for user account security.
@@ -2516,11 +3295,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/userssecretanswertypes
         """
-        return await self(UsersSecretAnswerTypes(), request_options=request_options)
+        return await self(UsersSecretAnswerTypes())
 
-    async def users_trophies(
-        self, user_id: str, *, request_options: RequestOptions | None = None
-    ) -> UsersTrophiesResponse:
+    async def users_trophies(self, user_id: str) -> UsersTrophiesResponse:
         """Generated by forge — DO NOT EDIT. Get Trophies.
         Sourced from the official OpenAPI spec (readme.io).
         List of user trophies.
@@ -2532,11 +3309,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/userstrophies
         """
-        return await self(UsersTrophies(user_id=user_id), request_options=request_options)
+        return await self(UsersTrophies(user_id=user_id))
 
-    async def users_unfollow(
-        self, user_id: str, *, request_options: RequestOptions | None = None
-    ) -> ForumStatusMessageResponse:
+    async def users_unfollow(self, user_id: str) -> ForumStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Unfollow User.
         Sourced from the official OpenAPI spec (readme.io).
         Unfollow a user.
@@ -2548,11 +3323,9 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/usersunfollow
         """
-        return await self(UsersUnfollow(user_id=user_id), request_options=request_options)
+        return await self(UsersUnfollow(user_id=user_id))
 
-    async def users_unignore(
-        self, user_id: str, *, request_options: RequestOptions | None = None
-    ) -> ForumStatusMessageResponse:
+    async def users_unignore(self, user_id: str) -> ForumStatusMessageResponse:
         """Generated by forge — DO NOT EDIT. Unignore User.
         Sourced from the official OpenAPI spec (readme.io).
         Stop ignoring a user.
@@ -2564,4 +3337,4 @@ class GeneratedForumFacade:
 
         Docs: https://lolzteam.readme.io/reference/usersunignore
         """
-        return await self(UsersUnignore(user_id=user_id), request_options=request_options)
+        return await self(UsersUnignore(user_id=user_id))

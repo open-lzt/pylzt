@@ -6,7 +6,9 @@ to update.
 from __future__ import annotations
 
 from pylzt.models.base import LolzObject
-from pylzt.models.forum.conversations_messages_list_message import ConversationsMessagesListMessage
+from pylzt.models.forum.conversations_messages_create_message import (
+    ConversationsMessagesCreateMessage,
+)
 from pylzt.models.forum.links import Links
 
 
@@ -16,6 +18,6 @@ class ConversationsMessagesListResponse(LolzObject):
     Docs: https://lolzteam.readme.io/reference/conversationsmessageslist
     """
 
-    messages: list[ConversationsMessagesListMessage]
+    messages: list[ConversationsMessagesCreateMessage]
     messages_total: int
     links: Links

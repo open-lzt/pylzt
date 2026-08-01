@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from pylzt.models.base import LolzObject
 from pylzt.models.forum.links import Links
-from pylzt.models.forum.search_all_user import SearchAllUser
+from pylzt.models.forum.user import User
 
 
 class UsersListResponse(LolzObject):
@@ -16,6 +16,6 @@ class UsersListResponse(LolzObject):
     Docs: https://lolzteam.readme.io/reference/userslist
     """
 
-    users: list[SearchAllUser]
+    users: list[User]
     users_total: int
     links: Links

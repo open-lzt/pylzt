@@ -6,7 +6,7 @@ to update.
 from __future__ import annotations
 
 from pylzt.models.base import LolzObject
-from pylzt.models.forum.search_all_user import SearchAllUser
+from pylzt.models.forum.user import User
 
 
 class Claim(LolzObject):
@@ -23,4 +23,4 @@ class Claim(LolzObject):
     message_body_plain_text: str
     amount: int
     amount_formatted: str
-    author: SearchAllUser
+    author: User
