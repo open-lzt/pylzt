@@ -209,12 +209,7 @@ uv run pytest -m e2e -q
 
 `.github/workflows/ci.yml` гоняет ruff, mypy и pytest на каждый push и PR. `.githooks/pre-push` — тот же гейт локально, чтобы красное ловилось до пуша, а не после.
 
-Релиз идёт по тегу `v*`: `.github/workflows/release.yml` собирает sdist и wheel, прогоняет гейт, публикует на PyPI через OIDC trusted publishing (токена в secrets нет) и создаёт GitHub Release с автосгенерированными заметками.
-
-```bash
-# поднять version в pyproject.toml, затем
-git tag v0.2.1 && git push origin main v0.2.1
-```
+Релизы едут по тегу `v*` — сборка, гейт и публикация на PyPI автоматические, порядок для мейнтейнера описан в [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Экосистема
 

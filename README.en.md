@@ -209,12 +209,7 @@ uv run pytest -m e2e -q
 
 `.github/workflows/ci.yml` runs ruff, mypy and pytest on every push and PR. `.githooks/pre-push` is the same gate locally, so red is caught before the push rather than after.
 
-Releases are driven by a `v*` tag: `.github/workflows/release.yml` builds the sdist and wheel, runs the gate, publishes to PyPI over OIDC trusted publishing (no token in secrets) and cuts a GitHub Release with generated notes.
-
-```bash
-# bump version in pyproject.toml, then
-git tag v0.2.1 && git push origin main v0.2.1
-```
+Releases ride a `v*` tag — build, gate and PyPI publish are automatic; the maintainer procedure lives in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Ecosystem
 

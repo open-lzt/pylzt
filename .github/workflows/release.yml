@@ -74,15 +74,19 @@ jobs:
           TAG="${GITHUB_REF#refs/tags/}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           PREV="$(git tag --sort=-creatordate | grep -v "^$TAG$" | head -n1 || true)"
+          # tformat, not format: `format:` omits the trailing newline, so the closing
+          # delimiter lands on the same line as the last commit and is never matched.
+          # The delimiter is randomised so a commit subject can't close the block early.
+          DELIM="notes-$(openssl rand -hex 8)"
           {
-            echo "notes<<EOF"
+            echo "notes<<$DELIM"
             if [[ -n "$PREV" ]]; then
               echo "### Changes since $PREV"
-              git --no-pager log --pretty=format:'- %s (%h)' "$PREV..$TAG"
+              git --no-pager log --pretty=tformat:'- %s (%h)' "$PREV..$TAG"
             else
               echo "### First tagged release"
             fi
-            echo "EOF"
+            echo "$DELIM"
           } >> "$GITHUB_OUTPUT"
 
       - uses: softprops/action-gh-release@v2
