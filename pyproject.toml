@@ -24,8 +24,8 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/zlexdev/pylzt"
-Repository = "https://github.com/zlexdev/pylzt"
+Homepage = "https://github.com/open-lzt/pylzt"
+Repository = "https://github.com/open-lzt/pylzt"
 
 [build-system]
 requires = ["hatchling"]

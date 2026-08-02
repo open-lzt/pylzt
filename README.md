@@ -1,10 +1,11 @@
+<p align="right"><a href="README.en.md">English</a> · <b>Русский</b></p>
+
 <div align="center">
 
 # pylzt
 
-<sub>Typed async framework over the lzt.market / lolzteam / AntiPublic APIs — not a thin HTTP wrapper</sub>
+<sub>Типизированный async-фреймворк над API lzt.market / lolzteam / AntiPublic — не тонкая обёртка над HTTP</sub>
 
-[![CI](https://github.com/zlexdev/pylzt/actions/workflows/ci.yml/badge.svg)](https://github.com/zlexdev/pylzt/actions/workflows/ci.yml)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/)
 [![Pydantic v2](https://img.shields.io/badge/pydantic-v2-e92063)](https://docs.pydantic.dev/)
 [![mypy: strict](https://img.shields.io/badge/mypy-strict-2a6db2)](https://mypy-lang.org/)
@@ -13,56 +14,17 @@
 
 </div>
 
-[Full documentation](docs/) · [AI-agent docs](docs/for_ai/)
+[Документация](docs/) · [Для AI-агентов](docs/for_ai/) · [Гайд по интеграции](docs/integration-guide.md)
 
-Typed async **framework** over the [lzt.market](https://lzt.market) marketplace API,
-the [lolzteam](https://lolz.live) forum API, and the [AntiPublic](https://antipublic.one)
-leak-checking API — not a thin HTTP wrapper.
-
-**[Why a framework](#why-a-framework-not-a-library)** ·
-**[Quickstart](#30-second-quickstart)** ·
-**[Sync/async](#async-and-sync-side-by-side)** ·
-**[Pagination](#pagination)** ·
-**[Batching](#batching-n-calls-into-one-request)** ·
-**[Media uploads](#uploading-media)** ·
-**[AntiPublic](#antipublic-leak-checking-api)** ·
-**[Errors](#error-handling)** ·
-**[Codegen](#codegen-the-builder)**
-
-## Why a framework, not a library
-
-A wrapper gives you typed methods over an HTTP client. pylzt ships the operational
-machinery a production integration actually needs, already wired together:
-
-- **Token pool** (`token_pool/round_robin.py`) — round-robins over many marketplace
-  tokens, each metered by its own per-`RateClass` bucket at the official published
-  ceilings (Market 120/min general + 20/min Category Search; Forum 300/min). AntiPublic
-  gets its own single-credential pool (`token_pool/_static.py`) — a license key isn't
-  fungible with an OAuth token, so it never enters the same rotation.
-- **Proxy pool** (`proxy_pool/`) — sticky-per-token or round-robin egress proxies
-  (HTTP/HTTPS/SOCKS5) with per-proxy circuit-breaker health tracking.
-- **Resilience** (`transport/base.py`, `lib/retry.py`) — retry with jittered
-  backoff honoring `Retry-After`, a typed self-registering error hierarchy
-  (`errors.py`), request-coalescing `/batch` (`lib/batch.py`), a TTL cache honoring the
-  server's `cacheTTL`.
-- **Method-as-class** (`methods/base.py`) — every endpoint is a frozen `BaseMethod[T]`
-  Pydantic model, not a hand-maintained function — malformed request fields fail at
-  construction, not on the wire; `Client.execute(method)` is the one request-execution
-  path every domain namespace and every generated facade method delegates to.
-- **Generated, not hand-transcribed** (`dev/codegen/`) — methods, response models,
-  enums, and facades are generated from the official OpenAPI reference, flat into the
-  library behind a ruff+mypy gate. Auto-detects `format: binary` fields into a real
-  `Media` type, so file-upload endpoints get typed multipart support for free.
-- **Sync and async, one engine** (`sync/runner.py`) — `SyncClient` isn't a second
-  implementation of rate limiting and retries; it runs the *same* async engine on a
-  background event-loop thread (`SyncRunner`), with every method's return type
-  matching its async counterpart's unwrapped type under `mypy --strict`.
-
-## 30-second quickstart
+## Установка
 
 ```bash
-pip install "git+https://github.com/zlexdev/pylzt.git"
+pip install "git+https://github.com/open-lzt/pylzt.git"
 ```
+
+Python 3.12+. Зависимости: `pydantic>=2.7`, `httpx[socks]>=0.27`, `structlog>=24.1`.
+
+## Быстрый старт
 
 ```python
 import asyncio
@@ -84,69 +46,70 @@ async def main() -> None:
 asyncio.run(main())
 ```
 
-`client.market` / `client.forum` / `client.antipublic` are the three domain
-namespaces — every endpoint in the official spec is a real method on the matching
-one (`client.forum.threads_get(...)`, `client.antipublic.license_check_license()`).
+Три доменных неймспейса: `client.market` · `client.forum` · `client.antipublic`. Каждый эндпоинт официальной спеки — реальный метод на своём неймспейсе (`client.forum.threads_get(...)`, `client.antipublic.license_check_license()`).
 
-## Async and sync, side by side
+Токены можно не передавать в конструктор — они читаются из `LZT_TOKENS`.
+
+## Sync и async — один движок
+
+`SyncClient` — не вторая реализация рейт-лимитов и ретраев. Он крутит тот же async-движок на фоновом потоке с event-loop (`sync/runner.py`), и типы возврата совпадают с async-аналогами под `mypy --strict`.
 
 ```python
-# async — Client
 async with Client(["<market-token>"]) as client:
     lot = await client.market.get_lot(item_id=42)
 
-# sync — SyncClient, same constructor args, blocking calls, no event loop to manage
 from pylzt.sync.client import SyncClient
 
 with SyncClient(["<market-token>"]) as client:
-    lot = client.market.get_lot(item_id=42)  # no `await`
+    lot = client.market.get_lot(item_id=42)   # без await
 ```
 
-## Pagination
+## Пагинация
 
 ```python
+from decimal import Decimal
+
 from pylzt.models.lot import LotFilter
 from pylzt.types import Category, OrderBy
-from decimal import Decimal
 
 filt = LotFilter(category=Category.STEAM, pmax=Decimal("500"), order_by=OrderBy.PRICE_ASC)
 
 async for lot in client.market.list_lots(filt, max_pages=5):
     ...
 
-all_lots = await client.market.list_lots(filt).collect(limit=200)  # materialize a list
-first = await client.market.list_lots(filt).first_page()           # just the first page
+all_lots = await client.market.list_lots(filt).collect(limit=200)   # в список
+first = await client.market.list_lots(filt).first_page()            # только первая страница
 ```
 
-## Batching N calls into one request
+## Батчинг N вызовов в один запрос
 
-Three ways in, pick by how the calls arise in your code:
+Три входа — выбирайте по тому, как вызовы возникают в вашем коде.
 
 ```python
 from pylzt.methods.catalog import GetLot
 from pylzt.methods.categories import CategoryParams
 from pylzt.types import Category, ItemId
 
-# 1. You already have the full list up front — one POST /batch, one call.
+# 1. Список известен заранее — один POST /batch.
 results = await client.execute_batch([
     GetLot(item_id=ItemId(1)),
     CategoryParams(category=Category.STEAM),
 ])
 
-# 2. Calls are scattered across a function/loop — wrap the region, every execute()
-#    inside coalesces into /batch requests instead of firing one per call.
+# 2. Вызовы разбросаны по функции — оберните участок, каждый execute() внутри
+#    склеится в /batch вместо отдельного запроса.
 async with client.batching():
     lot, categories = await asyncio.gather(
         client.execute(GetLot(item_id=ItemId(1))),
         client.execute(CategoryParams(category=Category.STEAM)),
     )
 
-# 3. No block to wrap (e.g. calls originate in unrelated call sites) — job() coalesces
-#    with every other concurrent job() call through one shared, client-lifetime collector.
+# 3. Оборачивать нечего (вызовы из несвязанных мест) — job() склеивает со всеми
+#    другими параллельными job() через общий сборщик на время жизни клиента.
 lot = await client.job(GetLot(item_id=ItemId(1)))
 ```
 
-## Uploading media
+## Загрузка файлов
 
 ```python
 from pylzt import Media
@@ -155,13 +118,11 @@ avatar = Media.from_path("avatar.png")
 await client.forum.users_avatar_upload(user_id="me", avatar=avatar)
 ```
 
-See [`docs/integration-guide.md`](docs/integration-guide.md) for `media_storage=`
-(an optional post-upload byte cache).
+Опциональный кэш байтов после загрузки — `media_storage=`, см. [гайд по интеграции](docs/integration-guide.md).
 
-## AntiPublic (leak-checking API)
+## AntiPublic
 
-A separate license key, not a market/forum token — it never enters the same rotation
-(see the framework overview above):
+Отдельный лицензионный ключ, не токен маркета — в общую ротацию он не попадает никогда.
 
 ```python
 async with Client(["<market-token>"], antipublic_key="<antipublic-license-key>") as client:
@@ -169,13 +130,11 @@ async with Client(["<market-token>"], antipublic_key="<antipublic-license-key>")
     hit = await client.antipublic.license_check_lines(lines=("user:pass",))
 ```
 
-Calling `client.antipublic.*` without `antipublic_key=` raises `CredentialMissing` —
-fail loud instead of a silent no-op.
+Вызов `client.antipublic.*` без `antipublic_key=` поднимает `CredentialMissing` — падаем громко, а не молча ничего не делаем.
 
-## Error handling
+## Ошибки
 
-Every failure the SDK raises is an `LztError` subclass — catch the specific type
-you can recover from, and let the rest propagate:
+Всё, что поднимает SDK, — подклассы `LztError`. Ловите тот тип, от которого умеете восстанавливаться, остальное пусть летит выше.
 
 ```python
 from pylzt import AuthFailed, NotFound, RateLimited, TransportError
@@ -184,125 +143,74 @@ from pylzt.types import ItemId
 try:
     lot = await client.market.get_lot(item_id=ItemId(999_999_999))
 except NotFound:
-    ...  # lot doesn't exist or isn't visible to this token
+    ...  # лота нет или он не виден этому токену
 except RateLimited as exc:
-    ...  # exc carries retry_after — the token pool already backs off internally
+    ...  # exc.retry_after — пул токенов уже отступил сам
 except AuthFailed:
-    ...  # token is dead/revoked — pull it out of rotation, see reconfigure()
+    ...  # токен мёртв — убрать из ротации, см. reconfigure()
 except TransportError:
-    ...  # upstream 5xx after retries were exhausted
+    ...  # upstream 5xx, ретраи исчерпаны
 ```
 
-Full walkthrough — DI, config, fakes for tests, `reconfigure()` for live token
-rotation, the full error table: **[`docs/integration-guide.md`](docs/integration-guide.md)**.
+Полная таблица ошибок, DI, фейки для тестов, `reconfigure()` для горячей ротации токенов — [`docs/integration-guide.md`](docs/integration-guide.md).
 
-## Codegen (the builder)
+## Почему фреймворк, а не библиотека
 
-The SDK's methods, response models, enums and facades are generated from the
-official readme.io OpenAPI reference and installed **flat** into the library behind a
-ruff + mypy gate. `dev/codegen/` (`pipeline.py` + `generator.py` + `scraper.py`, driven by
-`python -m dev.codegen`) is two-phase: `generate` renders into a staging tree and never
-touches the library; `install` promotes staging into `src/pylzt/` behind the gate and
-rolls back on any failure, so the library on disk is never left broken by a regen.
+Обёртка даёт типизированные методы над HTTP-клиентом. pylzt даёт операционную обвязку, которая нужна боевой интеграции, уже собранную:
 
-### Commands
+- **Пул токенов** (`token_pool/round_robin.py`) — round-robin по многим токенам, каждый со своим ведром на `RateClass` по официальным потолкам (Market 120/мин + 20/мин Category Search, Forum 300/мин). У AntiPublic свой пул на одну учётку (`token_pool/_static.py`).
+- **Пул прокси** (`proxy_pool/`) — sticky-per-token или round-robin, HTTP/HTTPS/SOCKS5, circuit breaker на каждый прокси.
+- **Устойчивость** (`transport/base.py`, `lib/retry.py`) — ретраи с джиттером и уважением `Retry-After`, самрегистрирующаяся типизированная иерархия ошибок, склейка запросов в `/batch`, TTL-кэш по серверному `cacheTTL`.
+- **Метод как класс** (`methods/base.py`) — каждый эндпоинт это frozen `BaseMethod[T]` на Pydantic. Кривое поле запроса падает при конструировании, а не на проводе. `Client.execute(method)` — единственный путь исполнения запроса для всех фасадов.
+- **Сгенерировано, а не переписано руками** (`dev/codegen/`) — методы, модели ответов, енумы и фасады рендерятся из официальной OpenAPI-спеки за гейтом ruff+mypy. `format: binary` автоматически становится типом `Media`.
+
+## Кодогенерация
+
+Две фазы: `generate` рендерит в staging и не трогает библиотеку, `install` продвигает staging в `src/pylzt/` за гейтом и откатывается при любой ошибке. Библиотека на диске никогда не остаётся сломанной после регена.
 
 ```bash
-python -m dev.codegen generate                 # render into dev/codegen/generated/ only
-python -m dev.codegen install                  # promote staging -> library, behind the gate
-python -m dev.codegen build                     # generate + install in one shot (the common case)
-python -m dev.codegen build --scrape            # re-scrape the OpenAPI spec first, then build
-python -m dev.codegen scrape                    # scrape + merge the spec only, no codegen
-python -m dev.codegen check                     # run the ruff + mypy + import gate, no regen
+python -m dev.codegen build            # generate + install, обычный случай
+python -m dev.codegen build --scrape   # сначала перескрейпить спеку
+python -m dev.codegen generate         # только рендер в dev/codegen/generated/
+python -m dev.codegen install          # только продвижение staging → библиотека
+python -m dev.codegen scrape           # только скрейп + слияние спеки
+python -m dev.codegen check            # только гейт ruff+mypy+import, без регена
 ```
 
-Useful flags (repeatable, combine freely):
-
-| Flag | On | Effect |
+| Флаг | Где | Что делает |
 |---|---|---|
-| `--api market` / `--api forum` / `--api antipublic` | `generate`, `build` | restrict to one API (repeatable); default: all three |
-| `--scrape` | `generate`, `build` | re-fetch the readme.io reference before rendering |
-| `--refresh` | `generate --scrape`, `build --scrape`, `scrape` | ignore the on-disk page cache, refetch every page |
-| `--model-backend {pydantic,dataclass}` | `generate`, `build` | response-DTO target; default `pydantic` (request methods are always frozen Pydantic models) |
-| `--no-validate` | `install`, `build` | skip the ruff+mypy gate on install (danger — only for a quick local look at staged output) |
-| `--site market` / `--site forum` / `--site antipublic` | `scrape` | restrict scraping to one site (repeatable) |
+| `--api market\|forum\|antipublic` | `generate`, `build` | ограничить одним API (повторяемый); по умолчанию все три |
+| `--scrape` | `generate`, `build` | перекачать readme.io-справочник перед рендером |
+| `--refresh` | `*--scrape`, `scrape` | игнорировать дисковый кэш страниц |
+| `--model-backend {pydantic,dataclass}` | `generate`, `build` | таргет для DTO ответов; по умолчанию `pydantic` |
+| `--no-validate` | `install`, `build` | пропустить гейт (опасно, только для локального просмотра) |
+| `--site market\|forum\|antipublic` | `scrape` | ограничить скрейп одним сайтом |
 
-### What each phase does
+Слитые спеки `dev/generated/openapi/lzt_{market,forum,antipublic}.json` **закоммичены** — свежий клон собирается без скрейпа. Остальное под `dev/generated/` в gitignore.
 
-- **`scraper.py`** fetches every readme.io reference page for a site and unions the
-  embedded OpenAPI 3.1 fragments into one merged spec, cached per-page on disk under
-  `dev/generated/openapi/.page_cache/<site>/` (`--refresh` bypasses the cache). The merged
-  spec is written to `dev/generated/openapi/lzt_<site>.json` — **these JSON files are
-  versioned** (see below); the page cache and scrape logs next to them are not.
-- **`generator.py`** turns that spec into typed method-classes (`BaseMethod[T]`), nested
-  Pydantic response models, `StrEnum`s, async facade methods, and a parallel **sync**
-  facade per site (`facades/sync_{api}.py` — each method a thin blocking wrapper over
-  its async counterpart via `SyncRunner`, no second spec-derived implementation) — flat
-  into `dev/codegen/generated/{methods,models,enums,facades}/`. It also runs a
-  normalisation pass over the raw extraction so the output stays hand-written-quality
-  rather than a literal 1:1 spec dump — folding structurally-identical models into one
-  class, hoisting shared generic bases, mapping `format: binary` request fields to the
-  real `Media` type, and **reusing hand-written primitives instead of duplicating
-  them**: any enum whose wire values are `{yes, no, nomatter}` (or a subset) collapses onto
-  the one `pylzt.types.Tristate` — with a `Tristate.from_bool(value: bool | None)`
-  classmethod — instead of a same-shaped duplicate class per field name (`Tel`, `EditBtag`,
-  `ClashPass`, ...); any response model whose leading field is `status: str` rebases onto
-  `pylzt.models.base.BaseResponse`, which owns `is_ok()`, instead of every model carrying
-  its own copy of that field. `EXISTING_TYPES_ENUMS` in `generator.py` is the full list of
-  hand-written enums codegen imports rather than regenerates.
-- **`pipeline.py`** snapshots the currently-installed generated files, wipes them (so a
-  removed domain's file disappears on the next build), copies the staged set in, runs
-  `ruff --fix` then the ruff+mypy+import gate, and restores the snapshot on any failure.
+Каждый сгенерированный файл несёт `Generated by forge — DO NOT EDIT`: спека не всегда совпадает с тем, что API реально отдаёт, и реген затрёт правку руками. Что проверено вживую, что сломано и как патчить расхождение спека/реальность — [`docs/codegen-runbook.md`](docs/codegen-runbook.md).
 
-Generated and hand-written modules coexist flat in the same package — generated ones carry
-an auto-gen header marker and an `{api}_` / `{api}` name, hand-written ones are unprefixed,
-and `install` refuses to overwrite a hand-written module (`_guard_no_clobber`). See
-`dev/codegen/_MODULE.md` for the full contract.
-
-### API schema
-
-`dev/generated/openapi/lzt_market.json`, `lzt_forum.json`, and `lzt_antipublic.json` —
-the merged OpenAPI specs `scraper.py` produces — are committed so a clone can
-`python -m dev.codegen build` without re-scraping readme.io first. Everything else under
-`dev/generated/` (the page cache, scrape logs, and `dev/codegen/generated/` staging tree)
-stays gitignored and gets rebuilt on demand. Re-scrape with
-`python -m dev.codegen scrape --refresh` when the upstream reference changes, and commit
-the updated JSON files alongside the codegen diff they produce.
-
-### Live verification
-
-Every generated file carries a `Generated by forge — DO NOT EDIT` docstring — the
-spec's declared types don't always match what the API actually returns, so a fresh
-regen is never a place to hand-patch. `tests/pylzt/e2e/test_live_read.py` (marker
-`e2e`, needs `LZT_E2E_TOKEN`, excluded from the default test run) auto-discovers and
-exercises every zero-argument GET endpoint against the real API. See
-**`docs/codegen-runbook.md`** for what's been verified, what's
-still known-broken, and the hand-patch mechanism for fixing a spec/reality mismatch
-without the next codegen run silently reverting it.
-
-## Development
-
-GitHub Actions is unavailable on this account (locked pending a payment method), so
-`.github/workflows/ci.yml` is not a working gate today. `.githooks/pre-push` mirrors it
-locally (ruff check, ruff format --check, mypy, pytest) and blocks a push on failure.
-After cloning, point git at it once: `git config core.hooksPath .githooks`.
-
-## Contributing
+## Разработка
 
 ```bash
-git clone https://github.com/zlexdev/pylzt && cd pylzt
+git clone https://github.com/open-lzt/pylzt && cd pylzt
 uv sync --extra dev
-git config core.hooksPath .githooks   # local ruff+mypy+pytest gate on push, see above
+git config core.hooksPath .githooks   # локальный гейт ruff+mypy+pytest на push
 uv run pytest -q
 ```
 
-PRs go against `main`. `.githooks/pre-push` is the actual gate right now (see
-Development above) — it must pass before a push goes through.
+E2E-тесты бьют по живому API, требуют `LZT_E2E_TOKEN` и исключены из прогона по умолчанию:
 
-## Authors
+```bash
+uv run pytest -m e2e -q
+```
 
-- [zlexdev](https://github.com/zlexdev)
+GitHub Actions на аккаунте недоступен, поэтому реальный гейт сейчас — `.githooks/pre-push`. Он блокирует push при провале.
 
-## License
+## Экосистема
 
-[MIT](LICENSE).
+[lzt-testnet](https://github.com/open-lzt/lzt-testnet) — мок-маркет для тестов · [lzt-eventus](https://github.com/open-lzt/lzt-eventus) — движок событий · [auto-lzt](https://github.com/open-lzt/auto-lzt) — no-code автоматизации · [lzt-mcp](https://github.com/open-lzt/lzt-mcp) — сервер для AI-агентов · [весь стенд](https://github.com/open-lzt/open-lzt)
+
+## Лицензия
+
+[MIT](LICENSE)
