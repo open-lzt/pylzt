@@ -19,8 +19,10 @@
 ## Установка
 
 ```bash
-pip install "git+https://github.com/open-lzt/pylzt.git"
+pip install pylzt
 ```
+
+Свежий `main` вместо релиза — `pip install "git+https://github.com/open-lzt/pylzt.git"`.
 
 Python 3.12+. Зависимости: `pydantic>=2.7`, `httpx[socks]>=0.27`, `structlog>=24.1`.
 

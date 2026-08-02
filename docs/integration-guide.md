@@ -7,7 +7,8 @@ lolz.live API. Every snippet below is checked against the actual signatures in
 ## Install
 
 ```bash
-pip install "git+https://github.com/open-lzt/pylzt.git"
+pip install pylzt
+# unreleased main:  pip install "git+https://github.com/open-lzt/pylzt.git"
 ```
 
 ## Quickstart
