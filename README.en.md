@@ -207,7 +207,14 @@ E2E tests hit the live API, need `LZT_E2E_TOKEN` and are excluded from the defau
 uv run pytest -m e2e -q
 ```
 
-GitHub Actions is unavailable on this account, so the real gate today is `.githooks/pre-push`. It blocks a push on failure.
+`.github/workflows/ci.yml` runs ruff, mypy and pytest on every push and PR. `.githooks/pre-push` is the same gate locally, so red is caught before the push rather than after.
+
+Releases are driven by a `v*` tag: `.github/workflows/release.yml` builds the sdist and wheel, runs the gate, publishes to PyPI over OIDC trusted publishing (no token in secrets) and cuts a GitHub Release with generated notes.
+
+```bash
+# bump version in pyproject.toml, then
+git tag v0.2.1 && git push origin main v0.2.1
+```
 
 ## Ecosystem
 

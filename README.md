@@ -207,7 +207,14 @@ E2E-тесты бьют по живому API, требуют `LZT_E2E_TOKEN` и
 uv run pytest -m e2e -q
 ```
 
-GitHub Actions на аккаунте недоступен, поэтому реальный гейт сейчас — `.githooks/pre-push`. Он блокирует push при провале.
+`.github/workflows/ci.yml` гоняет ruff, mypy и pytest на каждый push и PR. `.githooks/pre-push` — тот же гейт локально, чтобы красное ловилось до пуша, а не после.
+
+Релиз идёт по тегу `v*`: `.github/workflows/release.yml` собирает sdist и wheel, прогоняет гейт, публикует на PyPI через OIDC trusted publishing (токена в secrets нет) и создаёт GitHub Release с автосгенерированными заметками.
+
+```bash
+# поднять version в pyproject.toml, затем
+git tag v0.2.1 && git push origin main v0.2.1
+```
 
 ## Экосистема
 
