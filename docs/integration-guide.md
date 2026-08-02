@@ -85,7 +85,7 @@ games = await client.market.category_games(Category.STEAM)
 
 `client.market` / `client.forum` / `client.antipublic` — доменные неймспейсы. Каждый эндпоинт официальной OpenAPI-спеки это настоящий `async def` на своём неймспейсе: `client.forum.forums_list()`, `client.forum.threads_get(thread_id)`, `client.forum.categories_get(...)`, `client.antipublic.license_check_license()`.
 
-Всё это генерируется командой `python -m dev.codegen build` (см. [`codegen-runbook.en.md`](codegen-runbook.en.md), на английском) — **файл с заголовком авто-генерации руками не правят.** У горстки моделей в docstring висит пометка о живой проверке: там объявленная спекой форма расходится с реальным ответом. Остальное сверено с боевым трафиком.
+Всё это генерируется командой `python -m dev.codegen build` — **файл с заголовком авто-генерации руками не правят.** У горстки моделей в docstring висит пометка о живой проверке: там объявленная спекой форма расходится с реальным ответом. Остальное сверено с боевым трафиком.
 
 Если нужного вызова в фасаде нет, спускайтесь на уровень «метод как класс» через `execute`. Он живёт на `Client`, а не на неймспейсе — это сквозная точка входа, к которой сводятся сами неймспейсы.
 
@@ -300,5 +300,4 @@ client = Client(["token-a"], config=ClientConfig(enable_adaptive_concurrency=Tru
 
 ## Смотрите также
 
-- [`codegen-runbook.en.md`](codegen-runbook.en.md) (на английском) — как собран сгенерированный фасад, что подтверждено вживую и как патчить расхождение спеки с реальностью.
 - `README.md` — обзор возможностей и справочник по командам кодогенерации.

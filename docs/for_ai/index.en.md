@@ -1,3 +1,5 @@
+<p align="right"><b>English</b> · <a href="index.md">Русский</a></p>
+
 # AI-agent map
 
 Read this before opening source — it's the shortest path to the right file.
@@ -25,10 +27,8 @@ Read this before opening source — it's the shortest path to the right file.
 
 ## Deeper references
 
-- **[`../integration-guide.md`](../integration-guide.md)** — DI, config, fakes for tests,
+- **[`../integration-guide.en.md`](../integration-guide.en.md)** — DI, config, fakes for tests,
   `reconfigure()` for live token rotation, the full typed-error table.
-- **[`../codegen-runbook.md`](../codegen-runbook.md)** — live-verified vs. still-known-broken
-  spec/reality mismatches, the hand-patch mechanism, and why (`_guard_no_clobber`).
 
 ## Non-obvious invariants worth knowing before editing
 
@@ -43,5 +43,6 @@ Read this before opening source — it's the shortest path to the right file.
 - **Sync isn't a second implementation.** `SyncClient`/`sync/runner.py` runs the same
   async engine on a background event-loop thread — there is exactly one rate-limit/retry
   implementation, not one per sync/async variant.
-- **`GitHub Actions` is not the CI gate right now.** `.githooks/pre-push` (ruff check,
-  ruff format --check, mypy, pytest) is — see the README's Development section.
+- **The gate is both CI and a local hook.** `.github/workflows/ci.yml` runs ruff, mypy and
+  pytest on every push and PR; `.githooks/pre-push` mirrors it locally so red is caught
+  before the push.
