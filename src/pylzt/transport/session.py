@@ -116,6 +116,12 @@ class HttpxSession(BaseTransport):
 
         try:
             return await self._wire_send(req)
+        except httpx.TimeoutException:
+            # A timeout is NOT a dropped connection: the request may well have been served, and on
+            # a non-idempotent POST (fast-buy) that difference is money. It keeps the httpx type
+            # the caller recognises — auto-lzt turns exactly this into `PurchaseOutcomeUnknown` —
+            # instead of becoming a NetworkError the retry policy would replay.
+            raise
         except httpx.TransportError as exc:
             # A pooled keep-alive the server closed between two polls surfaces as
             # RemoteProtocolError. Raw, it escapes `BaseTransport.send`'s `except LztError`:

@@ -82,6 +82,19 @@ class Response(BaseModel):
     headers: dict[str, str] = Field(default_factory=dict)
 
 
+_REPLAY_SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+
+
+def _replay_would_be_unsafe(req: Request, exc: LztError) -> bool:
+    """A `NetworkError` says the answer never arrived — not that the request never landed.
+
+    Replaying that on `POST /{id}/fast-buy` buys the lot a second time. Every other retryable
+    error carries a server verdict (a status, a body), so the request demonstrably did NOT take
+    effect and a retry is safe regardless of method.
+    """
+    return isinstance(exc, NetworkError) and req.method.upper() not in _REPLAY_SAFE_METHODS
+
+
 class BaseTransport(ABC):
     """Send a `Request`, get a `Response` — `send()` leases/signs/retries/gates around
     the abstract `_send_raw()` wire hook. If `token_pool` is never wired in by a
@@ -127,7 +140,11 @@ class BaseTransport(ABC):
                     resp = await self._send_raw(signed)
                 except LztError as exc:
                     self._report_outcome(lease, exc)
-                    delay = self._retry.next_delay(attempt, exc)
+                    delay = (
+                        None
+                        if _replay_would_be_unsafe(req, exc)
+                        else self._retry.next_delay(attempt, exc)
+                    )
                     if delay is None:
                         raise
                     attempt += 1

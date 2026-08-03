@@ -97,6 +97,44 @@ async def test_dropped_connection_becomes_a_retryable_network_error() -> None:
     assert resp.status == 200
 
 
+async def test_a_dropped_post_is_never_replayed() -> None:
+    """A dropped connection says the answer never arrived — not that the request never landed.
+    Replaying `POST /{id}/fast-buy` buys the lot a second time, so a non-idempotent method surfaces
+    the NetworkError instead of retrying it."""
+    attempts = 0
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        nonlocal attempts
+        attempts += 1
+        raise httpx.RemoteProtocolError("Server disconnected without sending a response.")
+
+    session = HttpxSession(client=_client(httpx.MockTransport(handle)), token_pool=_pool())
+    with pytest.raises(NetworkError):
+        await session.send(Request(method="POST", path="/1/fast-buy", rate_class=RateClass.GENERAL))
+    await session.aclose()
+
+    assert attempts == 1, "the purchase was sent to the marketplace more than once"
+
+
+async def test_a_timed_out_purchase_keeps_its_httpx_type() -> None:
+    """A timeout is not a dropped connection: the request may well have been served. It stays
+    `httpx.TimeoutException`, so the caller can tell "outcome unknown" from "it failed" — auto-lzt
+    turns exactly this into PurchaseOutcomeUnknown — and the retry policy never sees it."""
+    attempts = 0
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        nonlocal attempts
+        attempts += 1
+        raise httpx.ReadTimeout("timed out")
+
+    session = HttpxSession(client=_client(httpx.MockTransport(handle)), token_pool=_pool())
+    with pytest.raises(httpx.TimeoutException):
+        await session.send(Request(method="POST", path="/1/fast-buy", rate_class=RateClass.GENERAL))
+    await session.aclose()
+
+    assert attempts == 1
+
+
 async def test_network_error_is_raised_when_every_attempt_drops() -> None:
     def handle(request: httpx.Request) -> httpx.Response:
         raise httpx.ConnectError("connection refused")
