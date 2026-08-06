@@ -79,6 +79,11 @@ LIVE_TYPE_OVERRIDES: dict[str, str] = {
     # int by a live check on 2026-07-05. Same conclusion as the two hand-patched seller models —
     # this entry is what stops the third and fourth from needing one.
     "restore_percents": "int",
+    # `int` in the spec, `1926.63` on the wire (measured 2026-08-06 against `GET /me`). It is the
+    # balance converted to the display currency — money, so fractional is the normal case, not an
+    # edge one. Note `balance` beside it arrives as the STRING "1926.63" while only the `converted*`
+    # family is numeric, which is why this entry names one field rather than the group.
+    "convertedBalance": "float",
 }
 
 # Split camelCase AND acronym→Word boundaries: "CategoryEAResponse" → Category|EA|Response
@@ -1392,9 +1397,7 @@ def _lib_method_module(
             # HttpMethod/ApiTarget/RateClass live in pylzt.types (methods.base doesn't
             # re-export them under strict) — ApiTarget/RateClass only referenced by forum
             # method bodies (__api__/__rate_class__ overrides), _imports_used drops unused ones.
-            _imports_used(
-                code, ["HttpMethod", "ApiTarget", "RateClass", *reused], "pylzt.types"
-            ),
+            _imports_used(code, ["HttpMethod", "ApiTarget", "RateClass", *reused], "pylzt.types"),
             _imports_used(code, new_enums, f"pylzt.enums.{api}"),
         )
         if imp

@@ -43,7 +43,7 @@ class ToBalance(LolzObject):
     can_warn: bool
     contest_count: int
     conv_welcome_message: str
-    convertedBalance: int
+    convertedBalance: float
     convertedDeposit: int
     convertedHold: int
     currency: str
