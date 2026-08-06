@@ -56,7 +56,7 @@ class PublishingCheckItem(LolzObject):
     feedback_data: str
     buyer_avatar_date: int
     buyer_user_group_id: int
-    priceWithSellerFee: int
+    priceWithSellerFee: float
     guarantee: PublishingCheckItemGuarantee
     canViewLoginData: bool
     canUpdateItemStats: bool

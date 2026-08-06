@@ -19,7 +19,6 @@ from pylzt.models.market.battle_net_item import BattleNetItem
 from pylzt.models.market.blitz_wot_top_premium_tank import BlitzWotTopPremiumTank
 from pylzt.models.market.calculator import Calculator
 from pylzt.models.market.cart_get_response import CartGetResponse
-from pylzt.models.market.category_discord_item_seller import CategoryDiscordItemSeller
 from pylzt.models.market.category_onlyfans_item import CategoryOnlyfansItem
 from pylzt.models.market.category_onlyfans_response import CategoryOnlyfansResponse
 from pylzt.models.market.category_response import CategoryResponse
@@ -135,7 +134,6 @@ from pylzt.models.market.publishing_check_item_guarantee import PublishingCheckI
 from pylzt.models.market.publishing_check_item_seller import PublishingCheckItemSeller
 from pylzt.models.market.publishing_fast_sell_response import PublishingFastSellResponse
 from pylzt.models.market.purchasing_check_item import PurchasingCheckItem
-from pylzt.models.market.purchasing_check_item_seller import PurchasingCheckItemSeller
 from pylzt.models.market.purchasing_check_response import PurchasingCheckResponse
 from pylzt.models.market.purchasing_confirm_response import PurchasingConfirmResponse
 from pylzt.models.market.relic_main_property import RelicMainProperty
@@ -186,7 +184,6 @@ __all__ = [
     "BlitzWotTopPremiumTank",
     "Calculator",
     "CartGetResponse",
-    "CategoryDiscordItemSeller",
     "CategoryOnlyfansItem",
     "CategoryOnlyfansResponse",
     "CategoryResponse",
@@ -298,7 +295,6 @@ __all__ = [
     "PublishingCheckItemSeller",
     "PublishingFastSellResponse",
     "PurchasingCheckItem",
-    "PurchasingCheckItemSeller",
     "PurchasingCheckResponse",
     "PurchasingConfirmResponse",
     "RelicMainProperty",

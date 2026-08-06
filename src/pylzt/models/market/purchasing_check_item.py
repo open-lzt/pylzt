@@ -10,7 +10,7 @@ from pylzt.models.market.item_account_link import ItemAccountLink
 from pylzt.models.market.item_bump_settings import ItemBumpSettings
 from pylzt.models.market.item_extra_price import ItemExtraPrice
 from pylzt.models.market.item_guarantee import ItemGuarantee
-from pylzt.models.market.purchasing_check_item_seller import PurchasingCheckItemSeller
+from pylzt.models.market.publishing_check_item_seller import PublishingCheckItemSeller
 
 
 class PurchasingCheckItem(LolzObject):
@@ -66,7 +66,7 @@ class PurchasingCheckItem(LolzObject):
     user_alerted: str
     message: str
     min_price: int
-    priceWithSellerFee: int
+    priceWithSellerFee: float
     guarantee: ItemGuarantee
     canViewLoginData: bool
     canUpdateItemStats: bool
@@ -104,4 +104,4 @@ class PurchasingCheckItem(LolzObject):
     descriptionEnHtml: str
     descriptionPlain: str
     descriptionEnPlain: str
-    seller: PurchasingCheckItemSeller
+    seller: PublishingCheckItemSeller

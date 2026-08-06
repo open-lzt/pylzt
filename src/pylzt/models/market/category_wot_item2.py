@@ -59,7 +59,7 @@ class CategoryWotItem2[
     wot_blitz: int
     feedback_data: str
     isIgnored: bool
-    priceWithSellerFee: int
+    priceWithSellerFee: float
     guarantee: str
     canViewLoginData: bool
     canUpdateItemStats: bool

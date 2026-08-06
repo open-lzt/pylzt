@@ -8,11 +8,11 @@ from __future__ import annotations
 from pydantic import AliasPath, Field
 
 from pylzt.models.base import LolzObject
-from pylzt.models.market.category_discord_item_seller import CategoryDiscordItemSeller
 from pylzt.models.market.item_account_link import ItemAccountLink
 from pylzt.models.market.item_category import ItemCategory
 from pylzt.models.market.item_onlyfans_subscription import ItemOnlyfansSubscription
 from pylzt.models.market.item_onlyfans_transaction import ItemOnlyfansTransaction
+from pylzt.models.market.item_seller import ItemSeller
 
 
 class CategoryOnlyfansItem(LolzObject):
@@ -112,4 +112,4 @@ class CategoryOnlyfansItem(LolzObject):
     descriptionEnHtml: str
     descriptionPlain: str
     descriptionEnPlain: str
-    seller: CategoryDiscordItemSeller
+    seller: ItemSeller
