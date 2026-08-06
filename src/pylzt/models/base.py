@@ -22,7 +22,7 @@ just `cls.model_validate(raw)`) inherits `BaseModel, BoundModel` directly instea
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any, Optional, Self
 
 from pydantic import BaseModel, ConfigDict
 
@@ -49,6 +49,44 @@ class BoundModel:
 
 class LolzObject(BaseModel, BoundModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
+
+    @classmethod
+    def __pydantic_init_subclass__(cls, **kwargs: Any) -> None:
+        """An absent field is `None`, never a ValidationError.
+
+        The mirror of `extra="ignore"`. That one says an upstream field ADDITION must not break
+        parsing; this one says the same about a field the response simply does not carry. The
+        spec's `required` list is a claim about the API, and repeatedly a false one — measured
+        against prod, `purchasing_check` (the call that reads a price ceiling before money moves)
+        omits eleven fields the spec calls required, so the whole response was unparseable and
+        every autobuy degraded to "lot unavailable".
+
+        The costs are not symmetric. A wrongly-required field makes the ENTIRE response
+        unreadable — the caller gets an exception instead of the fifty fields that did arrive. A
+        wrongly-optional one costs an `is None` check.
+
+        **The price, stated plainly: static types now over-promise.** A field declared `int` here
+        can be `None` at runtime, and mypy will not warn about it. That is the deliberate trade
+        for keeping `| None` out of ~400 generated models; the alternative widens every field's
+        declared type and pushes the same check onto every caller of every field, including the
+        vast majority that are always present.
+
+        Applied to subclasses only — `LolzObject` itself declares no fields — and re-runs the
+        schema build, so validation, not just construction, sees the defaults.
+        """
+        super().__pydantic_init_subclass__(**kwargs)
+        loosened = False
+        for field in cls.model_fields.values():
+            if not field.is_required():
+                continue
+            # `Optional[...]`, not `... | None`: the annotation may still be an unresolved string
+            # under `from __future__ import annotations`, and the `|` operator has no meaning on
+            # one. `Optional` accepts both and normalises.
+            field.annotation = Optional[field.annotation]  # type: ignore[assignment]  # noqa: UP045
+            field.default = None
+            loosened = True
+        if loosened:
+            cls.model_rebuild(force=True)
 
     @classmethod
     def from_raw(cls, raw: Mapping[str, Any]) -> Self:

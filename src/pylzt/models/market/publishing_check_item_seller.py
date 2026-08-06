@@ -23,5 +23,5 @@ class PublishingCheckItemSeller(LolzObject):
     sold_items_count: int
     active_items_count: int
     restore_data: str
-    restore_percents: int | None = None
+    restore_percents: int
     isOnline: bool

@@ -81,12 +81,6 @@ LIVE_TYPE_OVERRIDES: dict[str, str] = {
     "restore_percents": "int",
 }
 
-# Response fields the spec marks required that the live API omits. Same evidence, other half of
-# the same bug: a type override alone leaves `restore_percents: int` required, and it is simply
-# absent whenever the seller has not triggered a restore-percentage calculation (live check
-# 2026-07-05, which is why both hand-patched seller models are nullable as well as int).
-LIVE_OPTIONAL_FIELDS: frozenset[str] = frozenset({"restore_percents"})
-
 # Split camelCase AND acronym→Word boundaries: "CategoryEAResponse" → Category|EA|Response
 # (so an acronym like EA/LLM/API doesn't glue to the next word and hide the shared name stem).
 ACRONYM_SAFE_SPLIT = re.compile(r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
@@ -551,7 +545,6 @@ def _build_model(
         # Applied after the schema-derived annotation, so an override wins over the spec — which
         # is the whole point: the entry exists because the spec was measured wrong against prod.
         annotation = LIVE_TYPE_OVERRIDES.get(name, annotation)
-        nullable = nullable or name in LIVE_OPTIONAL_FIELDS
         fields.append(
             ExtractedField(
                 name=leaf_name,
