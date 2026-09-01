@@ -56,6 +56,17 @@ The stable identity of a response model is **the operation that returns it**, no
 Pinning has to key on the method class, and that is a change to the naming pass, not a guard in
 front of it.
 
+## `__returning__` is not the whole declaration
+
+Found the same day from the consumer side: `GetLot` is hand-written, owns `parse_response`,
+leaves `__returning__` at `None` and states its type as `BaseMethod[Lot]`. Anything reading only
+`__returning__` files it as untyped — the testnet stand did, and answered `{}`, which
+`Lot.from_raw` accepts. Its client smoke test asserted a parsed lot against an empty body and
+passed for as long as the stand stayed quiet about it.
+
+Two methods are in that shape today (`GetLot`, `GetSelfProfile`). A consumer that needs the
+response type must read `__returning__` first and fall back to the generic argument.
+
 ## State
 
 The `_is_object` fix lives on `fix/typeless-object-schemas`, generated and diffed, **not
