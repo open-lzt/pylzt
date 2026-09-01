@@ -6,8 +6,8 @@ to update.
 from __future__ import annotations
 
 from pylzt.models.base import LolzObject
-from pylzt.models.forum.user_custom_fields import UserCustomFields
 from pylzt.models.forum.user_ignored_info import UserIgnoredInfo
+from pylzt.models.forum.users_ignored_user_custom_fields import UsersIgnoredUserCustomFields
 from pylzt.models.forum.users_ignored_user_rendered import UsersIgnoredUserRendered
 
 
@@ -27,7 +27,7 @@ class UsersIgnoredUser(LolzObject):
     contest_count: int
     conv_welcome_message: str
     convertedDeposit: int
-    custom_fields: UserCustomFields
+    custom_fields: UsersIgnoredUserCustomFields
     deposit: int
     homepage: str
     ignored_info: UserIgnoredInfo

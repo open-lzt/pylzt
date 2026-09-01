@@ -6,8 +6,8 @@ to update.
 from __future__ import annotations
 
 from pylzt.models.base import LolzObject
+from pylzt.models.market.category_battle_net_item_seller import CategoryBattleNetItemSeller
 from pylzt.models.market.item_bump_settings import ItemBumpSettings
-from pylzt.models.market.item_seller import ItemSeller
 
 
 class CategoryWotItem2[
@@ -103,4 +103,4 @@ class CategoryWotItem2[
     descriptionEnHtml: str
     descriptionPlain: str
     descriptionEnPlain: str
-    seller: ItemSeller
+    seller: CategoryBattleNetItemSeller

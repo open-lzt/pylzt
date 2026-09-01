@@ -8,12 +8,12 @@ from __future__ import annotations
 from pydantic import AliasPath, Field
 
 from pylzt.models.base import LolzObject
+from pylzt.models.market.category_battle_net_item_seller import CategoryBattleNetItemSeller
 from pylzt.models.market.item_account_link import ItemAccountLink
 from pylzt.models.market.item_buyer import ItemBuyer
 from pylzt.models.market.item_category import ItemCategory
 from pylzt.models.market.item_guarantee import ItemGuarantee
 from pylzt.models.market.item_public_tag import ItemPublicTag
-from pylzt.models.market.item_seller import ItemSeller
 
 
 class ListUserItem(LolzObject):
@@ -97,4 +97,4 @@ class ListUserItem(LolzObject):
     descriptionEnHtml: str
     descriptionPlain: str
     descriptionEnPlain: str
-    seller: ItemSeller
+    seller: CategoryBattleNetItemSeller

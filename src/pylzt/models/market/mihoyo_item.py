@@ -6,12 +6,12 @@ to update.
 from __future__ import annotations
 
 from pylzt.models.market.base_item import BaseItem
+from pylzt.models.market.category_battle_net_item_seller import CategoryBattleNetItemSeller
 from pylzt.models.market.item_account_link import ItemAccountLink
 from pylzt.models.market.item_bump_settings import ItemBumpSettings
 from pylzt.models.market.item_genshin_character import ItemGenshinCharacter
 from pylzt.models.market.item_honkai_character import ItemHonkaiCharacter
 from pylzt.models.market.item_mihoyo_linked_accounts import ItemMihoyoLinkedAccounts
-from pylzt.models.market.item_seller import ItemSeller
 from pylzt.models.market.item_zenless_character import ItemZenlessCharacter
 
 
@@ -109,4 +109,4 @@ class MihoyoItem(BaseItem):
     descriptionEnHtml: str
     descriptionPlain: str
     descriptionEnPlain: str
-    seller: ItemSeller
+    seller: CategoryBattleNetItemSeller

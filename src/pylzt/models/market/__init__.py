@@ -18,7 +18,9 @@ from pylzt.models.market.base_item import BaseItem
 from pylzt.models.market.battle_net_item import BattleNetItem
 from pylzt.models.market.blitz_wot_top_premium_tank import BlitzWotTopPremiumTank
 from pylzt.models.market.calculator import Calculator
+from pylzt.models.market.cart_get_item import CartGetItem
 from pylzt.models.market.cart_get_response import CartGetResponse
+from pylzt.models.market.category_battle_net_item_seller import CategoryBattleNetItemSeller
 from pylzt.models.market.category_onlyfans_item import CategoryOnlyfansItem
 from pylzt.models.market.category_onlyfans_response import CategoryOnlyfansResponse
 from pylzt.models.market.category_response import CategoryResponse
@@ -183,7 +185,9 @@ __all__ = [
     "BattleNetItem",
     "BlitzWotTopPremiumTank",
     "Calculator",
+    "CartGetItem",
     "CartGetResponse",
+    "CategoryBattleNetItemSeller",
     "CategoryOnlyfansItem",
     "CategoryOnlyfansResponse",
     "CategoryResponse",
