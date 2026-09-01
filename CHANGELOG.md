@@ -39,6 +39,7 @@ returns it, not its fields. Measurement: `docs/decisions/passthrough-and-model-n
 | `UserField` · `UserProfileThread` · `UserUserGroup` · `UserUserFollowing` · `UserUserExternalAuthentication` · `UserEditPermissions` | nested shapes that no longer occur under `User` |
 | `ProfilePostsCommentsEditCommentLinks` · `ProfilePostsCommentsEditCommentPermissions` | `ProfilePostsCommentsEdit` shares `ProfilePostsCommentsCreateComment` and its nested pair |
 | `SearchAllPermissionsBump` | replaced by the shared `PermissionsBump` shape |
+| `CategoryItemSeller` | the shape is Battle.net-specific; now `CategoryBattleNetItemSeller` |
 
 ### Changed shape, same name
 
