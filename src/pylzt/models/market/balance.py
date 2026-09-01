@@ -15,7 +15,7 @@ class Balance(LolzObject):
     """
 
     balance: str
-    convertedBalance: int
+    convertedBalance: float
     fullTitle: str
     title: str
     type: str

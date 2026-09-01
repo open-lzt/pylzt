@@ -55,6 +55,38 @@ OPENAPI_TO_PY_TYPE = {
     "boolean": "bool",
 }
 
+# Response fields whose rendered type is contradicted by what the live API actually sends. Keyed
+# by WIRE name; the bare type only — `nullable` is decided separately and still applies.
+#
+# This table exists because the per-file fix does not scale. Both entries below were ALREADY found
+# and hand-patched on individual models (`item_seller.py`, `category_discord_item_seller.py`,
+# 2026-07-05) — and the purchase path was missed, because a hand-patch fixes the one file someone
+# happened to hit. `restore_percents` alone is rendered into several seller models; patching them
+# one live incident at a time is how the money path stayed broken for a month.
+#
+# Fixing it here rather than in the files also keeps them GENERATED: a hand-patch means dropping
+# the auto-gen marker, which freezes that file against every future spec change
+# (`pipeline._guard_no_clobber`).
+#
+# Measured against prod, 2026-08-06: `purchasing_check` — the call `market.fast_buy` uses to
+# enforce a price ceiling — failed to parse on most categories, so the ceiling degraded every lot
+# to "unavailable" and no autobuy could complete a purchase.
+LIVE_TYPE_OVERRIDES: dict[str, str] = {
+    # The SPEC is self-contradictory here: it declares this field `integer` in some places and
+    # `number` in others. Live sends 25.22 / 31.04 — it is money with the seller fee folded in,
+    # so a fractional value is the normal case and `number` is the correct half.
+    "priceWithSellerFee": "float",
+    # The spec says `integer` and is RIGHT; the `str` rendering was a copy-paste bug, confirmed
+    # int by a live check on 2026-07-05. Same conclusion as the two hand-patched seller models —
+    # this entry is what stops the third and fourth from needing one.
+    "restore_percents": "int",
+    # `int` in the spec, `1926.63` on the wire (measured 2026-08-06 against `GET /me`). It is the
+    # balance converted to the display currency — money, so fractional is the normal case, not an
+    # edge one. Note `balance` beside it arrives as the STRING "1926.63" while only the `converted*`
+    # family is numeric, which is why this entry names one field rather than the group.
+    "convertedBalance": "float",
+}
+
 # Split camelCase AND acronym→Word boundaries: "CategoryEAResponse" → Category|EA|Response
 # (so an acronym like EA/LLM/API doesn't glue to the next word and hide the shared name stem).
 ACRONYM_SAFE_SPLIT = re.compile(r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
@@ -521,6 +553,9 @@ def _build_model(
         )
         cur_type = cur.get("type")
         nullable = name not in required or (isinstance(cur_type, list) and "null" in cur_type)
+        # Applied after the schema-derived annotation, so an override wins over the spec — which
+        # is the whole point: the entry exists because the spec was measured wrong against prod.
+        annotation = LIVE_TYPE_OVERRIDES.get(name, annotation)
         fields.append(
             ExtractedField(
                 name=leaf_name,

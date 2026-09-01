@@ -68,7 +68,7 @@ class MihoyoItem(BaseItem):
     mihoyo_zenless_currency: int
     feedback_data: str
     isIgnored: bool
-    priceWithSellerFee: int
+    priceWithSellerFee: float
     guarantee: str
     canViewLoginData: bool
     canUpdateItemStats: bool

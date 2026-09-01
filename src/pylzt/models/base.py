@@ -21,10 +21,11 @@ just `cls.model_validate(raw)`) inherits `BaseModel, BoundModel` directly instea
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
-from typing import TYPE_CHECKING, Any, Self
+from collections.abc import Iterable, Mapping, Sequence
+from types import UnionType
+from typing import TYPE_CHECKING, Any, ForwardRef, Optional, Self, Union, get_args, get_origin
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from pylzt.errors import ModelNotBound
 
@@ -47,8 +48,102 @@ class BoundModel:
         return client
 
 
+_SEQUENCE_ORIGINS = (list, tuple, set, frozenset, Sequence)
+
+
+def _accepts_sequence(annotation: Any) -> bool:
+    """Could a list legitimately be this field's value?
+
+    Errs toward YES on anything it cannot read — an unresolved ForwardRef, an exotic generic. A
+    wrong `no` would rewrite a genuinely empty list into `None`, which loses data; a wrong `yes`
+    only leaves the pre-existing behaviour in place. Between a silent data change and a loud
+    validation error, the loud one is the safe default.
+    """
+    if annotation is None:
+        return False
+    if annotation is Any or isinstance(annotation, ForwardRef | str):
+        return True
+    origin = get_origin(annotation)
+    if origin is Union or origin is UnionType:
+        return any(_accepts_sequence(arg) for arg in get_args(annotation))
+    target = origin or annotation
+    if not isinstance(target, type):
+        return True
+    return issubclass(target, _SEQUENCE_ORIGINS)
+
+
 class LolzObject(BaseModel, BoundModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
+
+    @classmethod
+    def __pydantic_init_subclass__(cls, **kwargs: Any) -> None:
+        """An absent field is `None`, never a ValidationError.
+
+        The mirror of `extra="ignore"`. That one says an upstream field ADDITION must not break
+        parsing; this one says the same about a field the response simply does not carry. The
+        spec's `required` list is a claim about the API, and repeatedly a false one — measured
+        against prod, `purchasing_check` (the call that reads a price ceiling before money moves)
+        omits eleven fields the spec calls required, so the whole response was unparseable and
+        every autobuy degraded to "lot unavailable".
+
+        The costs are not symmetric. A wrongly-required field makes the ENTIRE response
+        unreadable — the caller gets an exception instead of the fifty fields that did arrive. A
+        wrongly-optional one costs an `is None` check.
+
+        **The price, stated plainly: static types now over-promise.** A field declared `int` here
+        can be `None` at runtime, and mypy will not warn about it. That is the deliberate trade
+        for keeping `| None` out of ~400 generated models; the alternative widens every field's
+        declared type and pushes the same check onto every caller of every field, including the
+        vast majority that are always present.
+
+        Applied to subclasses only — `LolzObject` itself declares no fields — and re-runs the
+        schema build, so validation, not just construction, sees the defaults.
+        """
+        super().__pydantic_init_subclass__(**kwargs)
+        loosened = False
+        for field in cls.model_fields.values():
+            if not field.is_required():
+                continue
+            # `Optional[...]`, not `... | None`: the annotation may still be an unresolved string
+            # under `from __future__ import annotations`, and the `|` operator has no meaning on
+            # one. `Optional` accepts both and normalises.
+            field.annotation = Optional[field.annotation]  # type: ignore[assignment]  # noqa: UP045
+            field.default = None
+            loosened = True
+        if loosened:
+            cls.model_rebuild(force=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _empty_list_is_an_empty_object(cls, data: Any) -> Any:
+        """`[]` in an object-typed field means "empty", because PHP has one array type.
+
+        The backend is PHP/XenForo, and `json_encode` renders an empty associative array as `[]`,
+        not `{}` — the two are the same value there and only differ once a key exists. So ANY
+        object-typed field can arrive as a list the moment it happens to be empty; this is a
+        property of the serialiser, not of one endpoint. Measured against `GET /me` on 2026-08-06:
+        `restore_data`, `telegram_client` and `rendered.backgrounds` all came back `[]` and made
+        the whole profile unparseable.
+
+        Only the EMPTY list is rewritten, and only for fields whose declared type is not itself a
+        sequence. A non-empty list in an object field is a genuine contract mismatch and still
+        raises — silencing that would hide a real upstream change behind this workaround.
+        """
+        if not isinstance(data, Mapping):
+            return data
+        suspects = {
+            name
+            for name, field in cls.model_fields.items()
+            if not _accepts_sequence(field.annotation)
+        }
+        if not suspects:
+            return data
+        by_alias = {(field.alias or name): name for name, field in cls.model_fields.items()}
+        patched = dict(data)
+        for key, value in data.items():
+            if value == [] and by_alias.get(key, key) in suspects:
+                patched[key] = None
+        return patched
 
     @classmethod
     def from_raw(cls, raw: Mapping[str, Any]) -> Self:
