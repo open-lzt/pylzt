@@ -21,6 +21,7 @@ import keyword
 import re
 from dataclasses import dataclass, replace
 from enum import StrEnum
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -329,7 +330,8 @@ def _resolve_response_schema(spec: dict[str, Any], op: dict[str, Any]) -> dict[s
 def _is_object(schema: dict[str, Any]) -> bool:
     """A schema with `properties` is an object even when it omits `type` — JSON Schema makes
     `type` optional, and 47 of this spec's 200-responses leave it out. Requiring it dropped them
-    to the scalar branch and the method shipped `passthrough`. Debt: testnet .plans/typed-endpoints.md
+    to the scalar branch and the method shipped `passthrough`.
+    Debt: the testnet plan `.plans/typed-endpoints.md`.
     """
     return bool(schema.get("properties")) and schema.get("type") in (None, "object")
 
@@ -549,13 +551,22 @@ def _build_model(
     return name
 
 
+# Names the emitted model modules import from pydantic. A model class carrying one of these
+# shadows the import in its own module, and `Field(alias=...)` on the next line then calls the
+# MODEL - a ValidationError at import time, 24 test modules down. A wire field literally named
+# "field" reaches this by the ordinary `_pascal` route.
+_SHADOWS_AN_IMPORT = frozenset({"Field", "BaseModel", "AliasPath", "ConfigDict"})
+
+
 def _safe_type_name(name: str) -> str:
     """Guarantee a valid Python type identifier. Nested model names are built from wire
     field segments (`_pascal(path[-1])`), which can start with a digit ("0_stickers" →
     "0Stickers"); without the old response-root prefix that used to mask it, such a name
     would emit an invalid class/module. Prefix `Field` mirroring `_py_identifier`."""
     if not name or name[0].isdigit():
-        return f"Field{name}"
+        name = f"Field{name}"
+    if name in _SHADOWS_AN_IMPORT:
+        return f"{name}Model"
     return name
 
 
@@ -802,6 +813,31 @@ def _collect_enums_global(
         for member_id, value in e.members:
             merged[e.name].setdefault(member_id, value)
     return [ExtractedEnum(name=name, members=tuple(merged[name].items())) for name in order]
+
+
+@lru_cache(maxsize=1)
+def _installed_response_names() -> dict[str, str]:
+    """Method class name -> the model name it already returns in `src/pylzt`.
+
+    A regeneration must not rename a published model: importers keep compiling and get a
+    different shape. The stable identity of a response model is the OPERATION that returns it,
+    not its field set - pinning by fields was measured and made the churn worse.
+    Разбор: docs/decisions/passthrough-and-model-names.md
+    """
+    names: dict[str, str] = {}
+    methods_dir = PKG_ROOT / "methods"
+    if not methods_dir.exists():
+        return names
+    for path in sorted(methods_dir.glob("*.py")):
+        text = path.read_text(encoding="utf-8")
+        for m in re.finditer(r"^class (\w+)\(BaseMethod\[", text, re.M):
+            start = m.end()
+            nxt = text.find("\nclass ", start)
+            body = text[start : nxt if nxt > 0 else len(text)]
+            ret = re.search(r"__returning__ = (\w+)$", body, re.M)
+            if ret and ret.group(1) != "passthrough":
+                names[m.group(1)] = ret.group(1)
+    return names
 
 
 def _build_api_models(
@@ -1154,6 +1190,67 @@ def _rebase_status_responses(models: list[ExtractedModel]) -> list[ExtractedMode
     return out
 
 
+def _pin_published_roots(
+    op_root: dict[str, str | None], models: list[ExtractedModel], api: str
+) -> tuple[dict[str, str | None], list[ExtractedModel]]:
+    """Give every operation back the model name it already publishes.
+
+    Runs LAST, after the generic fold and the neutral-name pass. Pinning earlier was measured
+    twice and made the churn worse both times: at intern time it steals the names the neutral
+    pass then mints as `...Response2`, and pinning by field set renames every response whose
+    shape drifted. Разбор: docs/decisions/passthrough-and-model-names.md
+    """
+    published = _installed_response_names()
+    if not published:
+        return op_root, models
+    by_name = {m.name: m for m in models}
+    wanted: dict[str, str] = {}
+    for op_id, root in op_root.items():
+        if not root or "[" in root or root not in by_name:
+            continue
+        old = published.get(_pascal(op_id.replace(".", "_")))
+        if not old or old == root:
+            continue
+        if wanted.setdefault(root, old) != old:
+            wanted[root] = ""  # two published names want one shape - leave the shape alone
+    subs = {new: old for new, old in wanted.items() if old}
+
+    # A target still held by a shape that is not itself moving would become a duplicate. The
+    # holder is new to this run by construction (the published owner is the one asking), so it
+    # is the one that yields — under the name of the operation that builds it, never a numeric
+    # twin.
+    held = {m.name for m in models} - set(subs)
+    for new_name, old_name in list(subs.items()):
+        if old_name not in held:
+            continue
+        owners = [
+            op_id for op_id, root in op_root.items() if root == old_name and old_name != new_name
+        ]
+        if len(owners) == 1:
+            alt = _safe_type_name(_pascal(owners[0].replace(".", "_")) + old_name)
+        else:
+            # Not a response root: a shape new to this run. Name it from its own fields, the
+            # same neutral convention the collapse pass uses, never a numeric twin.
+            displaced = next((m for m in models if m.name == old_name), None)
+            alt = (
+                _safe_type_name(
+                    _pascal(api)
+                    + "".join(_pascal(f.name) for f in displaced.fields[:3])
+                    + "Response"
+                )
+                if displaced
+                else ""
+            )
+        if alt and alt not in held and alt not in subs.values():
+            subs[old_name] = alt
+        else:
+            del subs[new_name]
+    if not subs:
+        return op_root, models
+    models = [replace(m, name=subs.get(m.name, m.name)) for m in models]
+    return _apply_rewrites(subs, op_root, models)
+
+
 def _collapse_models(
     op_root: dict[str, str | None], models: list[ExtractedModel], api: str
 ) -> tuple[dict[str, str | None], list[ExtractedModel]]:
@@ -1234,7 +1331,7 @@ def _collapse_models(
     op_root, models = _reconcile_dangling(
         op_root, models, {**renames, **renames2}, {**param_rewrites, **params2}
     )
-    return op_root, models
+    return _pin_published_roots(op_root, models, api)
 
 
 PKG_ROOT = REPO_ROOT / "src" / "pylzt"
@@ -1366,9 +1463,7 @@ def _lib_method_module(
             # HttpMethod/ApiTarget/RateClass live in pylzt.types (methods.base doesn't
             # re-export them under strict) — ApiTarget/RateClass only referenced by forum
             # method bodies (__api__/__rate_class__ overrides), _imports_used drops unused ones.
-            _imports_used(
-                code, ["HttpMethod", "ApiTarget", "RateClass", *reused], "pylzt.types"
-            ),
+            _imports_used(code, ["HttpMethod", "ApiTarget", "RateClass", *reused], "pylzt.types"),
             _imports_used(code, new_enums, f"pylzt.enums.{api}"),
         )
         if imp

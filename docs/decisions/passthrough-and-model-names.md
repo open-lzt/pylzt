@@ -67,8 +67,24 @@ passed for as long as the stand stayed quiet about it.
 Two methods are in that shape today (`GetLot`, `GetSelfProfile`). A consumer that needs the
 response type must read `__returning__` first and fall back to the generic argument.
 
+## Pinning by operation works, and the numbers
+
+Applied as the LAST pass, after the generic fold and the neutral-name pass. Every operation gets
+back the model name it already publishes; a shape new to this run yields the name and is renamed
+from its own fields.
+
+| | root renames | published models gone |
+|---|---|---|
+| no pinning | 4 | 12 |
+| pinned by field set | 69 | — (worse, numeric suffixes) |
+| pinned by operation | **0** | **10** |
+
+The 10 that remain are nested shapes and one generic fold, listed in `CHANGELOG.md` for 0.3.0.
+
+Installed 01.09.2026 behind the gate: ruff clean, mypy strict clean on 449 files, 401 modules
+import, 223 tests pass. Untyped methods 66 -> 24.
+
 ## State
 
-The `_is_object` fix lives on `fix/typeless-object-schemas`, generated and diffed, **not
-installed**. Installing it is a breaking release of the model namespace and needs a version
-decision.
+Shipped in 0.3.0. Checked before installing: nothing in the flow engine, the testnet stand or
+the saas repo imports any of the 13 names that move or change shape.
