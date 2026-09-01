@@ -327,7 +327,11 @@ def _resolve_response_schema(spec: dict[str, Any], op: dict[str, Any]) -> dict[s
 
 
 def _is_object(schema: dict[str, Any]) -> bool:
-    return schema.get("type") == "object" and bool(schema.get("properties"))
+    """A schema with `properties` is an object even when it omits `type` — JSON Schema makes
+    `type` optional, and 47 of this spec's 200-responses leave it out. Requiring it dropped them
+    to the scalar branch and the method shipped `passthrough`. Debt: testnet .plans/typed-endpoints.md
+    """
+    return bool(schema.get("properties")) and schema.get("type") in (None, "object")
 
 
 # A wire object whose keys are UUIDs / integer indices / long hex is a MAP the spec encoded
